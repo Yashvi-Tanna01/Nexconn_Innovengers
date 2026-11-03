@@ -1,0 +1,102 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-ivory: #FBFBF9;
+    --bg-canvas: #F8F9FA;
+    --text-navy: #0B132B;
+    --text-slate: #475569;
+    --accent-teal: #0D9488;
+    --accent-cyan: #06B6D4;
+    --accent-amber: #D97706;
+    --border-neutral: #E2E8F0;
+  }
+
+  body {
+    background-color: #FBFBF9;
+    color: #0B132B;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer components {
+  /* Translucent light panels for clean, uncluttered surfaces */
+  .antah-panel {
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid #E2E8F0;
+    box-shadow: 0 4px 20px -2px rgba(11, 19, 43, 0.05);
+  }
+
+  .antah-card {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(11, 19, 43, 0.04), 0 4px 12px rgba(11, 19, 43, 0.03);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .antah-card:hover {
+    border-color: #CBD5E1;
+    box-shadow: 0 6px 20px rgba(11, 19, 43, 0.06);
+    transform: translateY(-1px);
+  }
+
+  .antah-card-static {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(11, 19, 43, 0.04);
+  }
+
+  /* Signal Beacon Pulse Animation for map markers and live indicators */
+  .signal-beacon {
+    position: relative;
+  }
+  .signal-beacon::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 9999px;
+    background: inherit;
+    opacity: 0.4;
+    animation: signalPulse 2.4s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+  }
+
+  @keyframes signalPulse {
+    0% {
+      transform: scale(0.9);
+      opacity: 0.7;
+    }
+    70% {
+      transform: scale(2.2);
+      opacity: 0;
+    }
+    100% {
+      transform: scale(2.2);
+      opacity: 0;
+    }
+  }
+}
+
+/* Subtle, polished custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
