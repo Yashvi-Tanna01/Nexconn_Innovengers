@@ -89,7 +89,12 @@ export const getCategoryGlyph = (category: ReportCategory, color: string): strin
 
 /**
  * Creates an exquisite, lightweight L.divIcon marker for the City Signal Atlas.
- * Pure SVG/HTML - zero image asset overhead, retina-sharp at any zoom.
+ * Adheres to the Territorial Intelligence palette:
+ * - Reported community issues: clean white rounded marker, category icon
+ * - Candidate signals / clusters: amber ring/accent (#D99A45)
+ * - Verified incidents: muted red (#D9534F) with verification shield
+ * - Resolved incidents: muted green (#286B56) with check badge
+ * Subtle single-shot animation ONLY for selected markers.
  */
 export const createAtlasMarkerIcon = (
   signal: AtlasSignal,
@@ -100,41 +105,91 @@ export const createAtlasMarkerIcon = (
   const meta = CATEGORY_PALETTE[signal.category] || CATEGORY_PALETTE.public_infrastructure;
   const isCandidate = signal.status === 'candidate_pattern';
   const isVerified = signal.status === 'verified_incident';
+  const isResolved = signal.status === 'resolved';
+
+  // Hierarchy: Selected (42px), Related (37px), Idle (34px)
+  const size = isSelected ? 42 : isRelatedToSelected ? 37 : 34;
+
+  // Semantic status accent color & border
+  let statusBorder = 'border border-[#E6EAE6]';
+  let statusBadge = '';
+  let pulseColor = meta.color;
+
+  if (isVerified) {
+    statusBorder = 'border-2 border-solid border-[#D9534F]';
+    pulseColor = '#D9534F';
+    statusBadge = `
+      <span class="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#D9534F] text-white rounded-full border-2 border-white flex items-center justify-center text-[8px] font-bold shadow-xs" title="Coordinator-Verified Incident">
+        <svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+        </svg>
+      </span>
+    `;
+  } else if (isCandidate) {
+    statusBorder = 'border-2 border-dashed border-[#D99A45] ring-2 ring-[#D99A45]/20';
+    pulseColor = '#D99A45';
+    statusBadge = `
+      <span class="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-[#D99A45] text-white rounded-full border-2 border-white flex items-center justify-center shadow-xs" title="AI-Detected Candidate Signal Cluster">
+        <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+      </span>
+    `;
+  } else if (isResolved) {
+    statusBorder = 'border-2 border-solid border-[#286B56] opacity-90';
+    pulseColor = '#286B56';
+    statusBadge = `
+      <span class="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#286B56] text-white rounded-full border-2 border-white flex items-center justify-center text-[8px] font-bold shadow-xs" title="Resolved Issue">
+        ✓
+      </span>
+    `;
+  } else {
+    // Standard reported community issue
+    statusBorder = 'border border-[#E6EAE6]';
+  }
+
+  // Spatial depth and focus ring
+  const elevationStyle = isSelected
+    ? isVerified
+      ? 'shadow-[0_0_0_3px_rgba(217,83,79,0.35),0_12px_28px_rgba(217,83,79,0.25)]'
+      : isCandidate
+      ? 'shadow-[0_0_0_3px_rgba(217,154,69,0.35),0_12px_28px_rgba(217,154,69,0.25)]'
+      : isResolved
+      ? 'shadow-[0_0_0_3px_rgba(40,107,86,0.35),0_12px_28px_rgba(40,107,86,0.25)]'
+      : 'shadow-[0_0_0_3px_rgba(24,35,34,0.15),0_12px_28px_rgba(24,35,34,0.18)]'
+    : isRelatedToSelected
+    ? 'shadow-[0_0_0_2px_rgba(217,154,69,0.4),0_6px_16px_rgba(24,35,34,0.08)]'
+    : 'shadow-[0_2px_8px_rgba(24,35,34,0.08)] hover:shadow-[0_6px_16px_rgba(24,35,34,0.12)]';
+
+  const transformStyle = isSelected
+    ? 'transform: scale(1.12); z-index: 100;'
+    : isRelatedToSelected
+    ? 'transform: scale(1.05); z-index: 50;'
+    : 'transform: scale(1);';
+
+  // Link indicator badge on related partner
+  const linkBadge = isRelatedToSelected && !isSelected
+    ? `<span class="absolute -bottom-1.5 -right-1.5 px-1 py-0.2 rounded text-[7px] font-mono font-bold bg-[#FFF7ED] text-[#D99A45] border border-[#D99A45]/40 shadow-2xs">LINK</span>`
+    : '';
+
+  // Single-shot subtle expanding pulse ONLY on the actively selected signal
+  const pulseHtml = isSelected
+    ? `<span class="atlas-signal-pulse" data-cycle="${pulseCycle}" style="border-color: ${pulseColor};"></span>`
+    : '';
+
   const glyph = getCategoryGlyph(signal.category, meta.color);
-
-  const active = isSelected || isRelatedToSelected;
-  const size = active ? 40 : 34;
-
-  // Visual status indicators
-  const haloBorder = isCandidate
-    ? 'border-2 border-dashed border-amber-500 shadow-[0_0_0_2px_rgba(217,119,6,0.2)]'
-    : isVerified
-    ? 'border-2 border-solid border-teal-600 shadow-[0_0_0_2px_rgba(13,148,136,0.2)]'
-    : 'border border-slate-300/90 shadow-sm';
-
-  const badgeIcon = isCandidate
-    ? `<span class="absolute -top-1 -right-1 w-3 h-3 bg-amber-500 rounded-full border-2 border-white"></span>`
-    : isVerified
-    ? `<span class="absolute -top-1 -right-1 w-3 h-3 bg-teal-600 rounded-full border-2 border-white flex items-center justify-center text-[7px] text-white font-bold">✓</span>`
-    : '';
-
-  // Signal Pulse: precise expanding circular wave when active, tagged with pulseCycle so it animates reliably on every click
-  const pulseHtml = active
-    ? `<span class="atlas-signal-pulse" data-cycle="${pulseCycle}" style="border-color: ${isCandidate ? '#D97706' : meta.color};"></span>`
-    : '';
 
   const html = `
     <div class="atlas-symbol-wrapper relative flex items-center justify-center" style="width: ${size}px; height: ${size}px;">
       ${pulseHtml}
       <div 
-        class="atlas-symbol-badge relative flex items-center justify-center rounded-xl bg-white ${haloBorder} transition-transform duration-200"
-        style="width: ${size}px; height: ${size}px; ${active ? 'transform: scale(1.1);' : ''}"
-        title="${signal.title} (${signal.id})"
+        class="atlas-symbol-badge relative flex items-center justify-center rounded-2xl bg-white ${statusBorder} ${elevationStyle} transition-all duration-200 cursor-pointer"
+        style="width: ${size}px; height: ${size}px; ${transformStyle}"
+        title="${signal.title} (${signal.id}) • ${isVerified ? 'Verified Incident' : isCandidate ? 'Candidate Cluster' : isResolved ? 'Resolved Incident' : 'Reported Community Issue'}"
       >
         <div class="flex items-center justify-center" style="color: ${meta.color};">
           ${glyph}
         </div>
-        ${badgeIcon}
+        ${statusBadge}
+        ${linkBadge}
       </div>
     </div>
   `;

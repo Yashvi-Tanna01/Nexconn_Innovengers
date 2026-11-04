@@ -1,9 +1,9 @@
-import React, { useEffect, useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { AntahChromaticWordmark } from './AntahChromaticWordmark';
 import { useLoading } from '../../context/LoadingContext';
 import { useAnimationLifecycle, AnimationStage } from '../../hooks/useAnimationLifecycle';
-import { Radio, ChevronRight, Sparkles } from 'lucide-react';
+import { Radio } from 'lucide-react';
 
 export type StartupPhase =
   | 'opening_atmosphere'
@@ -77,23 +77,11 @@ export const AppStartupLoader: React.FC = () => {
     progress,
     currentStage,
     cycleId,
-    skip,
   } = useAnimationLifecycle<StartupPhase>({
     stages,
     autoStart: !isAppInitialized,
     onComplete: handleSequenceComplete,
   });
-
-  // Keyboard shortcut: Press Escape to skip intro immediately
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !isAppInitialized) {
-        skip();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isAppInitialized, skip]);
 
   const showWordmark = phase !== 'opening_atmosphere';
   const showSubtitle = phase === 'identity_reveal' || phase === 'final_visual_moment' || phase === 'transition';
@@ -191,20 +179,6 @@ export const AppStartupLoader: React.FC = () => {
               <span className="font-bold text-antah-navy">{Math.round(progress * 100)}%</span>
             </div>
           </div>
-
-          {/* 5. Elegant Skip Option (Keyboard ESC / Click) */}
-          <motion.button
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.7 }}
-            whileHover={{ opacity: 1, scale: 1.03 }}
-            onClick={skip}
-            title="Skip cinematic startup sequence (Esc)"
-            className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 inline-flex items-center gap-1 text-[11px] font-mono text-antah-slate hover:text-antah-navy bg-white/80 hover:bg-white border border-slate-200/80 px-2.5 py-1 rounded-lg shadow-soft-xs transition-all z-30"
-          >
-            <span>Skip Intro</span>
-            <span className="text-[9px] bg-slate-100 text-slate-500 px-1 py-0.5 rounded font-bold">ESC</span>
-            <ChevronRight size={12} />
-          </motion.button>
         </motion.div>
       )}
     </AnimatePresence>

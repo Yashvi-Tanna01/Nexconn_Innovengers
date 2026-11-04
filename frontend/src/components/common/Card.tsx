@@ -2,18 +2,22 @@ import React, { useRef, useState, memo } from 'react';
 import { motion, useMotionValue, useSpring, useReducedMotion } from 'framer-motion';
 
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: 'default' | 'panel' | 'subtle' | 'interactive';
+  variant?: 'default' | 'panel' | 'subtle' | 'interactive' | 'level1' | 'level2' | 'level3';
   children: React.ReactNode;
   className?: string;
   tilt?: boolean;
+  level?: 1 | 2 | 3;
 }
 
 const variantStyles = {
-  default: 'bg-white border border-slate-200/90 rounded-2xl shadow-soft-xs',
-  panel: 'antah-panel rounded-2xl shadow-soft-sm',
+  default: 'spatial-level-2 rounded-2xl',
+  level1: 'spatial-level-1 rounded-2xl',
+  level2: 'spatial-level-2 rounded-2xl',
+  level3: 'spatial-level-3 rounded-2xl',
+  panel: 'spatial-level-2 rounded-2xl',
   subtle: 'bg-slate-50/70 border border-slate-200/80 rounded-2xl',
   interactive:
-    'bg-white border border-slate-200/90 rounded-2xl shadow-soft-xs hover:border-slate-300 hover:shadow-soft-md cursor-pointer transition-shadow',
+    'spatial-level-2 rounded-2xl cursor-pointer spatial-focus-ring focus:outline-none select-none',
 };
 
 // Isolated Tilted Card to prevent overhead on static cards
@@ -21,13 +25,15 @@ const TiltCard: React.FC<CardProps> = ({
   variant = 'default',
   children,
   className = '',
+  level,
   ...props
 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const shouldReduceMotion = useReducedMotion();
 
-  const rotateX = useSpring(useMotionValue(0), { stiffness: 300, damping: 28 });
-  const rotateY = useSpring(useMotionValue(0), { stiffness: 300, damping: 28 });
+  // Subtle restrained spring tilt (max 1.2 deg)
+  const rotateX = useSpring(useMotionValue(0), { stiffness: 350, damping: 30 });
+  const rotateY = useSpring(useMotionValue(0), { stiffness: 350, damping: 30 });
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (shouldReduceMotion || !cardRef.current) return;
@@ -35,14 +41,16 @@ const TiltCard: React.FC<CardProps> = ({
     const xPct = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
     const yPct = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
 
-    rotateX.set(-yPct * 3.5);
-    rotateY.set(xPct * 3.5);
+    rotateX.set(-yPct * 1.2);
+    rotateY.set(xPct * 1.2);
   };
 
   const handleMouseLeave = () => {
     rotateX.set(0);
     rotateY.set(0);
   };
+
+  const effectiveStyle = level ? variantStyles[`level${level}`] : variantStyles[variant];
 
   return (
     <motion.div
@@ -58,7 +66,7 @@ const TiltCard: React.FC<CardProps> = ({
             }
           : undefined
       }
-      className={`relative overflow-hidden ${variantStyles[variant]} ${className}`}
+      className={`relative overflow-hidden ${effectiveStyle} ${className}`}
       {...(props as any)}
     >
       {children}
@@ -71,19 +79,22 @@ export const Card: React.FC<CardProps> = memo(({
   children,
   className = '',
   tilt = false,
+  level,
   ...props
 }) => {
   if (tilt) {
     return (
-      <TiltCard variant={variant} className={className} {...props}>
+      <TiltCard variant={variant} level={level} className={className} {...props}>
         {children}
       </TiltCard>
     );
   }
 
+  const effectiveStyle = level ? variantStyles[`level${level}`] : variantStyles[variant];
+
   return (
     <div
-      className={`relative overflow-hidden ${variantStyles[variant]} ${className}`}
+      className={`relative overflow-hidden ${effectiveStyle} ${className}`}
       {...props}
     >
       {children}

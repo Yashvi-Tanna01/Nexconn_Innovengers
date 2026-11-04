@@ -24,12 +24,12 @@ export const Button: React.FC<ButtonProps> = ({
   const shouldReduceMotion = useReducedMotion();
 
   const baseClasses =
-    'relative inline-flex items-center justify-center font-medium select-none cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-antah-teal/50 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50';
+    'relative inline-flex items-center justify-center font-medium select-none cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-antah-teal focus-visible:ring-offset-2 active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-150';
 
   const sizeClasses = {
-    sm: 'text-xs px-3 py-1.5 rounded-lg gap-1.5',
-    md: 'text-sm px-4 py-2.5 rounded-subtle gap-2',
-    lg: 'text-base px-6 py-3 rounded-panel gap-2.5 shadow-soft-sm font-semibold',
+    sm: 'text-xs px-3 py-1.5 min-h-[36px] sm:min-h-[38px] rounded-lg gap-1.5',
+    md: 'text-sm px-4 py-2.5 min-h-[44px] rounded-subtle gap-2',
+    lg: 'text-base px-6 py-3 min-h-[48px] rounded-panel gap-2.5 shadow-soft-sm font-semibold',
   };
 
   const variantClasses = {

@@ -33,12 +33,17 @@ export const SignalThreadsLayer: React.FC<SignalThreadsLayerProps> = ({
 }) => {
   const [, setTick] = useState(0);
 
-  // Re-calculate paths whenever the map moves, zooms, or container resizes
+  // Re-calculate paths whenever the map moves, zooms, or container resizes (throttled to RAF)
   useEffect(() => {
     if (!map) return;
 
+    let rafId: number | null = null;
     const handleUpdate = () => {
-      setTick((t) => (t + 1) % 1000000);
+      if (rafId !== null) return;
+      rafId = requestAnimationFrame(() => {
+        setTick((t) => (t + 1) % 1000000);
+        rafId = null;
+      });
     };
 
     map.on('move', handleUpdate);
@@ -46,6 +51,7 @@ export const SignalThreadsLayer: React.FC<SignalThreadsLayerProps> = ({
     map.on('resize', handleUpdate);
 
     return () => {
+      if (rafId !== null) cancelAnimationFrame(rafId);
       map.off('move', handleUpdate);
       map.off('zoom', handleUpdate);
       map.off('resize', handleUpdate);
@@ -120,13 +126,13 @@ export const SignalThreadsLayer: React.FC<SignalThreadsLayerProps> = ({
       <defs>
         {/* Soft amber glow filter for active threads */}
         <filter id="thread-glow" x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0" dy="0" stdDeviation="2" floodColor="#D97706" floodOpacity="0.4" />
+          <feDropShadow dx="0" dy="0" stdDeviation="2" floodColor="#D99A45" floodOpacity="0.4" />
         </filter>
       </defs>
 
       {threadPaths.map(({ cluster, pathD, midpoint, isSelected, confidencePercent }) => {
         const isVerified = cluster.status === 'verified_incident';
-        const color = isVerified ? '#0D9488' : '#D97706';
+        const color = isVerified ? '#D9534F' : '#D99A45';
 
         return (
           <g key={`thread-${cluster.id}`} className="atlas-thread-group">
@@ -135,7 +141,7 @@ export const SignalThreadsLayer: React.FC<SignalThreadsLayerProps> = ({
               d={pathD}
               fill="none"
               stroke="transparent"
-              strokeWidth="20"
+              strokeWidth="24"
               className="pointer-events-auto cursor-pointer"
               onClick={() => onSelectCluster(cluster)}
             />
@@ -146,8 +152,8 @@ export const SignalThreadsLayer: React.FC<SignalThreadsLayerProps> = ({
                 d={pathD}
                 fill="none"
                 stroke={color}
-                strokeWidth="5"
-                strokeOpacity="0.25"
+                strokeWidth="6"
+                strokeOpacity="0.2"
                 strokeLinecap="round"
               />
             )}
@@ -157,42 +163,61 @@ export const SignalThreadsLayer: React.FC<SignalThreadsLayerProps> = ({
               d={pathD}
               fill="none"
               stroke={color}
-              strokeWidth={isSelected ? '2.5' : '1.75'}
-              strokeDasharray={isSelected ? '7, 4' : '5, 5'}
-              strokeOpacity={isSelected ? '0.95' : '0.65'}
+              strokeWidth={isSelected ? '2.5' : '1.5'}
+              strokeDasharray={isSelected ? '6, 4' : '4, 4'}
+              strokeOpacity={isSelected ? '0.95' : '0.45'}
               strokeLinecap="round"
               className="transition-all duration-300"
             />
 
+            {/* Animated Directional Telemetry Pulse Gliding Along the Curve when Selected */}
+            {isSelected && (
+              <circle r="3.5" fill={color} opacity="0.9">
+                <animateMotion
+                  path={pathD}
+                  dur="2.4s"
+                  repeatCount="indefinite"
+                  rotate="auto"
+                />
+              </circle>
+            )}
+
             {/* Compact Editorial Relationship Badge at Curve Apex */}
             <g
               transform={`translate(${midpoint.x}, ${midpoint.y})`}
-              className="pointer-events-auto cursor-pointer select-none"
+              className="pointer-events-auto cursor-pointer select-none transition-transform hover:scale-105"
               onClick={() => onSelectCluster(cluster)}
             >
               <rect
-                x="-52"
-                y="-11"
-                width="104"
-                height="22"
-                rx="11"
+                x="-58"
+                y="-12"
+                width="116"
+                height="24"
+                rx="12"
                 fill="#FFFFFF"
                 stroke={color}
                 strokeWidth={isSelected ? '1.5' : '1'}
                 filter="url(#thread-glow)"
                 className="transition-all duration-200"
               />
+              <circle
+                cx="-46"
+                cy="0"
+                r="3"
+                fill={color}
+                className={isSelected ? 'animate-pulse' : ''}
+              />
               <text
-                x="0"
+                x="4"
                 y="3.5"
                 textAnchor="middle"
                 fontSize="9"
                 fontFamily="system-ui, -apple-system, sans-serif"
                 fontWeight="700"
                 fill={color}
-                letterSpacing="0.05em"
+                letterSpacing="0.06em"
               >
-                {isVerified ? 'VERIFIED PATTERN' : `THREAD • ${confidencePercent}%`}
+                {isVerified ? 'VERIFIED INCIDENT' : `AI CANDIDATE • ${confidencePercent}%`}
               </text>
             </g>
           </g>

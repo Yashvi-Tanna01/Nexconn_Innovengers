@@ -65,20 +65,22 @@ export const ReportPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-antah-ivory text-antah-navy py-10 pb-24">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+    <div className="w-full px-4 pt-3 pb-8 space-y-4 select-none">
+      <div className="flex items-center justify-between pb-2 border-b border-[#E3E8E4]">
         <div>
-          <div className="inline-flex items-center gap-1.5 text-xs font-mono text-antah-teal mb-1">
-            <Radio size={14} className="animate-pulse" />
-            <span>COMMUNITY TELEMETRY INGESTION</span>
-          </div>
-          <h1 className="text-3xl font-extrabold text-antah-navy tracking-tight">
-            Report a Civic Issue
+          <h1 className="text-xl font-bold text-[#202827] font-sans tracking-tight">
+            Report Civic Issue
           </h1>
-          <p className="text-sm text-antah-slate mt-1">
-            Log an infrastructure anomaly. ANTAH’s spatial AI engine will correlate your observation with nearby signals across the municipal grid.
+          <p className="text-[11px] text-[#737C78]">
+            Ingreso de telemetría ciudadana a la red ANTAH
           </p>
         </div>
+        <div className="text-[10px] font-mono text-[#286B56] font-bold px-2.5 py-1 rounded-full bg-[#E1F0E8]">
+          PASO {step}/3
+        </div>
+      </div>
+
+      <div className="w-full space-y-4">
 
         {/* Step Progress Pills with Gliding Highlight */}
         <div className="grid grid-cols-3 gap-2 relative">
@@ -273,14 +275,30 @@ export const ReportPage: React.FC = () => {
                         </div>
                       </div>
 
-                      <Input
-                        label="Specific Street Name or Landmark"
-                        placeholder="e.g. Crossroad 7, opposite Sector 3 water tank"
-                        leftIcon={<MapPin size={16} />}
-                        value={locationName}
-                        onChange={(e) => setLocationName(e.target.value)}
-                        required
-                      />
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <label className="text-xs font-semibold text-antah-navy tracking-wide uppercase">
+                            Street Name or Landmark
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setLocationName('4th Main Road, Sector 3 Quad (GPS: 12.9782, 77.6398)');
+                            }}
+                            className="text-[10px] text-[#286B56] font-mono font-bold flex items-center gap-1 hover:underline active:scale-95"
+                          >
+                            <MapPin size={11} />
+                            <span>GPS Auto-Fill</span>
+                          </button>
+                        </div>
+                        <Input
+                          placeholder="e.g. Crossroad 7, opposite Sector 3 water tank"
+                          leftIcon={<MapPin size={16} />}
+                          value={locationName}
+                          onChange={(e) => setLocationName(e.target.value)}
+                          required
+                        />
+                      </div>
                     </CardContent>
                     <CardFooter className="justify-between">
                       <Button type="button" variant="outline" size="md" onClick={() => setStep(1)}>

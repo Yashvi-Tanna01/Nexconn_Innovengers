@@ -5,8 +5,8 @@ import {
   Crosshair,
   GitFork,
   HelpCircle,
-  Filter,
-  CheckCircle2,
+  Navigation,
+  Layers,
 } from 'lucide-react';
 import { ReportCategory } from '../../theme/tokens';
 import { CATEGORY_PALETTE } from './AtlasSymbols';
@@ -15,14 +15,16 @@ interface AtlasToolbarProps {
   onZoomIn: () => void;
   onZoomOut: () => void;
   onRecenter: () => void;
+  onLocateUser?: () => void;
+  isLocating?: boolean;
   showThreads: boolean;
   onToggleThreads: () => void;
   showLegend: boolean;
   onToggleLegend: () => void;
   selectedCategory: string;
   onSelectCategory: (cat: string) => void;
-  selectedStatus: string;
-  onSelectStatus: (status: string) => void;
+  selectedStatus?: string;
+  onSelectStatus?: (status: string) => void;
   totalSignals: number;
 }
 
@@ -30,98 +32,112 @@ export const AtlasToolbar: React.FC<AtlasToolbarProps> = ({
   onZoomIn,
   onZoomOut,
   onRecenter,
+  onLocateUser,
+  isLocating = false,
   showThreads,
   onToggleThreads,
   showLegend,
   onToggleLegend,
   selectedCategory,
   onSelectCategory,
-  selectedStatus,
-  onSelectStatus,
   totalSignals,
 }) => {
   const categories = Object.keys(CATEGORY_PALETTE) as ReportCategory[];
 
   return (
     <>
-      {/* Top Header Pill Bar (Desktop & Mobile) */}
-      <div className="absolute top-3 left-3 right-3 sm:top-4 sm:left-4 sm:right-4 flex flex-wrap items-center justify-between gap-2 pointer-events-none z-[500]">
-        {/* Left Editorial Title Badge */}
-        <div className="pointer-events-auto flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-white/95 border border-slate-200/90 shadow-soft-xs text-xs font-mono text-antah-navy backdrop-blur-sm">
-          <span className="w-2 h-2 rounded-full bg-antah-teal animate-pulse" />
-          <span className="font-extrabold tracking-wider uppercase">City Signal Atlas</span>
-          <span className="text-slate-400">|</span>
-          <span className="text-antah-slate font-medium text-[11px]">Bangalore East • {totalSignals} Active Signals</span>
-        </div>
-
-        {/* Right Floating Actions */}
-        <div className="pointer-events-auto flex items-center gap-1.5 p-1 rounded-full bg-white/95 border border-slate-200/90 shadow-soft-xs backdrop-blur-sm">
-          {/* Signal Threads Toggle */}
+      {/* 1. TOP-RIGHT FLOATING MAP CONTROL STACK */}
+      <div className="absolute top-3 right-3 sm:top-4 sm:right-4 flex flex-col items-center gap-1.5 pointer-events-none z-[500]">
+        <div className="pointer-events-auto bg-white/95 backdrop-blur-md border border-[#E6EAE6] rounded-2xl shadow-[0_4px_20px_rgba(24,35,34,0.08)] p-1 flex flex-col gap-1">
+          {/* Zoom In */}
           <button
-            onClick={onToggleThreads}
-            className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all min-h-[32px] ${
-              showThreads
-                ? 'bg-amber-50 border border-amber-300/80 text-amber-800 shadow-sm'
-                : 'text-antah-slate hover:text-antah-navy'
-            }`}
-            title="Toggle Candidate Relationship Threads"
+            onClick={onZoomIn}
+            className="w-10 h-10 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-[#182322] hover:bg-[#F8F8F5] active:scale-95 transition-all"
+            title="Zoom In"
+            aria-label="Zoom In"
           >
-            <GitFork size={13} className={showThreads ? 'text-amber-600' : 'text-slate-400'} />
-            <span className="hidden sm:inline">Signal Threads</span>
+            <Plus size={16} />
           </button>
 
-          {/* Legend Toggle */}
+          {/* Zoom Out */}
+          <button
+            onClick={onZoomOut}
+            className="w-10 h-10 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-[#182322] hover:bg-[#F8F8F5] active:scale-95 transition-all"
+            title="Zoom Out"
+            aria-label="Zoom Out"
+          >
+            <Minus size={16} />
+          </button>
+
+          <div className="w-6 h-px bg-[#E6EAE6] mx-auto my-0.5" />
+
+          {/* Recenter */}
+          <button
+            onClick={onRecenter}
+            className="w-10 h-10 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-[#727C79] hover:text-[#182322] hover:bg-[#F8F8F5] active:scale-95 transition-all"
+            title="Recenter Map View"
+            aria-label="Recenter Map View"
+          >
+            <Crosshair size={16} />
+          </button>
+
+          {/* Locate User (GPS) */}
+          {onLocateUser && (
+            <button
+              onClick={onLocateUser}
+              disabled={isLocating}
+              className={`w-10 h-10 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center active:scale-95 transition-all ${
+                isLocating
+                  ? 'text-[#D99A45] bg-[#FFF7ED] animate-spin'
+                  : 'text-[#727C79] hover:text-[#182322] hover:bg-[#F8F8F5]'
+              }`}
+              title="Locate My Position (GPS)"
+              aria-label="Locate My Position"
+            >
+              <Navigation size={15} className={isLocating ? 'rotate-45' : ''} />
+            </button>
+          )}
+
+          <div className="w-6 h-px bg-[#E6EAE6] mx-auto my-0.5" />
+
+          {/* Toggle Threads */}
+          <button
+            onClick={onToggleThreads}
+            className={`w-10 h-10 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center active:scale-95 transition-all ${
+              showThreads
+                ? 'bg-[#FFF7ED] text-[#D99A45] shadow-2xs'
+                : 'text-[#727C79] hover:text-[#182322] hover:bg-[#F8F8F5]'
+            }`}
+            title={showThreads ? 'Hide Signal Threads' : 'Show Signal Threads'}
+            aria-label="Toggle Signal Correlation Threads"
+          >
+            <GitFork size={15} />
+          </button>
+
+          {/* Toggle Cartographic Legend */}
           <button
             onClick={onToggleLegend}
-            className={`p-1.5 rounded-full transition-all min-h-[32px] min-w-[32px] flex items-center justify-center ${
-              showLegend ? 'bg-slate-100 text-antah-navy' : 'text-antah-slate hover:text-antah-navy'
+            className={`w-10 h-10 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center active:scale-95 transition-all ${
+              showLegend
+                ? 'bg-[#E1F0E8] text-[#286B56]'
+                : 'text-[#727C79] hover:text-[#182322] hover:bg-[#F8F8F5]'
             }`}
-            title="Cartographic Legend"
+            title="Map Symbols & Legend"
             aria-label="Cartographic Legend"
           >
             <HelpCircle size={15} />
           </button>
-
-          {/* Recenter Map */}
-          <button
-            onClick={onRecenter}
-            className="p-1.5 rounded-full text-antah-slate hover:text-antah-navy hover:bg-slate-100 transition-all min-h-[32px] min-w-[32px] flex items-center justify-center"
-            title="Recenter City Extent"
-            aria-label="Recenter City Extent"
-          >
-            <Crosshair size={14} />
-          </button>
-
-          {/* Zoom Buttons */}
-          <div className="hidden sm:flex items-center gap-0.5 border-l border-slate-200/80 pl-1">
-            <button
-              onClick={onZoomIn}
-              className="p-1.5 rounded-full text-antah-slate hover:text-antah-navy hover:bg-slate-100 transition-all min-h-[32px] min-w-[32px] flex items-center justify-center"
-              title="Zoom In"
-              aria-label="Zoom In"
-            >
-              <Plus size={14} />
-            </button>
-            <button
-              onClick={onZoomOut}
-              className="p-1.5 rounded-full text-antah-slate hover:text-antah-navy hover:bg-slate-100 transition-all min-h-[32px] min-w-[32px] flex items-center justify-center"
-              title="Zoom Out"
-              aria-label="Zoom Out"
-            >
-              <Minus size={14} />
-            </button>
-          </div>
         </div>
       </div>
 
-      {/* Bottom Category Filter Ribbon */}
-      <div className="absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-auto flex items-center gap-1.5 overflow-x-auto max-w-full pointer-events-auto z-[500] p-1.5 rounded-2xl bg-white/95 border border-slate-200/90 shadow-soft-xs backdrop-blur-sm">
+      {/* 2. BOTTOM FLOATING CATEGORY FILTER RIBBON */}
+      <div className="absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-auto flex items-center gap-1.5 overflow-x-auto max-w-full pointer-events-auto z-[500] p-1.5 rounded-2xl bg-white/95 backdrop-blur-md border border-[#E6EAE6] shadow-[0_4px_16px_rgba(24,35,34,0.06)] scrollbar-none">
         <button
           onClick={() => onSelectCategory('all')}
-          className={`px-3 py-1 rounded-xl text-xs font-semibold whitespace-nowrap transition-all min-h-[32px] ${
+          className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all active:scale-95 ${
             selectedCategory === 'all'
-              ? 'bg-antah-navy text-white shadow-soft-xs'
-              : 'text-antah-slate hover:text-antah-navy hover:bg-slate-50'
+              ? 'bg-[#182322] text-white shadow-xs'
+              : 'text-[#727C79] hover:text-[#182322] hover:bg-[#F8F8F5]'
           }`}
         >
           All Signals ({totalSignals})
@@ -134,14 +150,14 @@ export const AtlasToolbar: React.FC<AtlasToolbarProps> = ({
             <button
               key={catKey}
               onClick={() => onSelectCategory(catKey)}
-              className={`px-2.5 py-1 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 min-h-[32px] ${
+              className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 active:scale-95 ${
                 isCatSelected
-                  ? 'bg-antah-teal text-white shadow-soft-xs'
-                  : 'text-antah-slate hover:text-antah-navy hover:bg-slate-50'
+                  ? 'bg-[#E1F0E8] text-[#286B56] border border-[#286B56]/30 shadow-xs'
+                  : 'text-[#727C79] hover:text-[#182322] hover:bg-[#F8F8F5]'
               }`}
             >
               <span
-                className="w-2 h-2 rounded-full"
+                className="w-2 h-2 rounded-full shrink-0"
                 style={{ backgroundColor: meta.color }}
               />
               <span>{meta.label}</span>
@@ -152,4 +168,3 @@ export const AtlasToolbar: React.FC<AtlasToolbarProps> = ({
     </>
   );
 };
-

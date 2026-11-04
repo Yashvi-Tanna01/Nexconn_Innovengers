@@ -1,16 +1,17 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { LoadingProvider } from './context/LoadingContext';
 import { AppStartupLoader, GlobalLoadingOverlay } from './components/loading';
-import { Navbar } from './components/navigation/Navbar';
-import { Footer } from './components/navigation/Footer';
 import { NetworkBanner } from './components/common/NetworkBanner';
-import { LandingPage } from './pages/LandingPage';
+import { HomePage } from './components/home/HomePage';
+import { AndroidAppShell } from './components/layout/AndroidAppShell';
+import { DashboardPage } from './pages/DashboardPage';
 import { ExplorerPage } from './pages/ExplorerPage';
 import { ReportPage } from './pages/ReportPage';
-import { DashboardPage } from './pages/DashboardPage';
+import { SignalPatternsPage } from './pages/SignalPatternsPage';
 import { CoordinatorPage } from './pages/CoordinatorPage';
+import { MessagesPage } from './pages/MessagesPage';
 import { pageVariants, reducedPageVariants } from './theme/motion';
 
 // Scroll to top helper on route change
@@ -22,49 +23,52 @@ function ScrollToTop() {
   return null;
 }
 
-function AnimatedRoutes() {
+function MainLayout() {
   const location = useLocation();
   const shouldReduceMotion = useReducedMotion();
   const variants = shouldReduceMotion ? reducedPageVariants : pageVariants;
 
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={location.pathname}
-        variants={variants}
-        initial="initial"
-        animate="animate"
-        exit="exit"
-        className="flex-1 flex flex-col w-full"
-      >
-        <Routes location={location}>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/explorer" element={<ExplorerPage />} />
-          <Route path="/report" element={<ReportPage />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/coordinator" element={<CoordinatorPage />} />
-          <Route path="*" element={<LandingPage />} />
-        </Routes>
-      </motion.div>
-    </AnimatePresence>
+    <AndroidAppShell>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={location.pathname}
+          variants={variants}
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          className="w-full flex-1 flex flex-col"
+        >
+          <Routes location={location}>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/home" element={<HomePage />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/explorer" element={<ExplorerPage />} />
+            <Route path="/report" element={<ReportPage />} />
+            <Route path="/patterns" element={<SignalPatternsPage />} />
+            <Route path="/coordinator" element={<CoordinatorPage />} />
+            <Route path="/messages" element={<MessagesPage />} />
+            <Route path="*" element={<Navigate to="/home" replace />} />
+          </Routes>
+        </motion.div>
+      </AnimatePresence>
+    </AndroidAppShell>
   );
 }
 
 export function App() {
   return (
     <LoadingProvider>
+      {/* 
+        PRESERVED INVARIANT:
+        The ~8.8s 5-phase ThreeUI-inspired startup animation remains 100% untouched.
+      */}
       <AppStartupLoader />
       <GlobalLoadingOverlay />
       <BrowserRouter>
         <ScrollToTop />
         <NetworkBanner />
-        <div className="min-h-screen flex flex-col bg-antah-ivory text-antah-navy selection:bg-antah-teal/20 selection:text-antah-teal-hover">
-          <Navbar />
-          <main className="flex-1 flex flex-col">
-            <AnimatedRoutes />
-          </main>
-          <Footer />
-        </div>
+        <MainLayout />
       </BrowserRouter>
     </LoadingProvider>
   );

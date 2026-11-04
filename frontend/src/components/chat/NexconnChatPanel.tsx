@@ -84,7 +84,7 @@ export const NexconnChatPanel: React.FC<NexconnChatPanelProps> = ({
 
   return (
     <div
-      className={`flex flex-col h-[520px] max-h-[85vh] bg-white/95 backdrop-blur-xl border border-antah-border rounded-2xl shadow-soft-xl overflow-hidden select-none ${className}`}
+      className={`flex flex-col h-[520px] max-h-[85vh] spatial-level-3 rounded-2xl overflow-hidden select-none ${className}`}
     >
       {/* Top Nexconn Gateway Status Header */}
       <div className="px-5 py-3.5 bg-slate-50/80 border-b border-antah-border flex items-center justify-between">
@@ -197,8 +197,9 @@ export const NexconnChatPanel: React.FC<NexconnChatPanelProps> = ({
           type="text"
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
+          aria-label="Transmit message to incident crew & coordinator"
           placeholder="Transmit message to incident crew & coordinator..."
-          className="flex-1 bg-slate-50 text-antah-navy placeholder:text-antah-subtle text-xs rounded-xl border border-antah-border px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-antah-teal/30 focus:border-antah-teal"
+          className="flex-1 bg-slate-50 text-antah-navy placeholder:text-antah-subtle text-xs rounded-xl border border-antah-border px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-antah-teal/30 focus:border-antah-teal spatial-focus-ring"
         />
         <Button
           type="submit"

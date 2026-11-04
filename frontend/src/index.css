@@ -15,17 +15,75 @@
     --border-neutral: #E2E8F0;
   }
 
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html, body {
+    box-sizing: border-box;
+    overflow-x: hidden;
+    width: 100%;
+  }
+
   body {
-    background-color: #FBFBF9;
-    color: #0B132B;
+    background-color: #F5F6F4;
+    color: #202827;
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    overscroll-behavior-y: contain;
     overflow-x: hidden;
   }
 }
 
 @layer components {
+
+  /* ==========================================================================
+     Editorial Spatial Intelligence — Three-Level Depth Classes
+     ========================================================================== */
+
+  /* Level 1: Foundation (Zero/Flat depth, clean canvas) */
+  .spatial-level-1 {
+    background-color: var(--bg-ivory, #FBFBF9);
+    border: 1px solid rgba(226, 232, 240, 0.7);
+    box-shadow: none;
+  }
+
+  /* Level 2: Interactive Surfaces (Cards, toolbars, buttons) */
+  .spatial-level-2 {
+    background-color: #FFFFFF;
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    box-shadow: 0 2px 8px -2px rgba(11, 19, 43, 0.04), 0 1px 2px rgba(11, 19, 43, 0.02);
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+  }
+
+  .spatial-level-2:hover {
+    border-color: #CBD5E1;
+    box-shadow: 0 8px 24px -4px rgba(11, 19, 43, 0.07), 0 2px 6px rgba(11, 19, 43, 0.03);
+    transform: translateY(-1.5px);
+  }
+
+  .spatial-level-2:active {
+    transform: scale(0.985) translateY(0);
+    box-shadow: 0 1px 3px rgba(11, 19, 43, 0.04);
+  }
+
+  /* Level 3: Focused Overlays (Inspectors, drawers, modals) */
+  .spatial-level-3 {
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(226, 232, 240, 0.95);
+    box-shadow: 0 16px 40px -8px rgba(11, 19, 43, 0.12), 0 4px 12px rgba(11, 19, 43, 0.04);
+  }
+
+  /* Accessible Focus Ring */
+  .spatial-focus-ring:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px #FFFFFF, 0 0 0 4px #0D9488;
+  }
 
   /* Translucent light frosted glass panels for spatial HUD clarity */
   .antah-panel {
@@ -115,7 +173,7 @@
 
 /* Leaflet Container Editorial Treatment */
 .atlas-container .leaflet-container {
-  background: #FBFBF9 !important;
+  background: #F0F2EE !important;
   font-family: inherit;
 }
 
@@ -124,24 +182,25 @@
 }
 
 .atlas-container .leaflet-control-attribution {
-  background: rgba(251, 251, 249, 0.85) !important;
+  background: rgba(240, 242, 238, 0.85) !important;
   backdrop-filter: blur(4px);
-  color: #64748B !important;
+  color: #727C79 !important;
   font-size: 10px !important;
   font-family: ui-monospace, monospace;
   padding: 2px 8px !important;
   border-top-left-radius: 8px;
-  border-left: 1px solid #E2E8F0;
-  border-top: 1px solid #E2E8F0;
+  border-left: 1px solid #E6EAE6;
+  border-top: 1px solid #E6EAE6;
 }
 
 .atlas-container .leaflet-control-attribution a {
-  color: #0D9488 !important;
+  color: #D99A45 !important;
   text-decoration: none;
 }
 
 /* Custom Marker Container */
-.atlas-marker-container {
+.atlas-marker-container,
+.user-gps-pulse-container {
   background: transparent !important;
   border: none !important;
 }

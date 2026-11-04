@@ -6,9 +6,74 @@
 export const BRAND = {
   name: "ANTAH",
   fullName: "The Unheard Signals Network",
-  tagline: "Small signals today, safer tomorrow.",
+  tagline: "Small signals today. A safer tomorrow.",
   mission: "Transform scattered community observations into connected intelligence and coordinated responses.",
-  version: "1.0.0 (Nexconn 2026)",
+  version: "2.0.0 (Nexconn 2026)",
+} as const;
+
+/**
+ * Editorial 3D Home Page Color System (Reference 1: Minimalist Glowing Orb)
+ */
+export const HOME_TOKENS = {
+  bg: "#F4F3EF",
+  textPrimary: "#202827",
+  textSecondary: "#7D8580",
+  forestGreen: "#286B56",
+  softAmber: "#E7A65B",
+  surfaceWhite: "#FFFFFF",
+  frameBorder: "rgba(255, 255, 255, 0.75)",
+  frameShadow: "0 30px 90px -20px rgba(32, 40, 39, 0.12)",
+} as const;
+
+/**
+ * Territorial Intelligence Internal Color System (Reference 2: VITA Dashboard)
+ */
+export const TERRITORIAL_TOKENS = {
+  mainBg: "#F5F6F4",
+  primaryPanel: "#FFFFFF",
+  secondaryPanel: "#F0F3F0",
+  sidebar: "#102B32",
+  sidebarSecondary: "#173941",
+  primaryText: "#1D2A2A",
+  secondaryText: "#6F7B78",
+  border: "#E2E8E4",
+  primaryGreen: "#23765D",
+  softGreen: "#E1F1E9",
+  blue: "#477DA8",
+  amber: "#E5A13B",
+  orange: "#E77C3C",
+  criticalRed: "#D64D4D",
+} as const;
+
+/**
+ * Android APK Mobile-First Native Color System
+ */
+export const ANDROID_TOKENS = {
+  background: "#F5F6F4",
+  surface: "#FFFFFF",
+  primaryText: "#202827",
+  secondaryText: "#737C78",
+  forestGreen: "#286B56",
+  softGreen: "#E1F0E8",
+  amber: "#E7A65B",
+  border: "#E3E8E4",
+  criticalRed: "#D9534F",
+} as const;
+
+/**
+ * Premium Territorial Intelligence Map Design System (ANTAH Spatial View)
+ */
+export const MAP_INTELLIGENCE_TOKENS = {
+  background: "#F8F8F5",      // Warm ivory main background
+  mapSurface: "#F0F2EE",      // Basemap canvas background
+  card: "#FFFFFF",            // White floating cards & panels
+  primaryText: "#182322",     // Dark green-charcoal primary text
+  secondaryText: "#727C79",   // Muted refined secondary text
+  brandAccent: "#D99A45",     // Signature warm amber
+  verifiedRed: "#D9534F",     // Muted red for verified incidents
+  candidateAmber: "#E5A13B",  // Amber for AI candidate clusters
+  resolvedGreen: "#286B56",   // Muted deep green for resolved incidents
+  border: "#E6EAE6",          // Subtle border token
 } as const;
 
 export const COLOR_TOKENS = {
@@ -53,6 +118,46 @@ export const COLOR_TOKENS = {
     light: "#F1F5F9",
     active: "#CBD5E1",
   },
+} as const;
+
+/**
+ * Editorial Spatial Intelligence — Three-Level Depth & Spatial Elevation System
+ */
+export const SPATIAL_ELEVATION = {
+  // Level 1: Foundation (Canvas, base geographic surface, primary document structure)
+  level1: {
+    bg: '#FBFBF9',
+    border: 'rgba(226, 232, 240, 0.7)',
+    shadow: 'none',
+    zIndex: 0,
+    className: 'bg-antah-ivory border-slate-200/70',
+  },
+  // Level 2: Interactive Surfaces (Cards, toolbars, navigation, list items)
+  level2: {
+    bg: '#FFFFFF',
+    border: 'rgba(226, 232, 240, 0.9)',
+    shadow: '0 2px 8px -2px rgba(11, 19, 43, 0.04), 0 1px 2px rgba(11, 19, 43, 0.02)',
+    hoverShadow: '0 8px 24px -4px rgba(11, 19, 43, 0.08), 0 2px 6px rgba(11, 19, 43, 0.03)',
+    activeShadow: '0 1px 3px rgba(11, 19, 43, 0.05)',
+    zIndex: 10,
+    className: 'bg-white border border-slate-200/90 shadow-soft-xs hover:border-slate-300 hover:shadow-soft-md transition-all',
+  },
+  // Level 3: Focused Overlays (Inspectors, context panels, modals, dialogs)
+  level3: {
+    bg: 'rgba(255, 255, 255, 0.96)',
+    border: 'rgba(226, 232, 240, 0.95)',
+    shadow: '0 16px 40px -8px rgba(11, 19, 43, 0.12), 0 4px 12px rgba(11, 19, 43, 0.04)',
+    zIndex: 50,
+    className: 'bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-xl',
+  },
+} as const;
+
+export const SPATIAL_TIMINGS = {
+  micro: 180, // Micro-interactions (hover, click, icon toggles)
+  component: 280, // Component transitions (drawer slide, panel reveal)
+  page: 250, // Page route transitions
+  springTactile: { type: 'spring', stiffness: 420, damping: 28 },
+  springSpatial: { type: 'spring', stiffness: 300, damping: 26 },
 } as const;
 
 export type ReportCategory =

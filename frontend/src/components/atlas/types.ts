@@ -190,6 +190,21 @@ export const ATLAS_SIGNALS: AtlasSignal[] = [
     reporterName: 'Arcade Maintenance Desk',
     affectedInfrastructure: 'Commercial Metering Vault #8',
   },
+  {
+    id: 'SIG-798',
+    category: 'drainage_overflow',
+    title: 'Culvert Desilting & Sump Clearance',
+    description: 'Debris clear-out completed. Water transit restored to baseline velocity.',
+    status: 'resolved',
+    severity: 'low',
+    coordinates: [12.9760, 77.6470],
+    locationName: 'Indiranagar 12th Main Sump',
+    neighborhood: 'Indiranagar Commercial Corridor',
+    districtId: 'DIST-COMMERCIAL',
+    reportedAt: '3 hours ago',
+    reporterName: 'Civic Maintenance Log',
+    affectedInfrastructure: 'Storm Drain Sump 12',
+  },
 ];
 
 export const ATLAS_CANDIDATE_CLUSTERS: AtlasCandidateCluster[] = [
