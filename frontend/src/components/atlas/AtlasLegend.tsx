@@ -33,7 +33,7 @@ export const AtlasLegend: React.FC<AtlasLegendProps> = ({ isOpen, onClose }) => 
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96, y: 8 }}
         transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-        className="pointer-events-auto absolute bottom-16 right-3 sm:right-16 w-80 sm:w-88 bg-white/98 backdrop-blur-md border border-[#E6EAE6] rounded-3xl p-4 sm:p-5 z-[510] space-y-4 text-[#182322] shadow-[0_12px_40px_rgba(24,35,34,0.12)] text-xs"
+        className="pointer-events-auto absolute bottom-14 sm:bottom-16 left-2 right-2 sm:left-auto sm:right-16 w-auto sm:w-88 max-w-[calc(100%-16px)] sm:max-w-none max-h-[calc(100%-72px)] overflow-y-auto bg-white/98 backdrop-blur-md border border-[#E6EAE6] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 z-[510] space-y-3 sm:space-y-4 text-[#182322] shadow-[0_12px_40px_rgba(24,35,34,0.12)] text-xs"
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[#E6EAE6] pb-2.5">

@@ -47,23 +47,23 @@ export const AndroidTopBar: React.FC = () => {
         {/* Left: Brand Identity */}
         <Link
           to="/home"
-          className="flex items-center gap-2.5 group focus:outline-none"
+          className="flex items-center gap-2.5 group focus:outline-none min-w-0"
         >
-          <div className="w-8 h-8 rounded-xl bg-[#286B56] flex items-center justify-center text-white font-bold text-xs shadow-sm group-active:scale-95 transition-transform">
+          <div className="w-8 h-8 rounded-xl bg-[#286B56] flex items-center justify-center text-white font-bold text-xs shadow-sm group-active:scale-95 transition-transform shrink-0">
             A
           </div>
-          <div className="flex flex-col">
-            <span className="font-bold text-sm tracking-wide text-[#202827] font-sans">
+          <div className="flex flex-col min-w-0">
+            <span className="font-bold text-sm tracking-wide text-[#202827] font-sans truncate">
               {meta.title}
             </span>
-            <span className="text-[10px] font-mono tracking-wider text-[#737C78] uppercase -mt-0.5">
+            <span className="text-[10px] font-mono tracking-wider text-[#737C78] uppercase -mt-0.5 truncate">
               {meta.subtitle}
             </span>
           </div>
         </Link>
 
         {/* Right Controls: Mesh Status, Notifications & Profile Avatar */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {/* Live Status indicator */}
           <div className="hidden xs:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#E1F0E8] border border-[#286B56]/20 text-[10px] font-mono text-[#286B56] font-semibold">
             <span className="w-1.5 h-1.5 rounded-full bg-[#286B56] animate-pulse" />
@@ -88,7 +88,7 @@ export const AndroidTopBar: React.FC = () => {
 
             {/* Notification Drawer Popup */}
             {notificationsOpen && (
-              <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-[#E3E8E4] p-3.5 z-50 text-xs">
+              <div className="absolute right-0 mt-2 w-[calc(100vw-24px)] max-w-72 sm:w-72 bg-white rounded-2xl shadow-xl border border-[#E3E8E4] p-3.5 z-50 text-xs">
                 <div className="flex items-center justify-between pb-2 border-b border-stone-100 mb-2">
                   <span className="font-bold text-[#202827]">Incident Alerts</span>
                   <span className="text-[10px] font-mono text-[#286B56] font-bold">3 ACTIVE</span>
@@ -140,7 +140,7 @@ export const AndroidTopBar: React.FC = () => {
 
             {/* Profile Drawer Popup */}
             {profileOpen && (
-              <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-[#E3E8E4] p-3.5 z-50 text-xs">
+              <div className="absolute right-0 mt-2 w-[calc(100vw-24px)] max-w-64 sm:w-64 bg-white rounded-2xl shadow-xl border border-[#E3E8E4] p-3.5 z-50 text-xs">
                 <div className="flex items-center gap-2.5 pb-3 border-b border-stone-100">
                   <div className="w-9 h-9 rounded-xl bg-[#286B56] text-white flex items-center justify-center font-bold text-xs">
                     R
@@ -187,4 +187,3 @@ export const AndroidTopBar: React.FC = () => {
 };
 
 export default AndroidTopBar;
-

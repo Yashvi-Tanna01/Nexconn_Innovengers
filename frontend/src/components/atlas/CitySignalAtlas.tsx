@@ -97,11 +97,11 @@ export const CitySignalAtlas: React.FC<CitySignalAtlasProps> = ({
       maxZoom: 18,
     });
 
-    // CartoDB Positron: Beautiful light territorial intelligence basemap
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    // High-fidelity OpenStreetMap basemap (requires no API key, zero watermark, clean light aesthetic)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a> • ANTAH Spatial',
-      subdomains: 'abcd',
+        '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors • ANTAH Spatial',
+      subdomains: 'abc',
       maxZoom: 19,
     }).addTo(map);
 
@@ -138,8 +138,15 @@ export const CitySignalAtlas: React.FC<CitySignalAtlasProps> = ({
       resizeObserver.observe(containerRef.current);
     }
 
+    const initTimer = setTimeout(() => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.invalidateSize({ animate: false });
+      }
+    }, 200);
+
     return () => {
       clearTimeout(resizeTimer);
+      clearTimeout(initTimer);
       resizeObserver.disconnect();
       map.remove();
       mapInstanceRef.current = null;
@@ -310,7 +317,7 @@ export const CitySignalAtlas: React.FC<CitySignalAtlasProps> = ({
       {/* 1. Underlying Leaflet Map Canvas */}
       <div
         ref={containerRef}
-        className="w-full h-full cursor-grab active:cursor-grabbing z-0"
+        className="w-full h-full cursor-grab active:cursor-grabbing z-0 [&_.leaflet-tile-pane]:contrast-[0.96] [&_.leaflet-tile-pane]:brightness-[1.02] [&_.leaflet-tile-pane]:saturate-[0.75]"
         style={{ background: '#F0F2EE' }}
       />
 

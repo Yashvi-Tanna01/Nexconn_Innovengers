@@ -130,11 +130,12 @@ export const AtlasToolbar: React.FC<AtlasToolbarProps> = ({
         </div>
       </div>
 
-      {/* 2. BOTTOM FLOATING CATEGORY FILTER RIBBON */}
-      <div className="absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-auto flex items-center gap-1.5 overflow-x-auto max-w-full pointer-events-auto z-[500] p-1.5 rounded-2xl bg-white/95 backdrop-blur-md border border-[#E6EAE6] shadow-[0_4px_16px_rgba(24,35,34,0.06)] scrollbar-none">
+      {/* 2. BOTTOM FLOATING CATEGORY FILTER RIBBON (Horizontally Scrollable Strip) */}
+      <div className="absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-auto flex items-center gap-1.5 overflow-x-auto max-w-[calc(100%-24px)] sm:max-w-xl md:max-w-2xl pointer-events-auto z-[500] p-1.5 rounded-2xl bg-white/95 backdrop-blur-md border border-[#E6EAE6] shadow-[0_4px_16px_rgba(24,35,34,0.06)] scrollbar-none box-border">
+        {/* All Signals chip */}
         <button
           onClick={() => onSelectCategory('all')}
-          className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all active:scale-95 ${
+          className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all active:scale-95 shrink-0 ${
             selectedCategory === 'all'
               ? 'bg-[#182322] text-white shadow-xs'
               : 'text-[#727C79] hover:text-[#182322] hover:bg-[#F8F8F5]'
@@ -143,6 +144,7 @@ export const AtlasToolbar: React.FC<AtlasToolbarProps> = ({
           All Signals ({totalSignals})
         </button>
 
+        {/* Categories */}
         {categories.map((catKey) => {
           const isCatSelected = selectedCategory === catKey;
           const meta = CATEGORY_PALETTE[catKey];
@@ -150,7 +152,7 @@ export const AtlasToolbar: React.FC<AtlasToolbarProps> = ({
             <button
               key={catKey}
               onClick={() => onSelectCategory(catKey)}
-              className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 active:scale-95 ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 active:scale-95 shrink-0 ${
                 isCatSelected
                   ? 'bg-[#E1F0E8] text-[#286B56] border border-[#286B56]/30 shadow-xs'
                   : 'text-[#727C79] hover:text-[#182322] hover:bg-[#F8F8F5]'
@@ -168,3 +170,5 @@ export const AtlasToolbar: React.FC<AtlasToolbarProps> = ({
     </>
   );
 };
+
+export default AtlasToolbar;
