@@ -22,12 +22,12 @@ export const AndroidAppShell: React.FC<AndroidAppShellProps> = ({ children }) =>
   }, [navigate, location]);
 
   return (
-    <div className="min-h-screen bg-[#F5F6F4] text-[#202827] flex flex-col antialiased selection:bg-[#286B56]/20 selection:text-[#286B56]">
+    <div className="min-h-screen bg-[#F5F6F4] text-[#202827] flex flex-col antialiased selection:bg-[#286B56]/20 selection:text-[#286B56] overflow-x-hidden w-full">
       {/* 1. Top Android Application Bar */}
       <AndroidTopBar />
 
       {/* 2. Main Responsive Viewport with Safe-Area Padding */}
-      <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pb-[calc(5rem+env(safe-area-inset-bottom,16px))] min-w-0 box-border">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pb-[calc(5.5rem+env(safe-area-inset-bottom,16px))] min-w-0 box-border overflow-x-hidden">
         {children}
       </main>
 
