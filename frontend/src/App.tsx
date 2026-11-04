@@ -7,7 +7,6 @@ import { ExplorerPage } from './pages/ExplorerPage';
 import { ReportPage } from './pages/ReportPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { CoordinatorPage } from './pages/CoordinatorPage';
-import { DesignSystemShowcase } from './components/design-system/DesignSystemShowcase';
 
 export function App() {
   return (
@@ -21,7 +20,7 @@ export function App() {
             <Route path="/report" element={<ReportPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/coordinator" element={<CoordinatorPage />} />
-            <Route path="/design-system" element={<DesignSystemShowcase />} />
+            <Route path="*" element={<LandingPage />} />
           </Routes>
         </main>
         <Footer />

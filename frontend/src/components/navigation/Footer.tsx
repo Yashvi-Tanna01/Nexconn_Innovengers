@@ -70,11 +70,6 @@ export const Footer: React.FC = () => {
                   Coordinator Hub
                 </Link>
               </li>
-              <li>
-                <Link to="/design-system" className="hover:text-antah-teal transition-colors">
-                  Design System Showcase
-                </Link>
-              </li>
             </ul>
           </div>
         </div>

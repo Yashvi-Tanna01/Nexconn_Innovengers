@@ -7,7 +7,6 @@ import {
   PlusCircle,
   LayoutDashboard,
   ShieldAlert,
-  Palette,
   Menu,
   X,
   Radio,
@@ -23,7 +22,6 @@ export const Navbar: React.FC = () => {
     { name: 'Network Explorer', path: '/explorer', icon: <Compass size={15} /> },
     { name: 'Resident Dashboard', path: '/dashboard', icon: <LayoutDashboard size={15} /> },
     { name: 'Coordinator Hub', path: '/coordinator', icon: <ShieldAlert size={15} /> },
-    { name: 'Design System', path: '/design-system', icon: <Palette size={15} /> },
   ];
 
   const isActive = (path: string) => {
@@ -48,11 +46,10 @@ export const Navbar: React.FC = () => {
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all duration-150 ${
-                    active
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all duration-150 ${active
                       ? 'bg-antah-teal/10 text-antah-teal font-bold shadow-soft-xs border border-antah-teal/20'
                       : 'text-antah-slate hover:text-antah-navy hover:bg-slate-100/70'
-                  }`}
+                    }`}
                 >
                   {link.icon && <span className={active ? 'text-antah-teal' : 'text-antah-muted'}>{link.icon}</span>}
                   <span>{link.name}</span>
@@ -113,11 +110,10 @@ export const Navbar: React.FC = () => {
                 key={link.path}
                 to={link.path}
                 onClick={() => setMobileMenuOpen(false)}
-                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  active
+                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${active
                     ? 'bg-antah-teal/10 text-antah-teal font-semibold border border-antah-teal/20'
                     : 'text-antah-slate hover:text-antah-navy hover:bg-slate-50'
-                }`}
+                  }`}
               >
                 {link.icon && <span>{link.icon}</span>}
                 <span>{link.name}</span>
