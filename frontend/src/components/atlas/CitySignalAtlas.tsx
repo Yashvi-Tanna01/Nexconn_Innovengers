@@ -97,11 +97,18 @@ export const CitySignalAtlas: React.FC<CitySignalAtlasProps> = ({
       maxZoom: 18,
     });
 
+<<<<<<< HEAD
     // CartoDB Positron: Beautiful light territorial intelligence basemap
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a> • ANTAH Spatial',
       subdomains: 'abcd',
+=======
+    // OpenStreetMap provides a keyless basemap for local development.
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> • ANTAH Signal Atlas',
+>>>>>>> 47ff7f9fca8662f280eb044dc656c922c8a25145
       maxZoom: 19,
     }).addTo(map);
 

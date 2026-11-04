@@ -1,5 +1,10 @@
 import os
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
 class Settings:
     PROJECT_NAME: str = "ANTAH — The Unheard Signals Network"
     PROJECT_DESCRIPTION: str = "Civic Intelligence Platform for Nexconn Build Challenge 2026"
