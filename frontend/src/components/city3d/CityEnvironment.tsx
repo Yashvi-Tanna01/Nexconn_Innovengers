@@ -1,245 +1,149 @@
-import React, { useMemo, useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
+import React, { useMemo, memo } from 'react';
 import * as THREE from 'three';
+import { BuildingProcedural, BuildingSpec } from './BuildingProcedural';
+import { CityStreets } from './CityStreets';
+import { TrafficSystem } from './TrafficSystem';
+import { DistrictZones } from './DistrictZones';
 import { SignalMarker } from './SignalMarker';
 import { CandidateLink } from './CandidateLink';
-import { CitySignal } from './types';
+import { CitySignal, District } from './types';
+import { usePerformanceSettings } from '../../utils/performance';
 
 interface CityEnvironmentProps {
   signals: CitySignal[];
   selectedSignal: CitySignal | null;
+  selectedDistrict: District | null;
+  hoveredDistrict: District | null;
   onSelectSignal: (signal: CitySignal) => void;
+  onSelectDistrict: (district: District) => void;
+  onHoverDistrict: (district: District | null) => void;
 }
 
-interface BuildingData {
-  id: number;
-  position: [number, number, number];
-  size: [number, number, number];
-  color: string;
-  hasRoofFeature?: boolean;
-}
-
-interface TrafficPulse {
-  roadIndex: number;
-  direction: 1 | -1;
-  speed: number;
-  offset: number;
-  color: string;
-}
-
-export const CityEnvironment: React.FC<CityEnvironmentProps> = ({
+export const CityEnvironment: React.FC<CityEnvironmentProps> = memo(({
   signals,
   selectedSignal,
+  selectedDistrict,
+  hoveredDistrict,
   onSelectSignal,
+  onSelectDistrict,
+  onHoverDistrict,
 }) => {
-  // Generate deterministic procedural city buildings
-  const buildings = useMemo<BuildingData[]>(() => {
-    const list: BuildingData[] = [];
-    const colors = ['#FFFFFF', '#F8F9FA', '#F1F5F9', '#EDF2F7', '#E2E8F0'];
+  const { enableShadows, maxBuildingDensity } = usePerformanceSettings();
+
+  // Generate deterministic architectural specs
+  const buildingSpecs = useMemo<BuildingSpec[]>(() => {
+    const list: BuildingSpec[] = [];
+    const colors = ['#FFFFFF', '#F8FAFC', '#F1F5F9', '#FFFFFF', '#EDEBE4'];
+    const roofColors = ['#94A3B8', '#64748B', '#CBD5E1', '#475569'];
     let id = 1;
 
-    // 4 major city quadrants with central avenues
-    const quadrants = [
-      { minX: -6.5, maxX: -1.2, minZ: -6.5, maxZ: -1.2 },
-      { minX: 1.2, maxX: 6.5, minZ: -6.5, maxZ: -1.2 },
-      { minX: -6.5, maxX: -1.2, minZ: 1.2, maxZ: 6.5 },
-      { minX: 1.2, maxX: 6.5, minZ: 1.2, maxZ: 6.5 },
+    // 4 major urban city quadrants
+    const sectors = [
+      { minX: -6.4, maxX: -1.3, minZ: -6.4, maxZ: -1.3, code: 'OVP' },
+      { minX: 1.3, maxX: 6.4, minZ: -6.4, maxZ: -1.3, code: 'IND' },
+      { minX: -6.4, maxX: -1.3, minZ: 1.3, maxZ: 6.4, code: 'SEC' },
+      { minX: 1.3, maxX: 6.4, minZ: 1.3, maxZ: 6.4, code: 'MET' },
     ];
 
-    quadrants.forEach((quad) => {
-      for (let x = quad.minX + 0.6; x <= quad.maxX - 0.6; x += 1.4) {
-        for (let z = quad.minZ + 0.6; z <= quad.maxZ - 0.6; z += 1.4) {
-          // Leave some pockets for civic parks / plazas
-          if ((Math.abs(x) < 2.5 && Math.abs(z) < 2.5) && (id % 3 === 0)) continue;
+    sectors.forEach((sec) => {
+      for (let x = sec.minX + 0.65; x <= sec.maxX - 0.65; x += 1.45) {
+        for (let z = sec.minZ + 0.65; z <= sec.maxZ - 0.65; z += 1.45) {
+          if (Math.abs(x) < 2.6 && Math.abs(z) < 2.6 && id % 3 === 0) continue;
 
-          // Pseudorandom height based on coordinates
-          const pseudoRand = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453;
-          const rand = Math.abs(pseudoRand - Math.floor(pseudoRand));
-          const height = 0.8 + rand * 2.8;
-          const width = 0.85 + (rand * 0.3);
-          const depth = 0.85 + ((1 - rand) * 0.3);
-          const color = colors[Math.floor(rand * colors.length)];
+          const hash = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453;
+          const rand = Math.abs(hash - Math.floor(hash));
+
+          const height = 0.9 + rand * 3.4;
+          const width = 0.88 + rand * 0.25;
+          const depth = 0.88 + (1 - rand) * 0.25;
+
+          const type: BuildingSpec['type'] =
+            height > 3.2 ? 'spire' : height > 2.2 ? 'stepped' : height > 1.4 ? 'tower' : 'block';
 
           list.push({
             id: id++,
             position: [x, height / 2, z],
             size: [width, height, depth],
-            color,
-            hasRoofFeature: height > 2.0,
+            type,
+            color: colors[Math.floor(rand * colors.length)],
+            roofColor: roofColors[Math.floor((1 - rand) * roofColors.length)],
+            hasSpire: type === 'spire' || (rand > 0.8 && height > 2.0),
+            hasHeliPad: rand > 0.85 && height > 2.4,
           });
         }
       }
     });
 
-    return list;
-  }, []);
+    return list.slice(0, maxBuildingDensity);
+  }, [maxBuildingDensity]);
 
-  // Moving light trails (simulated civic traffic and energy flow)
-  const trafficPulses = useMemo<TrafficPulse[]>(() => [
-    { roadIndex: 0, direction: 1, speed: 1.8, offset: 0, color: '#0D9488' },
-    { roadIndex: 0, direction: -1, speed: 2.2, offset: 3, color: '#06B6D4' },
-    { roadIndex: 1, direction: 1, speed: 1.5, offset: 1.5, color: '#0D9488' },
-    { roadIndex: 1, direction: -1, speed: 2.0, offset: 4.5, color: '#06B6D4' },
-    { roadIndex: 2, direction: 1, speed: 1.6, offset: 2, color: '#0D9488' },
-    { roadIndex: 3, direction: -1, speed: 1.9, offset: 3.5, color: '#06B6D4' },
-  ], []);
-
-  const trafficRefs = useRef<(THREE.Mesh | null)[]>([]);
-
-  useFrame((state) => {
-    const time = state.clock.getElapsedTime();
-    trafficPulses.forEach((pulse, idx) => {
-      const mesh = trafficRefs.current[idx];
-      if (!mesh) return;
-
-      // Animate along grid roads
-      const t = ((time * pulse.speed + pulse.offset) % 14) - 7;
-      if (pulse.roadIndex === 0) {
-        mesh.position.set(t * pulse.direction, 0.05, 0.3);
-      } else if (pulse.roadIndex === 1) {
-        mesh.position.set(-0.3, 0.05, t * pulse.direction);
-      } else if (pulse.roadIndex === 2) {
-        mesh.position.set(t * pulse.direction, 0.05, -0.3);
-      } else {
-        mesh.position.set(0.3, 0.05, t * pulse.direction);
-      }
-    });
-  });
-
-  // Find candidate pair
+  // Find candidate connection pair
   const candidatePair = useMemo(() => {
-    const sig1 = signals.find((s) => s.id === 'SIG-802');
-    const sig2 = signals.find((s) => s.id === 'SIG-805');
-    if (sig1 && sig2) {
-      return { start: sig1.position, end: sig2.position };
+    const s1 = signals.find((s) => s.id === 'SIG-802');
+    const s2 = signals.find((s) => s.id === 'SIG-805');
+    if (s1 && s2) {
+      return { start: s1.position, end: s2.position, confidence: 0.94 };
     }
     return null;
   }, [signals]);
 
   return (
     <group>
-      {/* Lighting System: Crisp, warm civic illumination */}
-      <ambientLight intensity={0.9} color="#FFFFFF" />
+      {/* 1. Atmospheric Fog */}
+      <fog attach="fog" args={['#F8F9FA', 13, 26]} />
+
+      {/* 2. Volumetric Lighting System */}
+      <ambientLight intensity={0.95} color="#FFFFFF" />
       <directionalLight
-        position={[10, 18, 12]}
-        intensity={1.4}
-        color="#FFFBF0"
-        castShadow
-        shadow-mapSize-width={1024}
-        shadow-mapSize-height={1024}
+        position={[12, 20, 14]}
+        intensity={1.5}
+        color="#FFFDF7"
+        castShadow={enableShadows}
+        shadow-mapSize-width={enableShadows ? 1024 : 512}
+        shadow-mapSize-height={enableShadows ? 1024 : 512}
+        shadow-camera-near={10}
+        shadow-camera-far={45}
+        shadow-camera-left={-10}
+        shadow-camera-right={10}
+        shadow-camera-top={10}
+        shadow-camera-bottom={-10}
+        shadow-bias={-0.0005}
       />
-      <directionalLight
-        position={[-10, 10, -10]}
-        intensity={0.5}
-        color="#E0F2FE"
+      <directionalLight position={[-12, 8, -12]} intensity={0.45} color="#E0F2FE" />
+      <hemisphereLight args={['#FFFFFF', '#E2E8F0', 0.5]} />
+
+      {/* 3. District Zones */}
+      <DistrictZones
+        selectedDistrict={selectedDistrict}
+        hoveredDistrict={hoveredDistrict}
+        onSelectDistrict={onSelectDistrict}
+        onHoverDistrict={onHoverDistrict}
       />
 
-      {/* Ground Foundation Base */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>
-        <planeGeometry args={[18, 18]} />
-        <meshStandardMaterial color="#F4F4F0" roughness={0.8} />
-      </mesh>
+      {/* 4. Detailed Streets, Crosswalks, and Plazas */}
+      <CityStreets />
 
-      {/* Primary Civic Street Grid */}
-      {/* Central East-West Boulevard */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
-        <planeGeometry args={[16, 1.8]} />
-        <meshStandardMaterial color="#CBD5E1" roughness={0.7} />
-      </mesh>
-      {/* Central North-South Avenue */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
-        <planeGeometry args={[1.8, 16]} />
-        <meshStandardMaterial color="#CBD5E1" roughness={0.7} />
-      </mesh>
+      {/* 5. Autonomous Traffic System */}
+      <TrafficSystem />
 
-      {/* Secondary Sector Roads */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.008, 4.0]}>
-        <planeGeometry args={[14, 0.8]} />
-        <meshStandardMaterial color="#E2E8F0" roughness={0.75} />
-      </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.008, -4.0]}>
-        <planeGeometry args={[14, 0.8]} />
-        <meshStandardMaterial color="#E2E8F0" roughness={0.75} />
-      </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[4.0, 0.008, 0]}>
-        <planeGeometry args={[0.8, 14]} />
-        <meshStandardMaterial color="#E2E8F0" roughness={0.75} />
-      </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-4.0, 0.008, 0]}>
-        <planeGeometry args={[0.8, 14]} />
-        <meshStandardMaterial color="#E2E8F0" roughness={0.75} />
-      </mesh>
-
-      {/* Civic Parks / Green Plazas */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-2.2, 0.012, -2.2]}>
-        <planeGeometry args={[1.8, 1.8]} />
-        <meshStandardMaterial color="#D1FAE5" roughness={0.9} />
-      </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[2.2, 0.012, 2.2]}>
-        <planeGeometry args={[1.8, 1.8]} />
-        <meshStandardMaterial color="#D1FAE5" roughness={0.9} />
-      </mesh>
-
-      {/* Stylized Park Trees */}
-      {[-2.5, -1.9].map((tx) =>
-        [-2.5, -1.9].map((tz) => (
-          <group key={`tree-${tx}-${tz}`} position={[tx, 0, tz]}>
-            <mesh position={[0, 0.25, 0]}>
-              <cylinderGeometry args={[0.04, 0.05, 0.5, 6]} />
-              <meshStandardMaterial color="#94A3B8" />
-            </mesh>
-            <mesh position={[0, 0.65, 0]}>
-              <coneGeometry args={[0.22, 0.55, 6]} />
-              <meshStandardMaterial color="#059669" roughness={0.6} />
-            </mesh>
-          </group>
-        ))
-      )}
-
-      {/* Procedural Buildings */}
-      {buildings.map((b) => (
-        <group key={`bldg-${b.id}`} position={b.position}>
-          {/* Main Building Body */}
-          <mesh castShadow receiveShadow>
-            <boxGeometry args={b.size} />
-            <meshStandardMaterial
-              color={b.color}
-              roughness={0.3}
-              metalness={0.05}
-            />
-          </mesh>
-
-          {/* Roof Accent / HVAC or Water Tank */}
-          {b.hasRoofFeature && (
-            <mesh position={[0, b.size[1] / 2 + 0.1, 0]}>
-              <boxGeometry args={[b.size[0] * 0.45, 0.2, b.size[2] * 0.45]} />
-              <meshStandardMaterial color="#94A3B8" roughness={0.5} />
-            </mesh>
-          )}
-
-          {/* Subtle Window Glow Strip */}
-          <mesh position={[0, 0, b.size[2] / 2 + 0.005]}>
-            <planeGeometry args={[b.size[0] * 0.75, b.size[1] * 0.65]} />
-            <meshBasicMaterial color="#E0F2FE" transparent opacity={0.35} />
-          </mesh>
-        </group>
+      {/* 6. Procedural Architecture */}
+      {buildingSpecs.map((spec) => (
+        <BuildingProcedural
+          key={`bldg-${spec.id}`}
+          spec={spec}
+          isDistrictHovered={
+            Boolean(
+              hoveredDistrict &&
+                spec.position[0] >= hoveredDistrict.bounds.minX &&
+                spec.position[0] <= hoveredDistrict.bounds.maxX &&
+                spec.position[2] >= hoveredDistrict.bounds.minZ &&
+                spec.position[2] <= hoveredDistrict.bounds.maxZ
+            )
+          }
+        />
       ))}
 
-      {/* Animated Traffic Light Trails */}
-      {trafficPulses.map((pulse, idx) => (
-        <mesh
-          key={`traffic-${idx}`}
-          ref={(el) => {
-            trafficRefs.current[idx] = el;
-          }}
-          position={[0, 0.05, 0]}
-        >
-          <boxGeometry args={[0.25, 0.06, 0.12]} />
-          <meshBasicMaterial color={pulse.color} />
-        </mesh>
-      ))}
-
-      {/* Floating Civic Signals */}
+      {/* 7. Floating Civic Signal Beacons */}
       {signals.map((sig) => (
         <SignalMarker
           key={sig.id}
@@ -249,17 +153,21 @@ export const CityEnvironment: React.FC<CityEnvironmentProps> = ({
         />
       ))}
 
-      {/* Candidate Pattern Connection Arc */}
+      {/* 8. Candidate AI Pattern Neural Arc */}
       {candidatePair && (
         <CandidateLink
           start={candidatePair.start}
           end={candidatePair.end}
+          confidenceScore={candidatePair.confidence}
           isActive={
-            selectedSignal?.id === 'SIG-802' || selectedSignal?.id === 'SIG-805'
+            selectedSignal?.id === 'SIG-802' ||
+            selectedSignal?.id === 'SIG-805' ||
+            !selectedSignal
           }
         />
       )}
     </group>
   );
-};
+});
 
+CityEnvironment.displayName = 'CityEnvironment';

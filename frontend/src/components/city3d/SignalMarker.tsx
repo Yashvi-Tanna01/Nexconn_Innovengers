@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, memo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { CitySignal } from './types';
@@ -10,13 +10,20 @@ interface SignalMarkerProps {
   onSelect: (signal: CitySignal) => void;
 }
 
-export const SignalMarker: React.FC<SignalMarkerProps> = ({
+// Shared geometries across all signal beacons
+const SHARED_SHAFT_GEO = new THREE.CylinderGeometry(0.02, 0.035, 1.3, 6);
+const SHARED_CORE_SPHERE = new THREE.SphereGeometry(0.22, 14, 14);
+const SHARED_INNER_RING = new THREE.RingGeometry(0.34, 0.42, 24);
+const SHARED_OUTER_RING = new THREE.RingGeometry(0.55, 0.62, 24);
+
+export const SignalMarker: React.FC<SignalMarkerProps> = memo(({
   signal,
   isSelected,
   onSelect,
 }) => {
   const groupRef = useRef<THREE.Group>(null);
-  const ringRef = useRef<THREE.Mesh>(null);
+  const ring1Ref = useRef<THREE.Mesh>(null);
+  const ring2Ref = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
 
   const categoryMeta = REPORT_CATEGORIES[signal.category] || REPORT_CATEGORIES.public_infrastructure;
@@ -24,19 +31,23 @@ export const SignalMarker: React.FC<SignalMarkerProps> = ({
 
   useFrame((state, delta) => {
     if (!groupRef.current) return;
-    // Gentle bobbing motion
     const t = state.clock.getElapsedTime();
-    groupRef.current.position.y = signal.position[1] + Math.sin(t * 2.5 + signal.position[0]) * 0.12;
 
-    // Rotate pulsing ring
-    if (ringRef.current) {
-      ringRef.current.rotation.z += delta * 1.5;
-      const pulseScale = 1 + Math.sin(t * 3) * 0.18;
-      ringRef.current.scale.set(pulseScale, pulseScale, pulseScale);
+    // Harmonic floating bob
+    groupRef.current.position.y =
+      signal.position[1] + Math.sin(t * 2.5 + signal.position[0]) * 0.12;
+
+    // Counter-rotating rings
+    if (ring1Ref.current) {
+      ring1Ref.current.rotation.z += delta * 1.5;
+    }
+    if (ring2Ref.current) {
+      ring2Ref.current.rotation.z -= delta * 1.0;
     }
   });
 
-  const scale = isSelected ? 1.4 : hovered ? 1.25 : 1.0;
+  const active = isSelected || hovered;
+  const scale = isSelected ? 1.4 : hovered ? 1.2 : 1.0;
 
   return (
     <group
@@ -57,59 +68,63 @@ export const SignalMarker: React.FC<SignalMarkerProps> = ({
         document.body.style.cursor = 'auto';
       }}
     >
-      {/* Vertical Signal Beam Stem */}
-      <mesh position={[0, -0.6, 0]}>
-        <cylinderGeometry args={[0.025, 0.025, 1.2, 8]} />
+      {/* 1. Vertical Light Shaft */}
+      <mesh
+        geometry={SHARED_SHAFT_GEO}
+        position={[0, -0.65, 0]}
+      >
         <meshBasicMaterial
           color={markerColor}
           transparent
-          opacity={hovered || isSelected ? 0.9 : 0.6}
+          opacity={active ? 0.9 : 0.6}
         />
       </mesh>
 
-      {/* Floating Signal Core Sphere */}
-      <mesh position={[0, 0, 0]}>
-        <sphereGeometry args={[0.22, 16, 16]} />
+      {/* 2. Floating Luminous Core Sphere */}
+      <mesh
+        geometry={SHARED_CORE_SPHERE}
+        position={[0, 0, 0]}
+      >
         <meshStandardMaterial
           color={markerColor}
           emissive={markerColor}
-          emissiveIntensity={isSelected ? 0.8 : hovered ? 0.5 : 0.3}
+          emissiveIntensity={isSelected ? 1.0 : hovered ? 0.7 : 0.4}
           roughness={0.2}
+          metalness={0.1}
         />
       </mesh>
 
-      {/* Rotating Pulse Ring */}
-      <mesh ref={ringRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
-        <ringGeometry args={[0.32, 0.38, 32]} />
+      {/* 3. Inner Ring */}
+      <mesh
+        ref={ring1Ref}
+        geometry={SHARED_INNER_RING}
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[0, 0, 0]}
+      >
         <meshBasicMaterial
           color={markerColor}
           transparent
-          opacity={isSelected ? 0.85 : hovered ? 0.7 : 0.4}
+          opacity={active ? 0.85 : 0.5}
           side={THREE.DoubleSide}
         />
       </mesh>
 
-      {/* Secondary Outer Radar Ring for candidate suggestions */}
-      {signal.status === 'candidate_pattern' && (
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, 0]}>
-          <ringGeometry args={[0.48, 0.52, 24]} />
-          <meshBasicMaterial
-            color="#D97706" // Amber highlight for candidate patterns
-            transparent
-            opacity={0.5}
-            side={THREE.DoubleSide}
-          />
-        </mesh>
-      )}
-
-      {/* Soft Ground Beacon Point Light */}
-      <pointLight
-        color={markerColor}
-        intensity={isSelected ? 1.2 : hovered ? 0.8 : 0.4}
-        distance={3.5}
-        decay={2}
-      />
+      {/* 4. Outer Ring */}
+      <mesh
+        ref={ring2Ref}
+        geometry={SHARED_OUTER_RING}
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[0, 0, 0]}
+      >
+        <meshBasicMaterial
+          color={markerColor}
+          transparent
+          opacity={active ? 0.6 : 0.25}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
     </group>
   );
-};
+});
 
+SignalMarker.displayName = 'SignalMarker';

@@ -3,22 +3,28 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/antah-symbol.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Android & iOS Safe Area Viewport -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#FBFBF9" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="manifest" href="/manifest.json" />
+
     <title>ANTAH — The Unheard Signals Network | Civic Intelligence Platform</title>
     <meta name="description" content="ANTAH connects scattered community observations to uncover patterns, coordinate action, and help communities respond before small problems grow." />
+
     <!-- Google Fonts for Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Leaflet CSS for Geolocation and Mapping -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <script type="module" crossorigin src="/assets/index-uCbw1iwE.js"></script>
-    <link rel="modulepreload" crossorigin href="/assets/ui-vendor-D0f2ucgP.js">
-    <link rel="modulepreload" crossorigin href="/assets/three-vendor-CNAiGj5k.js">
-    <link rel="stylesheet" crossorigin href="/assets/index-5k3_fh8F.css">
+    <script type="module" crossorigin src="/assets/index-n4MmcaL_.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/ui-vendor-Brra8dOV.js">
+    <link rel="modulepreload" crossorigin href="/assets/three-vendor-XQm8esd5.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-CqXxqgge.css">
   </head>
-  <body class="h-full bg-antah-ivory text-antah-navy selection:bg-antah-teal/20 selection:text-antah-teal-hover overflow-x-hidden">
+  <body class="h-full bg-antah-ivory text-antah-navy selection:bg-antah-teal/20 selection:text-antah-teal-hover overflow-x-hidden pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
     <div id="root" class="min-h-full flex flex-col"></div>
   </body>
 </html>
-

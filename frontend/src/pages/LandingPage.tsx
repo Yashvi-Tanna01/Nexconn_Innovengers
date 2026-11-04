@@ -1,9 +1,17 @@
 import React, { Suspense } from 'react';
 import { Link } from 'react-router-dom';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Button } from '../components/common/Button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/common/Card';
 import { CategoryBadge } from '../components/common/Badge';
+import { AnimatedCounter } from '../components/common/AnimatedCounter';
+import { PageLoadingState } from '../components/loading';
 import { BRAND, REPORT_CATEGORIES, ReportCategory } from '../theme/tokens';
+import {
+  staggerContainerVariants,
+  revealItemVariants,
+  EASINGS,
+} from '../theme/motion';
 import {
   Compass,
   PlusCircle,
@@ -19,6 +27,8 @@ import {
   Eye,
   Activity,
   Layers,
+  FileText,
+  Share2,
 } from 'lucide-react';
 
 const CityCanvas = React.lazy(() =>
@@ -26,39 +36,57 @@ const CityCanvas = React.lazy(() =>
 );
 
 export const LandingPage: React.FC = () => {
+  const shouldReduceMotion = useReducedMotion();
+
   return (
-    <div className="min-h-screen bg-antah-ivory text-antah-navy">
-      {/* 1. HERO SECTION */}
-      <section className="relative pt-6 pb-16 lg:pt-10 lg:pb-24 overflow-hidden border-b border-antah-border">
-        {/* Subtle decorative geometric background lines */}
-        <div className="absolute inset-0 bg-[radial-gradient(#0D9488_1px,transparent_1px)] [background-size:32px_32px] opacity-[0.04] pointer-events-none" />
+    <div className="min-h-screen bg-antah-ivory text-antah-navy pb-16">
+      {/* 1. CINEMATIC HERO SECTION */}
+      <section className="relative pt-4 pb-16 lg:pt-6 lg:pb-20 overflow-hidden border-b border-slate-200/70">
+        {/* Subtle decorative futuristic grid watermark */}
+        <div className="absolute inset-0 bg-[radial-gradient(#0D9488_1px,transparent_1px)] [background-size:28px_28px] opacity-[0.035] pointer-events-none" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          {/* Top Hero Header Content */}
-          <div className="max-w-3xl mb-8">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-antah-teal/10 border border-antah-teal/20 text-antah-teal text-xs font-semibold tracking-wide uppercase mb-4">
+          {/* Header Billboard with Staged Motion */}
+          <motion.div
+            variants={shouldReduceMotion ? undefined : staggerContainerVariants}
+            initial="initial"
+            animate="animate"
+            className="max-w-3xl mb-6"
+          >
+            <motion.div
+              variants={shouldReduceMotion ? undefined : revealItemVariants}
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-50 border border-teal-200 text-antah-teal text-xs font-semibold tracking-wide uppercase mb-3"
+            >
               <Radio size={13} className="text-antah-teal animate-pulse" />
-              <span>Civic Intelligence Platform • Nexconn 2026</span>
-            </div>
+              <span>Civic Intelligence Network • Nexconn 2026</span>
+            </motion.div>
 
-            <h1 className="text-4xl sm:text-6xl font-black text-antah-navy tracking-tight leading-[1.1]">
-              Every Small Signal Matters.
-            </h1>
+            <motion.h1
+              variants={shouldReduceMotion ? undefined : revealItemVariants}
+              className="text-4xl sm:text-6xl font-black text-antah-navy tracking-tight leading-[1.08]"
+            >
+              Every Signal Matters.
+            </motion.h1>
 
-            <p className="mt-4 text-lg sm:text-xl text-antah-slate leading-relaxed font-normal">
-              ANTAH connects scattered community observations to uncover hidden patterns,
-              coordinate rapid human action, and help municipal crews respond before minor hazards escalate.
-            </p>
+            <motion.p
+              variants={shouldReduceMotion ? undefined : revealItemVariants}
+              className="mt-3 text-lg sm:text-xl text-antah-slate leading-relaxed font-normal"
+            >
+              Small local reports. Connected intelligence. Safer communities. ANTAH transforms scattered citizen observations into verified civic responses before small failures cascade.
+            </motion.p>
 
-            <div className="mt-6 flex flex-wrap items-center gap-3.5">
+            <motion.div
+              variants={shouldReduceMotion ? undefined : revealItemVariants}
+              className="mt-6 flex flex-wrap items-center gap-3.5"
+            >
               <Link to="/explorer">
                 <Button
                   variant="primary"
                   size="lg"
                   icon={<Compass size={18} />}
-                  className="shadow-soft-md"
+                  className="shadow-soft-md font-bold"
                 >
-                  Explore the Network
+                  Explore the City
                 </Button>
               </Link>
 
@@ -67,47 +95,136 @@ export const LandingPage: React.FC = () => {
                   variant="secondary"
                   size="lg"
                   icon={<PlusCircle size={18} />}
-                  className="shadow-soft-sm"
+                  className="shadow-soft-sm font-semibold"
                 >
-                  Report an Observation
+                  Report an Issue
                 </Button>
               </Link>
 
               <div className="hidden sm:flex items-center gap-2 ml-2 text-xs font-mono text-antah-muted">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span>3D Twin Live</span>
+                <span>3D Digital Twin Active</span>
               </div>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
-          {/* Interactive 3D City Twin Experience */}
-          <div className="mt-4">
+          {/* Interactive 3D City Twin Visual Centerpiece */}
+          <motion.div
+            initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.99, y: 12 }}
+            animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: EASINGS.easeOutCubic, delay: 0.15 }}
+            className="mt-3"
+          >
             <Suspense
               fallback={
-                <div className="w-full h-[540px] sm:h-[620px] rounded-2xl bg-slate-100 border border-antah-border flex flex-col items-center justify-center gap-3 text-xs font-mono text-antah-slate">
-                  <div className="w-6 h-6 border-2 border-antah-teal border-t-transparent rounded-full animate-spin" />
-                  <span>INITIALIZING 3D CIVIC TWIN...</span>
-                </div>
+                <PageLoadingState
+                  message="INITIALIZING 3D SPATIAL DIGITAL TWIN..."
+                  subMessage="ANTAH • Small signals today, safer tomorrow."
+                  minHeight="h-[580px] sm:h-[660px] lg:h-[720px]"
+                />
               }
             >
               <CityCanvas />
             </Suspense>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* 2. THE 4-STEP CIVIC INTELLIGENCE PROCESS */}
+      <section className="py-20 bg-white border-b border-slate-200/70">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-2xl mb-14">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-antah-teal mb-2">
+              System Architecture
+            </h2>
+            <h3 className="text-3xl font-extrabold text-antah-navy tracking-tight">
+              How Small Whispers Become Coordinated Action
+            </h3>
+            <p className="mt-2 text-base text-antah-slate leading-relaxed">
+              Traditional 311 systems log complaints in silos. ANTAH correlates observations across infrastructure networks to uncover root causes.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Step 01: REPORT */}
+            <Card tilt={true} className="p-6 space-y-3 group bg-slate-50/70 border-slate-200/80">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-2xl font-black text-antah-teal">01</span>
+                <div className="w-8 h-8 rounded-lg bg-teal-50 text-antah-teal flex items-center justify-center">
+                  <FileText size={16} />
+                </div>
+              </div>
+              <h4 className="text-base font-bold text-antah-navy group-hover:text-antah-teal transition-colors">
+                REPORT
+              </h4>
+              <p className="text-xs text-antah-slate leading-relaxed">
+                A resident logs a local observation (pipe leak, drain backflow, or road depression) with geographic coordinates and photos.
+              </p>
+            </Card>
+
+            {/* Step 02: CONNECT */}
+            <Card tilt={true} className="p-6 space-y-3 group bg-slate-50/70 border-slate-200/80">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-2xl font-black text-cyan-600">02</span>
+                <div className="w-8 h-8 rounded-lg bg-cyan-50 text-cyan-600 flex items-center justify-center">
+                  <Share2 size={16} />
+                </div>
+              </div>
+              <h4 className="text-base font-bold text-antah-navy group-hover:text-cyan-600 transition-colors">
+                CONNECT
+              </h4>
+              <p className="text-xs text-antah-slate leading-relaxed">
+                Spatial-temporal algorithms detect candidate relationships between nearby reports along shared municipal infrastructure conduits.
+              </p>
+            </Card>
+
+            {/* Step 03: VERIFY */}
+            <Card tilt={true} className="p-6 space-y-3 group bg-amber-50/50 border-amber-200/80">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-2xl font-black text-amber-600">03</span>
+                <div className="w-8 h-8 rounded-lg bg-amber-100/70 text-amber-700 flex items-center justify-center">
+                  <ShieldCheck size={16} />
+                </div>
+              </div>
+              <h4 className="text-base font-bold text-amber-950">
+                VERIFY
+              </h4>
+              <p className="text-xs text-amber-900/90 leading-relaxed">
+                Human civic coordinators inspect supporting evidence, hydrologic slope, and telemetry to officially validate candidate patterns.
+              </p>
+            </Card>
+
+            {/* Step 04: RESPOND */}
+            <Card tilt={true} className="p-6 space-y-3 group bg-slate-50/70 border-slate-200/80">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-2xl font-black text-blue-600">04</span>
+                <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                  <MessageSquare size={16} />
+                </div>
+              </div>
+              <h4 className="text-base font-bold text-antah-navy group-hover:text-blue-600 transition-colors">
+                RESPOND
+              </h4>
+              <p className="text-xs text-antah-slate leading-relaxed">
+                An incident-specific collaboration space is provisioned using Nexconn Chat SDK, coordinating remediation crews, dispatchers, and residents in real time.
+              </p>
+            </Card>
           </div>
         </div>
       </section>
 
-      {/* 2. FIVE PRIMARY CIVIC SIGNAL CATEGORIES */}
-      <section className="py-20 bg-white border-b border-antah-border">
+      {/* 3. FIVE PRIMARY CIVIC SIGNAL CATEGORIES */}
+      <section className="py-20 bg-antah-ivory border-b border-slate-200/70">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-2xl mb-12">
             <h2 className="text-xs font-bold uppercase tracking-widest text-antah-teal mb-2">
               Civic Taxonomy
             </h2>
             <h3 className="text-3xl font-extrabold text-antah-navy tracking-tight">
-              Five Critical Infrastructure Signals
+              Five Infrastructure Anomaly Domains
             </h3>
             <p className="mt-2 text-base text-antah-slate leading-relaxed">
-              Every citizen observation is classified, geo-tagged, and indexed into spatial-temporal grids to detect systemic infrastructure degradation.
+              Every community signal belongs to a distinct municipal infrastructure layer, each monitored for spatial correlation.
             </p>
           </div>
 
@@ -115,11 +232,11 @@ export const LandingPage: React.FC = () => {
             {(Object.keys(REPORT_CATEGORIES) as ReportCategory[]).map((catKey) => {
               const cat = REPORT_CATEGORIES[catKey];
               return (
-                <Card key={catKey} variant="default" className="group hover:border-slate-300">
+                <Card key={catKey} variant="default" tilt={true} className="group">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <CategoryBadge category={catKey} size="md" />
-                      <span className="text-[11px] font-mono text-antah-muted uppercase">Active Sensor</span>
+                      <span className="text-[11px] font-mono text-antah-muted uppercase">Active Domain</span>
                     </div>
                   </CardHeader>
                   <CardContent className="pt-1">
@@ -129,13 +246,13 @@ export const LandingPage: React.FC = () => {
                     <p className="text-xs text-antah-slate mt-2 leading-relaxed">
                       {cat.description}
                     </p>
-                    <div className="mt-4 pt-4 border-t border-antah-border-light flex items-center justify-between text-xs text-antah-muted">
+                    <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-antah-muted">
                       <span>Proximity Radius: 150m</span>
                       <Link
                         to={`/explorer?category=${catKey}`}
                         className="font-semibold text-antah-teal flex items-center gap-1 hover:underline"
                       >
-                        View Markers <ArrowRight size={12} />
+                        Inspect Domain <ArrowRight size={12} />
                       </Link>
                     </div>
                   </CardContent>
@@ -143,23 +260,23 @@ export const LandingPage: React.FC = () => {
               );
             })}
 
-            {/* Candidate Correlation Special Card */}
-            <Card variant="panel" className="bg-amber-50/40 border-amber-200">
+            {/* Neural Cluster Callout Card */}
+            <Card variant="panel" tilt={true} className="bg-amber-50/40 border-amber-200">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-100 text-amber-900 text-xs font-bold">
                     <Sparkles size={13} className="text-amber-600 animate-pulse" />
-                    <span>Cross-Category AI Link</span>
+                    <span>Cross-Domain Correlation</span>
                   </div>
-                  <span className="text-[11px] font-mono text-amber-800 font-semibold">HYPOTHESIS</span>
+                  <span className="text-[11px] font-mono text-amber-800 font-semibold">CANDIDATE</span>
                 </div>
               </CardHeader>
               <CardContent className="pt-1">
                 <h4 className="text-base font-bold text-amber-950">
-                  Pattern Suggestion Engine
+                  Pattern Hypothesis Engine
                 </h4>
                 <p className="text-xs text-amber-900 mt-2 leading-relaxed">
-                  Identifies when a roadside water puddle and a culvert overflow 90m away stem from the exact same pressurized subterranean fracture.
+                  Identifies structural links between separate categories, such as subterranean pipe bursts undermining adjacent road sub-base and flooding downstream storm grates.
                 </p>
                 <div className="mt-4 pt-4 border-t border-amber-200/60 flex items-center justify-between text-xs text-amber-800 font-medium">
                   <span>Coordinator Decision Required</span>
@@ -173,186 +290,67 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* 3. AI CORRELATION & ETHICAL ARCHITECTURE */}
-      <section className="py-20 bg-antah-ivory border-b border-antah-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-antah-teal/10 text-antah-teal text-xs font-bold uppercase tracking-wider mb-3">
-                <Network size={14} />
-                <span>Explainable Spatial Intelligence</span>
-              </div>
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-antah-navy tracking-tight leading-tight">
-                Turning Isolated Whispers Into Verified Incidents
-              </h2>
-              <p className="mt-4 text-base text-antah-slate leading-relaxed">
-                Traditional civic portals treat each complaint as an isolated ticket. ANTAH introduces
-                a continuous spatial-temporal correlation layer that evaluates proximity, timeline concurrence,
-                and infrastructural dependencies.
-              </p>
-
-              <div className="mt-6 space-y-4">
-                <div className="p-4 rounded-xl bg-white border border-antah-border shadow-soft-xs flex items-start gap-3.5">
-                  <div className="w-8 h-8 rounded-lg bg-teal-50 text-antah-teal flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Activity size={18} />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-antah-navy">Spatial-Temporal Closeness</h4>
-                    <p className="text-xs text-antah-slate mt-1 leading-relaxed">
-                      Evaluates reports filed within 150 meters and 60 minutes of each other across compatible infrastructure grids.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-xl bg-white border border-antah-border shadow-soft-xs flex items-start gap-3.5">
-                  <div className="w-8 h-8 rounded-lg bg-amber-50 text-antah-amber flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <ShieldCheck size={18} />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-antah-navy">Human-in-the-Loop Safeguard</h4>
-                    <p className="text-xs text-antah-slate mt-1 leading-relaxed">
-                      AI correlations are framed strictly as candidate proposals. Authorized civic coordinators review supporting evidence before elevating clusters to confirmed incidents.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-xl bg-white border border-antah-border shadow-soft-xs flex items-start gap-3.5">
-                  <div className="w-8 h-8 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <MessageSquare size={18} />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-antah-navy">Nexconn Incident Chat Channels</h4>
-                    <p className="text-xs text-antah-slate mt-1 leading-relaxed">
-                      Once verified, authorized emergency dispatchers and on-site repair crews communicate instantly through dedicated Nexconn real-time channels.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Visual Workflow Mockup / Architecture Panel */}
-            <div className="antah-panel rounded-2xl p-6 sm:p-8 border border-antah-border shadow-soft-md">
-              <div className="flex items-center justify-between pb-4 border-b border-antah-border-light mb-6">
-                <span className="font-mono text-xs font-bold text-antah-navy uppercase">
-                  Candidate Cluster #409 Pipeline
-                </span>
-                <span className="text-xs font-mono px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-semibold">
-                  Awaiting Coordinator Verification
-                </span>
-              </div>
-
-              {/* Step 1: Input reports */}
-              <div className="space-y-3">
-                <div className="p-3 rounded-lg bg-white border border-antah-border text-xs flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-sky-500" />
-                    <span className="font-mono font-bold text-antah-navy">SIG-802:</span>
-                    <span className="text-antah-slate">Water Main Seepage (Sector 3)</span>
-                  </div>
-                  <span className="text-[10px] font-mono text-antah-muted">18m ago</span>
-                </div>
-
-                <div className="p-3 rounded-lg bg-white border border-antah-border text-xs flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-teal-600" />
-                    <span className="font-mono font-bold text-antah-navy">SIG-805:</span>
-                    <span className="text-antah-slate">Culvert Overflow (Crossroad 7)</span>
-                  </div>
-                  <span className="text-[10px] font-mono text-antah-muted">25m ago</span>
-                </div>
-              </div>
-
-              {/* Connecting Logic */}
-              <div className="my-4 px-4 py-3 rounded-lg bg-amber-50/80 border border-amber-200 text-xs">
-                <div className="flex items-center justify-between text-amber-900 font-bold mb-1">
-                  <span>Candidate Hypothesis</span>
-                  <span className="font-mono text-[11px] bg-amber-200/80 px-1.5 py-0.2 rounded">91% Match</span>
-                </div>
-                <p className="text-[11px] text-amber-800 leading-relaxed">
-                  Both points share hydraulic gravity drain path. High probability of underground main break causing downstream surcharge.
-                </p>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="pt-2 flex items-center gap-2">
-                <Link to="/coordinator" className="flex-1">
-                  <Button variant="amber" size="sm" className="w-full text-xs justify-center font-bold">
-                    Coordinator Hub: Verify Candidate
-                  </Button>
-                </Link>
-                <Link to="/explorer?cluster=409">
-                  <Button variant="outline" size="sm" className="text-xs">
-                    Inspect 3D Map
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 4. PLATFORM METRICS / CIVIC PULSE */}
-      <section className="py-16 bg-white border-b border-antah-border">
+      {/* 4. PLATFORM METRICS WITH ANIMATED COUNTERS */}
+      <section className="py-16 bg-white border-b border-slate-200/70">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 text-center">
-            <div className="p-6 rounded-xl bg-slate-50/80 border border-antah-border">
+            <Card variant="default" tilt={true} className="p-6 bg-slate-50/80 border-slate-200/80">
               <div className="text-3xl sm:text-4xl font-black text-antah-navy font-mono">
-                184
+                <AnimatedCounter value={184} />
               </div>
               <div className="text-xs font-semibold uppercase tracking-wider text-antah-slate mt-2">
                 Active Community Signals
               </div>
-            </div>
+            </Card>
 
-            <div className="p-6 rounded-xl bg-slate-50/80 border border-antah-border">
+            <Card variant="default" tilt={true} className="p-6 bg-slate-50/80 border-slate-200/80">
               <div className="text-3xl sm:text-4xl font-black text-antah-teal font-mono">
-                12
+                <AnimatedCounter value={12} />
               </div>
               <div className="text-xs font-semibold uppercase tracking-wider text-antah-slate mt-2">
                 Candidate Patterns Flagged
               </div>
-            </div>
+            </Card>
 
-            <div className="p-6 rounded-xl bg-slate-50/80 border border-antah-border">
+            <Card variant="default" tilt={true} className="p-6 bg-slate-50/80 border-slate-200/80">
               <div className="text-3xl sm:text-4xl font-black text-antah-amber font-mono">
-                100%
+                <AnimatedCounter value={100} suffix="%" />
               </div>
               <div className="text-xs font-semibold uppercase tracking-wider text-antah-slate mt-2">
                 Human-Verified Incidents
               </div>
-            </div>
+            </Card>
 
-            <div className="p-6 rounded-xl bg-slate-50/80 border border-antah-border">
+            <Card variant="default" tilt={true} className="p-6 bg-slate-50/80 border-slate-200/80">
               <div className="text-3xl sm:text-4xl font-black text-antah-navy font-mono">
-                &lt; 25m
+                <AnimatedCounter value={25} prefix="< " suffix="m" />
               </div>
               <div className="text-xs font-semibold uppercase tracking-wider text-antah-slate mt-2">
                 Dispatch Response Velocity
               </div>
-            </div>
+            </Card>
           </div>
         </div>
       </section>
 
       {/* 5. CALL TO ACTION BANNER */}
-      <section className="py-20 bg-gradient-to-br from-antah-ivory via-white to-teal-50/30">
+      <section className="py-20 bg-gradient-to-br from-antah-ivory via-white to-teal-50/40">
         <div className="max-w-4xl mx-auto px-4 text-center space-y-6">
           <h2 className="text-3xl sm:text-4xl font-extrabold text-antah-navy tracking-tight">
-            Protect Your Neighborhood Before Problems Escalate.
+            Small signals today, safer tomorrow.
           </h2>
           <p className="text-base text-antah-slate max-w-2xl mx-auto leading-relaxed">
-            Report a pothole, leak, or dark corridor in seconds. Join ANTAH's civic intelligence grid
-            and empower coordinators to respond with precision.
+            Report a leak, broken light, or road hazard in seconds. Help ANTAH's civic intelligence grid empower municipal coordinators to respond with precision.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
             <Link to="/report">
-              <Button variant="primary" size="lg" icon={<PlusCircle size={18} />}>
-                Submit an Observation
+              <Button variant="primary" size="lg" icon={<PlusCircle size={18} />} className="font-bold">
+                Report an Issue
               </Button>
             </Link>
             <Link to="/explorer">
-              <Button variant="secondary" size="lg" icon={<Compass size={18} />}>
-                Launch Network Explorer
+              <Button variant="secondary" size="lg" icon={<Compass size={18} />} className="font-semibold">
+                Launch City Explorer
               </Button>
             </Link>
           </div>

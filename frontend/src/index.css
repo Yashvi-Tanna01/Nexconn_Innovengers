@@ -10,6 +10,7 @@
     --text-slate: #475569;
     --accent-teal: #0D9488;
     --accent-cyan: #06B6D4;
+    --accent-blue: #3B82F6;
     --accent-amber: #D97706;
     --border-neutral: #E2E8F0;
   }
@@ -20,63 +21,68 @@
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
   }
 }
 
 @layer components {
-  /* Translucent light panels for clean, uncluttered surfaces */
+
+  /* Translucent light frosted glass panels for spatial HUD clarity */
   .antah-panel {
-    background: rgba(255, 255, 255, 0.88);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid #E2E8F0;
-    box-shadow: 0 4px 20px -2px rgba(11, 19, 43, 0.05);
+    background: rgba(255, 255, 255, 0.84);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    box-shadow: 0 10px 32px -4px rgba(11, 19, 43, 0.06), 0 1px 3px rgba(11, 19, 43, 0.03);
   }
 
   .antah-card {
     background: #FFFFFF;
     border: 1px solid #E2E8F0;
-    border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(11, 19, 43, 0.04), 0 4px 12px rgba(11, 19, 43, 0.03);
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(11, 19, 43, 0.04), 0 6px 18px rgba(11, 19, 43, 0.03);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .antah-card:hover {
     border-color: #CBD5E1;
-    box-shadow: 0 6px 20px rgba(11, 19, 43, 0.06);
-    transform: translateY(-1px);
+    box-shadow: 0 12px 30px rgba(11, 19, 43, 0.07);
+    transform: translateY(-2px);
   }
 
   .antah-card-static {
     background: #FFFFFF;
     border: 1px solid #E2E8F0;
-    border-radius: 12px;
+    border-radius: 16px;
     box-shadow: 0 1px 3px rgba(11, 19, 43, 0.04);
   }
 
-  /* Signal Beacon Pulse Animation for map markers and live indicators */
+  /* Signal Beacon Pulse Animation */
   .signal-beacon {
     position: relative;
   }
+
   .signal-beacon::after {
     content: '';
     position: absolute;
     inset: -4px;
     border-radius: 9999px;
     background: inherit;
-    opacity: 0.4;
+    opacity: 0.45;
     animation: signalPulse 2.4s cubic-bezier(0.24, 0, 0.38, 1) infinite;
   }
 
   @keyframes signalPulse {
     0% {
       transform: scale(0.9);
-      opacity: 0.7;
+      opacity: 0.75;
     }
+
     70% {
       transform: scale(2.2);
       opacity: 0;
     }
+
     100% {
       transform: scale(2.2);
       opacity: 0;
@@ -84,19 +90,21 @@
   }
 }
 
-/* Subtle, polished custom scrollbars */
+/* Polished high-tech custom scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
+
 ::-webkit-scrollbar-track {
   background: #F1F5F9;
 }
+
 ::-webkit-scrollbar-thumb {
   background: #CBD5E1;
   border-radius: 3px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: #94A3B8;
 }
-

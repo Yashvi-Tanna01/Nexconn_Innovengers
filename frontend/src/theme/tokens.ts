@@ -6,7 +6,7 @@
 export const BRAND = {
   name: "ANTAH",
   fullName: "The Unheard Signals Network",
-  tagline: "Small signals today. Safer communities tomorrow.",
+  tagline: "Small signals today, safer tomorrow.",
   mission: "Transform scattered community observations into connected intelligence and coordinated responses.",
   version: "1.0.0 (Nexconn 2026)",
 } as const;

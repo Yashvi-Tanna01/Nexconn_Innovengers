@@ -1,0 +1,19 @@
+{
+  "name": "ANTAH — The Unheard Signals Network",
+  "short_name": "ANTAH",
+  "description": "Civic Intelligence Platform for community hazard correlation and response.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FBFBF9",
+  "theme_color": "#0D9488",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/antah-symbol.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
+
