@@ -108,3 +108,68 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #94A3B8;
 }
+
+/* ==========================================================================
+   ANTAH — City Signal Atlas Cartographic Styles
+   ========================================================================== */
+
+/* Leaflet Container Editorial Treatment */
+.atlas-container .leaflet-container {
+  background: #FBFBF9 !important;
+  font-family: inherit;
+}
+
+.atlas-container .leaflet-tile-pane {
+  filter: contrast(1.02) brightness(1.01);
+}
+
+.atlas-container .leaflet-control-attribution {
+  background: rgba(251, 251, 249, 0.85) !important;
+  backdrop-filter: blur(4px);
+  color: #64748B !important;
+  font-size: 10px !important;
+  font-family: ui-monospace, monospace;
+  padding: 2px 8px !important;
+  border-top-left-radius: 8px;
+  border-left: 1px solid #E2E8F0;
+  border-top: 1px solid #E2E8F0;
+}
+
+.atlas-container .leaflet-control-attribution a {
+  color: #0D9488 !important;
+  text-decoration: none;
+}
+
+/* Custom Marker Container */
+.atlas-marker-container {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Signature Visual: Precise Single-Shot Signal Pulse Wave */
+.atlas-signal-pulse {
+  position: absolute;
+  inset: -8px;
+  border-radius: 9999px;
+  border: 1.5px solid currentColor;
+  pointer-events: none;
+  animation: atlasSignalPulseWave 1.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes atlasSignalPulseWave {
+  0% {
+    transform: scale(0.65);
+    opacity: 0.95;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .atlas-signal-pulse {
+    animation: none;
+    opacity: 0;
+  }
+}

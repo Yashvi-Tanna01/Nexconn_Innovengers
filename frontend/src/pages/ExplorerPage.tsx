@@ -5,7 +5,7 @@ import { Button } from '../components/common/Button';
 import { CategoryBadge, StatusBadge } from '../components/common/Badge';
 import { PageLoadingState } from '../components/loading';
 import { REPORT_CATEGORIES, ReportCategory } from '../theme/tokens';
-import { SAMPLE_CITY_SIGNALS, CitySignal } from '../components/city3d/types';
+import { ATLAS_SIGNALS, AtlasSignal } from '../components/atlas/types';
 import {
   Compass,
   Filter,
@@ -17,18 +17,18 @@ import {
   X,
 } from 'lucide-react';
 
-const CityCanvas = React.lazy(() =>
-  import('../components/city3d/CityCanvas').then((mod) => ({ default: mod.CityCanvas }))
+const CitySignalAtlas = React.lazy(() =>
+  import('../components/atlas/CitySignalAtlas').then((mod) => ({ default: mod.CitySignalAtlas }))
 );
 
 export const ExplorerPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [activeSignal, setActiveSignal] = useState<CitySignal | null>(SAMPLE_CITY_SIGNALS[0]);
+  const [activeSignal, setActiveSignal] = useState<AtlasSignal | null>(ATLAS_SIGNALS[0]);
   const shouldReduceMotion = useReducedMotion();
 
-  const filteredSignals = SAMPLE_CITY_SIGNALS.filter((s) => {
+  const filteredSignals = ATLAS_SIGNALS.filter((s) => {
     if (selectedCategory !== 'all' && s.category !== selectedCategory) return false;
     if (selectedStatus !== 'all' && s.status !== selectedStatus) return false;
     if (searchQuery.trim()) {
@@ -50,14 +50,14 @@ export const ExplorerPage: React.FC = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-1.5 text-xs font-mono text-antah-teal mb-1">
-              <Compass size={14} className="animate-spin" style={{ animationDuration: '10s' }} />
-              <span>SPATIAL CIVIC TWIN & TELEMETRY</span>
+              <Compass size={14} className="text-antah-teal" />
+              <span>GEOGRAPHIC CIVIC ATLAS & SIGNAL THREADS</span>
             </div>
-            <h1 className="text-3xl font-extrabold text-antah-navy tracking-tight">
-              City Explorer
+            <h1 className="text-3xl font-extrabold text-antah-navy tracking-tight font-serif">
+              City Signal Atlas
             </h1>
             <p className="text-sm text-antah-slate mt-0.5">
-              Interactive 3D digital twin of municipal infrastructure signals, district telemetry, and candidate patterns.
+              Editorial geographic atlas visualizing municipal infrastructure reports, candidate Signal Threads, and coordinator-verified patterns across Bangalore East.
             </p>
           </div>
 
@@ -82,18 +82,21 @@ export const ExplorerPage: React.FC = () => {
           </div>
         </div>
 
-        {/* 3D Digital Twin Viewport (Centerpiece) */}
+        {/* City Signal Atlas Viewport (Centerpiece) */}
         <div className="w-full">
           <Suspense
             fallback={
               <PageLoadingState
-                message="SYNTHESIZING 3D SPATIAL CIVIC TELEMETRY..."
-                subMessage="ANTAH • Small signals today, safer tomorrow."
+                message="INITIALIZING CITY SIGNAL ATLAS..."
+                subMessage="Cartographic Positron tiles, geographic coordinates, and Signal Threads"
                 minHeight="h-[580px] sm:h-[660px] lg:h-[720px]"
               />
             }
           >
-            <CityCanvas onSignalClick={(sig) => setActiveSignal(sig)} />
+            <CitySignalAtlas
+              selectedSignalId={activeSignal?.id}
+              onSignalClick={(sig) => setActiveSignal(sig)}
+            />
           </Suspense>
         </div>
 
@@ -112,10 +115,10 @@ export const ExplorerPage: React.FC = () => {
                   : 'bg-white border border-slate-200 text-antah-slate hover:bg-slate-50'
               }`}
             >
-              All Categories ({SAMPLE_CITY_SIGNALS.length})
+              All Categories ({ATLAS_SIGNALS.length})
             </button>
             {(Object.keys(REPORT_CATEGORIES) as ReportCategory[]).map((catKey) => {
-              const count = SAMPLE_CITY_SIGNALS.filter((s) => s.category === catKey).length;
+              const count = ATLAS_SIGNALS.filter((s) => s.category === catKey).length;
               return (
                 <button
                   key={catKey}
@@ -165,7 +168,7 @@ export const ExplorerPage: React.FC = () => {
         <div className="space-y-3">
           <div className="flex items-center justify-between text-xs font-mono text-antah-muted pb-1">
             <span>FILTERED SIGNALS: {filteredSignals.length}</span>
-            <span>CLICK CARD TO FOCUS 3D TWIN</span>
+            <span>CLICK CARD TO FOCUS SIGNAL ON ATLAS</span>
           </div>
 
           <motion.div

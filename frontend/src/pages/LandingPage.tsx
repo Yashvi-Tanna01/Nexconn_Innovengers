@@ -31,8 +31,8 @@ import {
   Share2,
 } from 'lucide-react';
 
-const CityCanvas = React.lazy(() =>
-  import('../components/city3d/CityCanvas').then((mod) => ({ default: mod.CityCanvas }))
+const CitySignalAtlas = React.lazy(() =>
+  import('../components/atlas/CitySignalAtlas').then((mod) => ({ default: mod.CitySignalAtlas }))
 );
 
 export const LandingPage: React.FC = () => {
@@ -103,12 +103,12 @@ export const LandingPage: React.FC = () => {
 
               <div className="hidden sm:flex items-center gap-2 ml-2 text-xs font-mono text-antah-muted">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span>3D Digital Twin Active</span>
+                <span>City Signal Atlas Active</span>
               </div>
             </motion.div>
           </motion.div>
 
-          {/* Interactive 3D City Twin Visual Centerpiece */}
+          {/* Interactive City Signal Atlas Centerpiece */}
           <motion.div
             initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.99, y: 12 }}
             animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0 }}
@@ -118,13 +118,13 @@ export const LandingPage: React.FC = () => {
             <Suspense
               fallback={
                 <PageLoadingState
-                  message="INITIALIZING 3D SPATIAL DIGITAL TWIN..."
+                  message="INITIALIZING CITY SIGNAL ATLAS..."
                   subMessage="ANTAH • Small signals today, safer tomorrow."
                   minHeight="h-[580px] sm:h-[660px] lg:h-[720px]"
                 />
               }
             >
-              <CityCanvas />
+              <CitySignalAtlas />
             </Suspense>
           </motion.div>
         </div>
