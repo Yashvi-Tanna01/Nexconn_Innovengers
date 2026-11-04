@@ -94,7 +94,8 @@ export const getCategoryGlyph = (category: ReportCategory, color: string): strin
 export const createAtlasMarkerIcon = (
   signal: AtlasSignal,
   isSelected: boolean,
-  isRelatedToSelected: boolean
+  isRelatedToSelected: boolean,
+  pulseCycle: number = 0
 ): L.DivIcon => {
   const meta = CATEGORY_PALETTE[signal.category] || CATEGORY_PALETTE.public_infrastructure;
   const isCandidate = signal.status === 'candidate_pattern';
@@ -117,9 +118,9 @@ export const createAtlasMarkerIcon = (
     ? `<span class="absolute -top-1 -right-1 w-3 h-3 bg-teal-600 rounded-full border-2 border-white flex items-center justify-center text-[7px] text-white font-bold">✓</span>`
     : '';
 
-  // Signal Pulse: precise expanding circular wave when active
+  // Signal Pulse: precise expanding circular wave when active, tagged with pulseCycle so it animates reliably on every click
   const pulseHtml = active
-    ? `<span class="atlas-signal-pulse" style="border-color: ${isCandidate ? '#D97706' : meta.color};"></span>`
+    ? `<span class="atlas-signal-pulse" data-cycle="${pulseCycle}" style="border-color: ${isCandidate ? '#D97706' : meta.color};"></span>`
     : '';
 
   const html = `

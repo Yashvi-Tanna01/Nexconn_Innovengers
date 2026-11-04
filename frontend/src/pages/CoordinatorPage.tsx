@@ -81,9 +81,10 @@ export const CoordinatorPage: React.FC = () => {
         </div>
 
         {/* Action Notice Banner */}
-        <AnimatePresence>
+        <AnimatePresence mode="wait">
           {actionNotice && (
             <motion.div
+              key={`notice-${actionNotice}`}
               variants={shouldReduceMotion ? undefined : panelVariants}
               initial="initial"
               animate="animate"

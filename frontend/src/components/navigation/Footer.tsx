@@ -2,9 +2,11 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { AntahLogo } from '../brand/AntahLogo';
 import { BRAND, REPORT_CATEGORIES, ReportCategory } from '../../theme/tokens';
+import { useLoading } from '../../context/LoadingContext';
 import { ShieldAlert, ArrowUpRight, Heart, Sparkles } from 'lucide-react';
 
 export const Footer: React.FC = () => {
+  const { replayStartupAnimation } = useLoading();
   return (
     <footer className="bg-white border-t border-antah-border text-antah-slate pt-12 pb-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -69,6 +71,15 @@ export const Footer: React.FC = () => {
                 <Link to="/coordinator" className="hover:text-antah-teal transition-colors">
                   Coordinator Hub
                 </Link>
+              </li>
+              <li className="pt-1">
+                <button
+                  onClick={replayStartupAnimation}
+                  className="hover:text-antah-teal transition-colors flex items-center gap-1.5 text-xs text-antah-slate font-medium"
+                >
+                  <Sparkles size={12} className="text-antah-amber" />
+                  <span>Replay Startup Intro</span>
+                </button>
               </li>
             </ul>
           </div>

@@ -7,6 +7,7 @@ interface AnimatedCounterProps {
   prefix?: string;
   suffix?: string;
   className?: string;
+  once?: boolean;
 }
 
 export const AnimatedCounter: React.FC<AnimatedCounterProps> = ({
@@ -15,9 +16,10 @@ export const AnimatedCounter: React.FC<AnimatedCounterProps> = ({
   prefix = '',
   suffix = '',
   className = '',
+  once = false,
 }) => {
   const ref = useRef<HTMLSpanElement>(null);
-  const isInView = useInView(ref, { once: true, margin: '-40px' });
+  const isInView = useInView(ref, { once, margin: '-40px' });
   const shouldReduceMotion = useReducedMotion();
 
   const motionValue = useMotionValue(shouldReduceMotion ? value : 0);

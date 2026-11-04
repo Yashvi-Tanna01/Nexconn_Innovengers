@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { AntahLogo } from '../brand/AntahLogo';
 import { Button } from '../common/Button';
+import { useLoading } from '../../context/LoadingContext';
 import {
   Compass,
   PlusCircle,
@@ -11,12 +12,14 @@ import {
   Menu,
   X,
   Radio,
+  Sparkles,
 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
   const shouldReduceMotion = useReducedMotion();
+  const { replayStartupAnimation } = useLoading();
 
   const navLinks = [
     { name: 'Home', path: '/', icon: null },
@@ -82,6 +85,15 @@ export const Navbar: React.FC = () => {
 
           {/* Action Area & Live Telemetry */}
           <div className="hidden sm:flex items-center gap-3">
+            <button
+              onClick={replayStartupAnimation}
+              title="Replay cinematic startup intro"
+              className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200/80 border border-slate-200 text-[11px] font-mono text-antah-slate hover:text-antah-navy transition-colors focus:outline-none focus:ring-1 focus:ring-antah-teal"
+            >
+              <Sparkles size={11} className="text-antah-amber" />
+              <span>Replay Intro</span>
+            </button>
+
             <div className="hidden xl:flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100/80 border border-slate-200/80 text-[11px] font-mono text-antah-slate">
               <span className="w-2 h-2 rounded-full bg-antah-teal animate-pulse" />
               <span>CIVIC GRID: ONLINE</span>

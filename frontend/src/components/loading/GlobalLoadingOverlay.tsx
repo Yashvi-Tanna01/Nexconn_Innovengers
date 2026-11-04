@@ -1,21 +1,21 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useLoading } from '../../context/LoadingContext';
 import { AntahChromaticWordmark } from './AntahChromaticWordmark';
-import { Radio } from 'lucide-react';
+import { X } from 'lucide-react';
 
 export const GlobalLoadingOverlay: React.FC = () => {
-  const { loading, isAppInitialized } = useLoading();
+  const { loading, isAppInitialized, operationCycle, stopLoading } = useLoading();
+  const shouldReduceMotion = useReducedMotion();
 
-  if (!isAppInitialized || !loading.isActive) {
-    return null;
-  }
+  // Active only if the app is already initialized and a genuine operation is active
+  const isVisible = isAppInitialized && loading.isActive;
 
   return (
     <AnimatePresence>
-      {loading.isActive && (
+      {isVisible && (
         <motion.div
-          key="antah-global-overlay"
+          key={`antah-global-overlay-${operationCycle}`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0, transition: { duration: 0.28 } }}
@@ -23,18 +23,20 @@ export const GlobalLoadingOverlay: React.FC = () => {
         >
           {/* Translucent Frosted Glass Card Container */}
           <motion.div
-            initial={{ scale: 0.96, opacity: 0, y: 12 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.96, opacity: 0, y: 12 }}
+            initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0.96, opacity: 0, y: 12 }}
+            animate={shouldReduceMotion ? { opacity: 1 } : { scale: 1, opacity: 1, y: 0 }}
+            exit={shouldReduceMotion ? { opacity: 0 } : { scale: 0.96, opacity: 0, y: 12 }}
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
             className="relative w-full max-w-lg p-8 sm:p-10 rounded-3xl bg-white/95 border border-slate-200/90 shadow-2xl flex flex-col items-center text-center space-y-6"
           >
-            {/* Chromatic Wordmark in Light Theme */}
+            {/* Chromatic Wordmark in Light Theme with dynamic cycleId for repeatable animation */}
             <AntahChromaticWordmark
               size="md"
               theme="light"
               showSubtitle={true}
               showTagline={false}
+              cycleId={operationCycle}
+              cadence="fast"
               statusMessage="CIVIC OPERATION ACTIVE"
             />
 

@@ -20,6 +20,8 @@ export interface LoadingState {
 export interface LoadingContextValue {
   isAppInitialized: boolean;
   setAppInitialized: (initialized: boolean) => void;
+  replayStartupAnimation: () => void;
+  operationCycle: number;
   loading: LoadingState;
   startLoading: (key: string, message?: string, category?: LoadingCategory) => void;
   stopLoading: (key: string) => void;
@@ -37,21 +39,25 @@ const LoadingContext = createContext<LoadingContextValue | undefined>(undefined)
 export const LoadingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Fresh launch starts uninitialized
   const [isAppInitialized, setIsAppInitialized] = useState<boolean>(false);
+  const [operationCycle, setOperationCycle] = useState<number>(0);
   const [loading, setLoading] = useState<LoadingState>(defaultLoadingState);
 
   // Track active loading keys with a Map to preserve order and messages
   const activeOperationsRef = useRef<Map<string, { message: string; category: LoadingCategory }>>(new Map());
+  const safetyTimeoutRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
-  const startLoading = useCallback((key: string, message = 'Processing signal data...', category: LoadingCategory = 'general') => {
-    activeOperationsRef.current.set(key, { message, category });
-    setLoading({
-      isActive: true,
-      message,
-      category,
-    });
+  const replayStartupAnimation = useCallback(() => {
+    setIsAppInitialized(false);
   }, []);
 
   const stopLoading = useCallback((key: string) => {
+    // Clear safety timeout
+    const existingTimeout = safetyTimeoutRef.current.get(key);
+    if (existingTimeout) {
+      clearTimeout(existingTimeout);
+      safetyTimeoutRef.current.delete(key);
+    }
+
     activeOperationsRef.current.delete(key);
     if (activeOperationsRef.current.size === 0) {
       setLoading(defaultLoadingState);
@@ -66,6 +72,32 @@ export const LoadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       });
     }
   }, []);
+
+  const startLoading = useCallback(
+    (key: string, message = 'Processing signal data...', category: LoadingCategory = 'general') => {
+      // Clear any prior safety timer for this key
+      const existingTimeout = safetyTimeoutRef.current.get(key);
+      if (existingTimeout) {
+        clearTimeout(existingTimeout);
+      }
+
+      // 15-second safety timeout so loading state NEVER becomes permanently stuck on network errors
+      const timer = setTimeout(() => {
+        console.warn(`[LoadingContext] Safety timeout triggered for operation "${key}". Clearing stuck loading state.`);
+        stopLoading(key);
+      }, 15000);
+      safetyTimeoutRef.current.set(key, timer);
+
+      activeOperationsRef.current.set(key, { message, category });
+      setOperationCycle((prev) => prev + 1);
+      setLoading({
+        isActive: true,
+        message,
+        category,
+      });
+    },
+    [stopLoading]
+  );
 
   const withLoading = useCallback(
     async <T,>(key: string, fn: () => Promise<T>, message?: string, category: LoadingCategory = 'general'): Promise<T> => {
@@ -85,6 +117,8 @@ export const LoadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       value={{
         isAppInitialized,
         setAppInitialized: setIsAppInitialized,
+        replayStartupAnimation,
+        operationCycle,
         loading,
         startLoading,
         stopLoading,

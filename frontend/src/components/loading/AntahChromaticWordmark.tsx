@@ -8,6 +8,8 @@ export interface AntahChromaticWordmarkProps {
   showTagline?: boolean;
   statusMessage?: string;
   className?: string;
+  cycleId?: number | string;
+  cadence?: 'startup' | 'standard' | 'fast';
 }
 
 export const AntahChromaticWordmark: React.FC<AntahChromaticWordmarkProps> = memo(({
@@ -17,9 +19,36 @@ export const AntahChromaticWordmark: React.FC<AntahChromaticWordmarkProps> = mem
   showTagline = true,
   statusMessage,
   className = '',
+  cycleId = 0,
+  cadence = 'standard',
 }) => {
   const shouldReduceMotion = useReducedMotion();
   const isLight = theme === 'light';
+
+  // Cadence timings: cinematic deliberate assembly for startup, snappy for localized loaders
+  const timings = {
+    startup: {
+      letterDuration: 0.65,
+      letterDelay: 0.16,
+      chromaticDuration: 1.8,
+      subDelay: 1.2,
+      taglineDelay: 1.8,
+    },
+    standard: {
+      letterDuration: 0.45,
+      letterDelay: 0.06,
+      chromaticDuration: 0.9,
+      subDelay: 0.25,
+      taglineDelay: 0.45,
+    },
+    fast: {
+      letterDuration: 0.25,
+      letterDelay: 0.03,
+      chromaticDuration: 0.45,
+      subDelay: 0.12,
+      taglineDelay: 0.2,
+    },
+  }[cadence];
 
   // Sizing tokens optimized for responsive layout stability
   const sizeMap = {
@@ -60,40 +89,45 @@ export const AntahChromaticWordmark: React.FC<AntahChromaticWordmarkProps> = mem
   const letterVariants = {
     initial: {
       opacity: 0,
-      y: shouldReduceMotion ? 0 : 14,
+      y: shouldReduceMotion ? 0 : 18,
+      scale: shouldReduceMotion ? 1 : 0.94,
     },
     animate: (i: number) => ({
       opacity: 1,
       y: 0,
+      scale: 1,
       transition: {
-        duration: 0.45,
+        duration: timings.letterDuration,
         ease: [0.16, 1, 0.3, 1],
-        delay: shouldReduceMotion ? 0 : i * 0.06,
+        delay: shouldReduceMotion ? 0 : i * timings.letterDelay,
       },
     }),
   };
 
   // Optical chromatic convergence: converges into crisp alignment without continuous heavy blur
   const chromaticCyan = {
-    initial: { x: -6, opacity: 0 },
+    initial: { x: -8, opacity: 0 },
     animate: {
       x: 0,
-      opacity: [0, 0.7, 0.35],
-      transition: { duration: 0.9, ease: [0.16, 1, 0.3, 1] },
+      opacity: [0, 0.75, 0.3],
+      transition: { duration: timings.chromaticDuration, ease: [0.16, 1, 0.3, 1] },
     },
   };
 
   const chromaticAmber = {
-    initial: { x: 6, opacity: 0 },
+    initial: { x: 8, opacity: 0 },
     animate: {
       x: 0,
-      opacity: [0, 0.7, 0.35],
-      transition: { duration: 0.9, ease: [0.16, 1, 0.3, 1], delay: 0.05 },
+      opacity: [0, 0.75, 0.3],
+      transition: { duration: timings.chromaticDuration, ease: [0.16, 1, 0.3, 1], delay: 0.08 },
     },
   };
 
   return (
-    <div className={`relative flex flex-col items-center justify-center text-center select-none ${className}`}>
+    <div
+      key={`wordmark-cycle-${cycleId}`}
+      className={`relative flex flex-col items-center justify-center text-center select-none ${className}`}
+    >
       {/* 1. Ambient Concentric Radar Pulse (Hardware-accelerated CSS opacity) */}
       <div
         className={`absolute ${currentSize.pulseSize} rounded-full pointer-events-none flex items-center justify-center`}
@@ -114,9 +148,10 @@ export const AntahChromaticWordmark: React.FC<AntahChromaticWordmarkProps> = mem
       {/* 2. Status Badge */}
       {statusMessage && (
         <motion.div
+          key={`badge-${cycleId}`}
           initial={{ opacity: 0, y: -6 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, delay: 0.15 }}
+          transition={{ duration: 0.35, delay: 0.1 }}
           className={`inline-flex items-center gap-2 rounded-full font-mono uppercase tracking-widest mb-3 z-10 ${
             currentSize.badge
           } ${
@@ -135,6 +170,7 @@ export const AntahChromaticWordmark: React.FC<AntahChromaticWordmarkProps> = mem
         {/* Layer A: Cyan / Teal Chromatic Channel */}
         {!shouldReduceMotion && (
           <motion.div
+            key={`cyan-${cycleId}`}
             variants={chromaticCyan}
             initial="initial"
             animate="animate"
@@ -152,6 +188,7 @@ export const AntahChromaticWordmark: React.FC<AntahChromaticWordmarkProps> = mem
         {/* Layer B: Amber / Rose Chromatic Channel */}
         {!shouldReduceMotion && (
           <motion.div
+            key={`amber-${cycleId}`}
             variants={chromaticAmber}
             initial="initial"
             animate="animate"
@@ -174,7 +211,7 @@ export const AntahChromaticWordmark: React.FC<AntahChromaticWordmarkProps> = mem
         >
           {letters.map((char, index) => (
             <motion.span
-              key={`char-${index}`}
+              key={`char-${char}-${index}-${cycleId}`}
               custom={index}
               variants={letterVariants}
               initial="initial"
@@ -190,9 +227,10 @@ export const AntahChromaticWordmark: React.FC<AntahChromaticWordmarkProps> = mem
       {/* 4. Subtitle: THE UNHEARD SIGNALS NETWORK */}
       {showSubtitle && (
         <motion.p
+          key={`sub-${cycleId}`}
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.45, delay: timings.subDelay, ease: [0.16, 1, 0.3, 1] }}
           className={`font-semibold uppercase font-sans mt-2 z-10 ${currentSize.sub} ${
             isLight ? 'text-antah-slate' : 'text-slate-300'
           }`}
@@ -204,9 +242,10 @@ export const AntahChromaticWordmark: React.FC<AntahChromaticWordmarkProps> = mem
       {/* 5. Official Tagline: "Small signals today, safer tomorrow." */}
       {showTagline && (
         <motion.p
+          key={`tagline-${cycleId}`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.4, delay: 0.45 }}
+          transition={{ duration: 0.4, delay: timings.taglineDelay }}
           className={`font-mono italic mt-1.5 z-10 ${currentSize.tagline} ${
             isLight ? 'text-antah-teal font-medium' : 'text-teal-300/90'
           }`}

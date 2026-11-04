@@ -105,6 +105,7 @@ export const ReportPage: React.FC = () => {
 
         {submittedId ? (
           <motion.div
+            key={`submitted-${submittedId}`}
             initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.95 }}
             animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, scale: 1 }}
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}

@@ -9,6 +9,7 @@ interface PageLoadingStateProps {
   minHeight?: string;
   className?: string;
   theme?: 'light' | 'dark';
+  cycleId?: number | string;
 }
 
 export const PageLoadingState: React.FC<PageLoadingStateProps> = ({
@@ -17,6 +18,7 @@ export const PageLoadingState: React.FC<PageLoadingStateProps> = ({
   minHeight = 'h-[540px] sm:h-[620px] lg:h-[700px]',
   className = '',
   theme = 'light',
+  cycleId,
 }) => {
   const isLight = theme === 'light';
 
@@ -45,6 +47,8 @@ export const PageLoadingState: React.FC<PageLoadingStateProps> = ({
           showSubtitle={true}
           showTagline={false}
           statusMessage={message}
+          cycleId={cycleId}
+          cadence="standard"
         />
 
         <motion.p

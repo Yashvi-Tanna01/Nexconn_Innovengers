@@ -49,6 +49,7 @@ export const CitySignalAtlas: React.FC<CitySignalAtlasProps> = ({
   const [showThreads, setShowThreads] = useState(true);
   const [showLegend, setShowLegend] = useState(false);
   const [activeChat, setActiveChat] = useState<{ id: string; title: string } | null>(null);
+  const [pulseCycle, setPulseCycle] = useState<number>(0);
 
   // Sync external selectedSignalId prop
   useEffect(() => {
@@ -57,6 +58,7 @@ export const CitySignalAtlas: React.FC<CitySignalAtlasProps> = ({
       if (match && match.id !== selectedSignal?.id) {
         setSelectedSignal(match);
         setSelectedCluster(null);
+        setPulseCycle((prev) => prev + 1);
         if (mapInstanceRef.current) {
           mapInstanceRef.current.panTo(match.coordinates, { animate: true, duration: 0.5 });
         }
@@ -112,6 +114,7 @@ export const CitySignalAtlas: React.FC<CitySignalAtlasProps> = ({
   const handleSelectSignal = useCallback((signal: AtlasSignal) => {
     setSelectedSignal(signal);
     setSelectedCluster(null);
+    setPulseCycle((prev) => prev + 1);
     if (onSignalClick) onSignalClick(signal);
 
     // Pan map gently toward selected signal if off-center
@@ -180,7 +183,7 @@ export const CitySignalAtlas: React.FC<CitySignalAtlasProps> = ({
         (selectedCluster?.signals.includes(sig.id))
       );
 
-      const icon = createAtlasMarkerIcon(sig, isSelected, isRelatedToSelected);
+      const icon = createAtlasMarkerIcon(sig, isSelected, isRelatedToSelected, pulseCycle);
       const marker = L.marker(sig.coordinates, {
         icon,
         title: sig.title,
@@ -193,7 +196,7 @@ export const CitySignalAtlas: React.FC<CitySignalAtlasProps> = ({
 
       marker.addTo(layer);
     });
-  }, [filteredSignals, selectedSignal, selectedCluster, handleSelectSignal]);
+  }, [filteredSignals, selectedSignal, selectedCluster, handleSelectSignal, pulseCycle]);
 
   return (
     <div
