@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { NexconnChatPanel } from '../components/chat/NexconnChatPanel';
 import { MessageSquare, Radio, ShieldAlert, Users, Layers, CheckCircle2 } from 'lucide-react';
-import { ATLAS_CANDIDATE_CLUSTERS, ATLAS_SIGNALS } from '../components/atlas/types';
+import { API_ENDPOINTS, apiRequest, Notification } from '../config/api';
 
 export const MessagesPage: React.FC = () => {
   const [selectedIncident, setSelectedIncident] = useState({
@@ -13,6 +13,20 @@ export const MessagesPage: React.FC = () => {
     status: 'ACTIVE_REMEDIATION',
     badge: 'Riesgo Crítico',
   });
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notificationError, setNotificationError] = useState<string | null>(null);
+  const [notificationsLoading, setNotificationsLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    apiRequest<Notification[]>(API_ENDPOINTS.notifications).then((result) => {
+      if (!active) return;
+      if (result.data) setNotifications(result.data);
+      else setNotificationError(result.error || 'Unable to load notifications.');
+      setNotificationsLoading(false);
+    });
+    return () => { active = false; };
+  }, []);
 
   const incidentChannels = [
     {
@@ -56,6 +70,19 @@ export const MessagesPage: React.FC = () => {
             Nexconn Chat SDK • Multi-actor incident rooms
           </p>
         </div>
+        {notificationsLoading && (
+          <div className="text-[11px] text-[#737C78]">Loading coordination notifications…</div>
+        )}
+        {notificationError && (
+          <div className="p-3 rounded-2xl bg-red-50 border border-red-200 text-[11px] text-red-900">
+            {notificationError}
+          </div>
+        )}
+        {!!notifications.length && (
+          <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-900">
+            {notifications[0].message}
+          </div>
+        )}
 
         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#E1F0E8] border border-[#286B56]/20 text-[#286B56] text-[10px] font-mono font-semibold">
           <span className="w-1.5 h-1.5 rounded-full bg-[#286B56] animate-pulse" />

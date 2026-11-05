@@ -6,6 +6,7 @@ import {
   AtlasCandidateCluster,
   ATLAS_SIGNALS,
   ATLAS_CANDIDATE_CLUSTERS,
+  ATLAS_DISTRICTS,
 } from './types';
 import { createAtlasMarkerIcon } from './AtlasSymbols';
 import { SignalThreadsLayer } from './SignalThreadsLayer';
@@ -13,6 +14,7 @@ import { AtlasToolbar } from './AtlasToolbar';
 import { AtlasContextPanel } from './AtlasContextPanel';
 import { AtlasLegend } from './AtlasLegend';
 import { NexconnChatPanel } from '../chat/NexconnChatPanel';
+import { API_ENDPOINTS, apiRequest, getAuthToken, Report } from '../../config/api';
 
 interface CitySignalAtlasProps {
   className?: string;
@@ -56,6 +58,39 @@ export const CitySignalAtlas: React.FC<CitySignalAtlasProps> = ({
   const [activeChat, setActiveChat] = useState<{ id: string; title: string } | null>(null);
   const [pulseCycle, setPulseCycle] = useState<number>(0);
   const [isLocating, setIsLocating] = useState(false);
+  const [liveReports, setLiveReports] = useState<Report[]>([]);
+  const [reportsLoaded, setReportsLoaded] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    apiRequest<Report[]>(API_ENDPOINTS.reports).then((result) => {
+      if (!active) return;
+      if (result.data) setLiveReports(result.data);
+      setReportsLoaded(true);
+    });
+    return () => { active = false; };
+  }, []);
+
+  const reportSignals = useMemo<AtlasSignal[]>(() => liveReports.map((report, index) => {
+    const gps = report.location.match(/(-?\d+(?:\.\d+)?)[,\s]+(-?\d+(?:\.\d+)?)/);
+    const district = ATLAS_DISTRICTS[index % ATLAS_DISTRICTS.length];
+    return {
+      id: `REPORT-${report.id}`,
+      category: report.category as AtlasSignal['category'],
+      title: report.title,
+      description: report.description,
+      status: report.status as AtlasSignal['status'],
+      severity: report.urgency >= 5 ? 'critical' : report.urgency >= 4 ? 'high' : report.urgency <= 2 ? 'low' : 'medium',
+      coordinates: gps ? [Number(gps[1]), Number(gps[2])] : district.center,
+      locationName: report.location,
+      neighborhood: district.name,
+      districtId: district.id,
+      reportedAt: 'Backend report',
+      reporterName: `Reporter #${report.reporter_id}`,
+    };
+  }), [liveReports]);
+
+  const displayedSignals = reportsLoaded && getAuthToken() && liveReports.length > 0 ? reportSignals : ATLAS_SIGNALS;
 
   // Sync external filter changes
   useEffect(() => {
@@ -69,7 +104,7 @@ export const CitySignalAtlas: React.FC<CitySignalAtlasProps> = ({
   // Sync external selectedSignalId prop
   useEffect(() => {
     if (selectedSignalId) {
-      const match = ATLAS_SIGNALS.find((s) => s.id === selectedSignalId);
+      const match = displayedSignals.find((s) => s.id === selectedSignalId);
       if (match && match.id !== selectedSignal?.id) {
         setSelectedSignal(match);
         setSelectedCluster(null);
@@ -81,7 +116,7 @@ export const CitySignalAtlas: React.FC<CitySignalAtlasProps> = ({
     } else if (selectedSignalId === '') {
       setSelectedSignal(null);
     }
-  }, [selectedSignalId, selectedSignal?.id]);
+  }, [selectedSignalId, selectedSignal?.id, displayedSignals]);
 
   // 1. Initialize Leaflet Map Instance Once
   useEffect(() => {
@@ -97,18 +132,10 @@ export const CitySignalAtlas: React.FC<CitySignalAtlasProps> = ({
       maxZoom: 18,
     });
 
-<<<<<<< HEAD
-    // CartoDB Positron: Beautiful light territorial intelligence basemap
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a> • ANTAH Spatial',
-      subdomains: 'abcd',
-=======
     // OpenStreetMap provides a keyless basemap for local development.
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> • ANTAH Signal Atlas',
->>>>>>> 47ff7f9fca8662f280eb044dc656c922c8a25145
       maxZoom: 19,
     }).addTo(map);
 
@@ -157,7 +184,7 @@ export const CitySignalAtlas: React.FC<CitySignalAtlasProps> = ({
 
   // 2. Filtered Signals
   const filteredSignals = useMemo(() => {
-    return ATLAS_SIGNALS.filter((s) => {
+    return displayedSignals.filter((s) => {
       if (selectedCategory !== 'all' && s.category !== selectedCategory) return false;
       if (selectedStatus !== 'all') {
         if (selectedStatus === 'candidate_clusters') {
@@ -174,7 +201,7 @@ export const CitySignalAtlas: React.FC<CitySignalAtlasProps> = ({
       }
       return true;
     });
-  }, [selectedCategory, selectedStatus]);
+  }, [selectedCategory, selectedStatus, displayedSignals]);
 
   // 3. Selection Handlers
   const handleSelectSignal = useCallback((signal: AtlasSignal) => {
@@ -210,11 +237,11 @@ export const CitySignalAtlas: React.FC<CitySignalAtlasProps> = ({
   }, []);
 
   const handleSelectSignalById = useCallback((id: string) => {
-    const found = ATLAS_SIGNALS.find((s) => s.id === id);
+    const found = displayedSignals.find((s) => s.id === id);
     if (found) {
       handleSelectSignal(found);
     }
-  }, [handleSelectSignal]);
+  }, [handleSelectSignal, displayedSignals]);
 
   const handleRecenter = useCallback(() => {
     if (mapInstanceRef.current) {

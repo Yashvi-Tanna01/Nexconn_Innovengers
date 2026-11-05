@@ -1,4 +1,5 @@
 import os
+import secrets
 
 from dotenv import load_dotenv
 
@@ -13,6 +14,8 @@ class Settings:
     
     # Database
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./antah.db")
+    JWT_SECRET: str = os.getenv("JWT_SECRET") or secrets.token_urlsafe(32)
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
     
     # Nexconn Chat Configuration
     NEXCONN_APP_ID: str = os.getenv("NEXCONN_APP_ID", "")

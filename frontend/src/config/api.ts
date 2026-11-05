@@ -42,7 +42,68 @@ export const API_ENDPOINTS = {
   clusters: `${API_BASE_URL}/clusters`,
   incidents: `${API_BASE_URL}/incidents`,
   chatAuth: `${API_BASE_URL}/chat/token`,
+  analytics: `${API_BASE_URL}/analytics`,
+  authMe: `${API_BASE_URL}/auth/me`,
+  notifications: `${API_BASE_URL}/notifications`,
 } as const;
+
+export interface User { id: number; email: string; full_name: string; role: string; }
+export interface Report {
+  id: number; title: string; description: string; category: string;
+  location: string; urgency: number; status: string; reporter_id: number;
+}
+export interface Analytics {
+  reports: number; clusters: number; approved_clusters: number;
+  incidents: number; resolved_incidents: number;
+}
+export interface Cluster {
+  id: number; title: string; explanation: string; score: number;
+  status: 'pending' | 'approved' | 'rejected' | 'needs_info' | string;
+}
+export interface Notification {
+  id: number; user_id: number; message: string; read: boolean; created_at: string;
+}
+export interface AuthToken { access_token: string; token_type: string; }
+
+const TOKEN_KEY = 'nexconn_access_token';
+export const getAuthToken = () => typeof window === 'undefined' ? null : localStorage.getItem(TOKEN_KEY);
+export const setAuthToken = (token: string | null) => {
+  if (typeof window === 'undefined') return;
+  if (token) localStorage.setItem(TOKEN_KEY, token);
+  else localStorage.removeItem(TOKEN_KEY);
+};
+
+export async function login(email: string, password: string): Promise<ApiResponse<AuthToken>> {
+  const result = await apiRequest<AuthToken>('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  });
+  if (result.data) setAuthToken(result.data.access_token);
+  return result;
+}
+
+export async function register(
+  email: string,
+  fullName: string,
+  password: string
+): Promise<ApiResponse<User>> {
+  return apiRequest<User>('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify({ email, full_name: fullName, password, role: 'reporter' }),
+  });
+}
+
+export function logout(): void {
+  setAuthToken(null);
+}
+
+export async function apiRequest<T>(path: string, options: RequestInit = {}, timeoutMs = 8000): Promise<ApiResponse<T>> {
+  const token = getAuthToken();
+  return fetchWithTimeout<T>(path.startsWith('http') ? path : `${API_BASE_URL}${path}`, {
+    ...options,
+    headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(options.headers || {}) },
+  }, timeoutMs);
+}
 
 export interface ApiResponse<T> {
   data?: T;
@@ -79,7 +140,14 @@ export async function fetchWithTimeout<T>(
     clearTimeout(id);
 
     if (!response.ok) {
-      return { error: `Server returned status ${response.status}: ${response.statusText}` };
+      let detail = response.statusText;
+      try {
+        const body = await response.json();
+        detail = body.detail || detail;
+      } catch {
+        // Some proxies return an empty response for errors.
+      }
+      return { error: `${detail} (${response.status})` };
     }
 
     const data = await response.json();
@@ -92,3 +160,4 @@ export async function fetchWithTimeout<T>(
     return { error: err.message || 'Network request failed.' };
   }
 }
+

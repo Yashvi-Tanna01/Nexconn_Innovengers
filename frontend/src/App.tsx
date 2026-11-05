@@ -12,6 +12,7 @@ import { ReportPage } from './pages/ReportPage';
 import { SignalPatternsPage } from './pages/SignalPatternsPage';
 import { CoordinatorPage } from './pages/CoordinatorPage';
 import { MessagesPage } from './pages/MessagesPage';
+import { AuthPage } from './pages/AuthPage';
 import { pageVariants, reducedPageVariants } from './theme/motion';
 
 // Scroll to top helper on route change
@@ -48,6 +49,8 @@ function MainLayout() {
             <Route path="/patterns" element={<SignalPatternsPage />} />
             <Route path="/coordinator" element={<CoordinatorPage />} />
             <Route path="/messages" element={<MessagesPage />} />
+            <Route path="/auth" element={<AuthPage />} />
+            <Route path="/login" element={<AuthPage />} />
             <Route path="*" element={<Navigate to="/home" replace />} />
           </Routes>
         </motion.div>

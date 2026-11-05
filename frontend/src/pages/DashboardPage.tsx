@@ -1,4 +1,4 @@
-import React, { useState, Suspense } from 'react';
+import React, { useState, Suspense, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Compass,
@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { ATLAS_SIGNALS, ATLAS_CANDIDATE_CLUSTERS, ATLAS_DISTRICTS, AtlasSignal } from '../components/atlas/types';
 import { PageLoadingState } from '../components/loading';
+import { API_ENDPOINTS, Analytics, apiRequest } from '../config/api';
 
 const CitySignalAtlas = React.lazy(() =>
   import('../components/atlas/CitySignalAtlas').then((mod) => ({ default: mod.CitySignalAtlas }))
@@ -31,14 +32,21 @@ const CitySignalAtlas = React.lazy(() =>
 export const DashboardPage: React.FC = () => {
   const [selectedSignal, setSelectedSignal] = useState<AtlasSignal>(ATLAS_SIGNALS[0]);
   const primaryCluster = ATLAS_CANDIDATE_CLUSTERS[0];
+  const [analytics, setAnalytics] = useState<Analytics | null>(null);
+
+  useEffect(() => {
+    apiRequest<Analytics>(API_ENDPOINTS.analytics).then((result) => {
+      if (result.data) setAnalytics(result.data);
+    });
+  }, []);
 
   const metrics = [
-    { label: 'Cobertura', value: '78%', trend: '↑ 8%', color: 'text-[#286B56]', bg: 'bg-[#E1F0E8]' },
-    { label: 'Riesgo', value: 'Medio', trend: '↓ 5%', color: 'text-[#E7A65B]', bg: 'bg-amber-50' },
-    { label: 'Señales', value: '24', trend: '↑ 2', color: 'text-blue-700', bg: 'bg-blue-50' },
-    { label: 'Cuadrantes', value: '18', trend: '↑ 3', color: 'text-teal-700', bg: 'bg-teal-50' },
-    { label: 'Red Nodos', value: '356', trend: '↑ 12%', color: 'text-emerald-700', bg: 'bg-emerald-50' },
-    { label: 'Alertas', value: '1', trend: 'Crítico', color: 'text-[#D9534F]', bg: 'bg-red-50' },
+    { label: 'Reportes', value: analytics ? String(analytics.reports) : '—', trend: 'Backend', color: 'text-[#286B56]', bg: 'bg-[#E1F0E8]' },
+    { label: 'Clusters', value: analytics ? String(analytics.clusters) : '—', trend: 'Backend', color: 'text-[#E7A65B]', bg: 'bg-amber-50' },
+    { label: 'Señales', value: analytics ? String(analytics.reports) : '—', trend: 'Backend', color: 'text-blue-700', bg: 'bg-blue-50' },
+    { label: 'Incidentes', value: analytics ? String(analytics.incidents) : '—', trend: 'Backend', color: 'text-teal-700', bg: 'bg-teal-50' },
+    { label: 'Aprobados', value: analytics ? String(analytics.approved_clusters) : '—', trend: 'Backend', color: 'text-emerald-700', bg: 'bg-emerald-50' },
+    { label: 'Resueltos', value: analytics ? String(analytics.resolved_incidents) : '—', trend: 'Backend', color: 'text-[#D9534F]', bg: 'bg-red-50' },
   ];
 
   return (

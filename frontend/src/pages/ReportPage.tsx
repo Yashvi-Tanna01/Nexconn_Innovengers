@@ -16,6 +16,7 @@ import {
   Radio,
   ArrowRight,
 } from 'lucide-react';
+import { API_ENDPOINTS, apiRequest, Report } from '../config/api';
 
 export const ReportPage: React.FC = () => {
   const [step, setStep] = useState<number>(1);
@@ -28,25 +29,35 @@ export const ReportPage: React.FC = () => {
   const [hasPhoto, setHasPhoto] = useState(false);
   const [submittedId, setSubmittedId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const shouldReduceMotion = useReducedMotion();
   const { startLoading, stopLoading } = useLoading();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !description || !locationName) return;
 
     setIsSubmitting(true);
+    setSubmitError(null);
     startLoading(
       'report-submission',
       'Transmitting observation to municipal signal twin & analyzing spatial correlation...',
       'reporting'
     );
-    setTimeout(() => {
-      const generatedId = `SIG-${Math.floor(830 + Math.random() * 90)}`;
-      setSubmittedId(generatedId);
-      setIsSubmitting(false);
-      stopLoading('report-submission');
-    }, 1800);
+    const result = await apiRequest<Report>(API_ENDPOINTS.reports, {
+      method: 'POST',
+      body: JSON.stringify({
+        title,
+        description,
+        category,
+        location: locationName,
+        urgency: severity === 'critical' ? 5 : severity === 'high' ? 4 : severity === 'medium' ? 3 : 1,
+      }),
+    });
+    if (result.data) setSubmittedId(String(result.data.id));
+    else setSubmitError(result.error || 'Unable to submit this report.');
+    setIsSubmitting(false);
+    stopLoading('report-submission');
   };
 
   const resetForm = () => {
@@ -56,6 +67,7 @@ export const ReportPage: React.FC = () => {
     setLocationName('');
     setHasPhoto(false);
     setSubmittedId(null);
+    setSubmitError(null);
   };
 
   const stepSlideVariants = {
@@ -132,6 +144,11 @@ export const ReportPage: React.FC = () => {
           </motion.div>
         ) : (
           <form onSubmit={handleSubmit}>
+            {submitError && (
+              <div className="mb-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700" role="alert">
+                {submitError}
+              </div>
+            )}
             <Card variant="default">
               <AnimatePresence mode="wait">
                 {/* STEP 1: CATEGORY & SEVERITY */}

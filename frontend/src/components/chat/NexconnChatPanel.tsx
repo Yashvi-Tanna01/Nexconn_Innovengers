@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '../common/Button';
-import { OperationLoadingIndicator } from '../loading';
 import { Send, ShieldCheck, User, Wrench, Radio, MessageSquare, AlertCircle } from 'lucide-react';
 
 interface ChatMessage {
@@ -50,32 +49,21 @@ export const NexconnChatPanel: React.FC<NexconnChatPanelProps> = ({
 
   const [inputText, setInputText] = useState('');
   const [isSending, setIsSending] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(true);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsConnecting(false);
-    }, 850);
-    return () => clearTimeout(timer);
-  }, [incidentId]);
-
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputText.trim()) return;
 
     setIsSending(true);
-    setTimeout(() => {
-      const newMsg: ChatMessage = {
+    const newMsg: ChatMessage = {
         id: `m-${Date.now()}`,
         sender: 'You (Municipal Responder)',
         role: 'crew',
         text: inputText.trim(),
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      };
-      setMessages((prev) => [...prev, newMsg]);
-      setInputText('');
-      setIsSending(false);
-    }, 400);
+    };
+    setMessages((prev) => [...prev, newMsg]);
+    setInputText('');
+    setIsSending(false);
   };
 
   const handleQuickAction = (quickText: string) => {
@@ -89,14 +77,14 @@ export const NexconnChatPanel: React.FC<NexconnChatPanelProps> = ({
       {/* Top Nexconn Gateway Status Header */}
       <div className="px-5 py-3.5 bg-slate-50/80 border-b border-antah-border flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+          <div className="w-2.5 h-2.5 rounded-full bg-amber-500" />
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-mono font-bold text-antah-navy uppercase">
-                NEXCONN CHAT SDK • CHANNEL
+                LOCAL CHAT MOCK • NOT CONNECTED
               </span>
-              <span className="text-[10px] font-mono bg-teal-50 text-teal-800 border border-teal-200 px-1.5 py-0.2 rounded font-semibold">
-                ENCRYPTED
+              <span className="text-[10px] font-mono bg-amber-50 text-amber-800 border border-amber-200 px-1.5 py-0.2 rounded font-semibold">
+                LOCAL ONLY
               </span>
             </div>
             <div className="text-[11px] text-antah-slate font-medium truncate max-w-[280px]">
@@ -116,22 +104,10 @@ export const NexconnChatPanel: React.FC<NexconnChatPanelProps> = ({
       </div>
 
       {/* Messages Stream */}
-      {isConnecting ? (
-        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-slate-900 text-white min-h-[220px]">
-          <OperationLoadingIndicator
-            size="lg"
-            label="CONNECTING TO NEXCONN INCIDENT CHANNEL..."
-            className="text-cyan-400"
-          />
-          <p className="text-xs text-slate-400 font-mono mt-3 italic">
-            Connecting to authorized incident responders & field crews...
-          </p>
-        </div>
-      ) : (
-        <div className="flex-1 p-4 overflow-y-auto space-y-3.5">
+      <div className="flex-1 p-4 overflow-y-auto space-y-3.5">
           <div className="text-center my-2">
             <span className="text-[10px] font-mono text-antah-muted bg-slate-100 px-2.5 py-1 rounded-full border border-slate-200">
-              Channel Initialized via Backend Token Exchange • Zero Client Secret Exposure
+              Local preview adapter • messages are not sent to Nexconn
             </span>
           </div>
 
@@ -163,8 +139,7 @@ export const NexconnChatPanel: React.FC<NexconnChatPanelProps> = ({
               </div>
             );
           })}
-        </div>
-      )}
+      </div>
 
       {/* Quick Situation Action Pills */}
       <div className="px-4 py-2 bg-slate-50 border-t border-antah-border-light flex items-center gap-1.5 overflow-x-auto text-[11px]">
@@ -215,4 +190,3 @@ export const NexconnChatPanel: React.FC<NexconnChatPanelProps> = ({
     </div>
   );
 };
-

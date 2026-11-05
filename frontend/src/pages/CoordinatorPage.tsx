@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../components/common/Card';
 import { Button } from '../components/common/Button';
-import { CategoryBadge, StatusBadge, AiCandidateBadge } from '../components/common/Badge';
+import { AiCandidateBadge } from '../components/common/Badge';
 import { NexconnChatPanel } from '../components/chat/NexconnChatPanel';
 import { useLoading } from '../context/LoadingContext';
-import { SAMPLE_CANDIDATE_CLUSTERS, SAMPLE_CITY_SIGNALS } from '../components/city3d/types';
+import { API_ENDPOINTS, apiRequest, Cluster } from '../config/api';
 import { panelVariants } from '../theme/motion';
 import {
   ShieldAlert,
@@ -18,42 +18,64 @@ import {
 } from 'lucide-react';
 
 export const CoordinatorPage: React.FC = () => {
-  const [clusterState, setClusterState] = useState<'pending' | 'verified' | 'dismissed'>('pending');
+  const [clusters, setClusters] = useState<Cluster[]>([]);
+  const [selectedClusterId, setSelectedClusterId] = useState<number | null>(null);
   const [activeChat, setActiveChat] = useState<boolean>(false);
   const [actionNotice, setActionNotice] = useState<string | null>(null);
+  const [errorNotice, setErrorNotice] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isReviewing, setIsReviewing] = useState(false);
   const shouldReduceMotion = useReducedMotion();
   const { startLoading, stopLoading } = useLoading();
 
-  const cluster = SAMPLE_CANDIDATE_CLUSTERS[0];
-  const contributingSignals = SAMPLE_CITY_SIGNALS.filter((s) => cluster.signals.includes(s.id));
+  const cluster = clusters.find((item) => item.id === selectedClusterId) || clusters[0];
+  const clusterState = cluster?.status === 'approved' ? 'verified' : cluster?.status === 'rejected' ? 'dismissed' : 'pending';
 
-  const handleApprove = () => {
-    startLoading(
-      'coord-approve',
-      'Validating telemetry correlation & establishing Incident INC-2026-088...',
-      'coordinator'
-    );
-    setTimeout(() => {
-      setClusterState('verified');
-      setActionNotice(
-        'Candidate Cluster #409 officially approved as Verified Incident INC-2026-088. Dispatched Remediation Crew Alpha.'
-      );
-      stopLoading('coord-approve');
-    }, 1600);
+  const loadClusters = async () => {
+    setIsLoading(true);
+    const result = await apiRequest<Cluster[]>(API_ENDPOINTS.clusters);
+    if (result.data) {
+      setClusters(result.data);
+      setSelectedClusterId((current) => current ?? result.data?.[0]?.id ?? null);
+    } else {
+      setErrorNotice(result.error || 'Unable to load candidate clusters.');
+    }
+    setIsLoading(false);
   };
 
-  const handleDismiss = () => {
+  useEffect(() => { void loadClusters(); }, []);
+
+  const reviewCluster = async (decision: 'approved' | 'rejected' | 'needs_info') => {
+    if (!cluster) return;
     startLoading(
-      'coord-dismiss',
-      'Unlinking candidate observations & logging coordinator rationale to audit trail...',
+      `coord-${decision}`,
+      'Saving coordinator review to the audit trail...',
       'coordinator'
     );
-    setTimeout(() => {
-      setClusterState('dismissed');
-      setActionNotice('Candidate Cluster #409 dismissed. Observations unlinked but preserved.');
-      stopLoading('coord-dismiss');
-    }, 1200);
+    setIsReviewing(true);
+    const result = await apiRequest<Cluster>(`/clusters/${cluster.id}/review`, {
+      method: 'POST',
+      body: JSON.stringify({ decision }),
+    });
+    if (result.data) {
+      setClusters((previous) => previous.map((item) => item.id === result.data?.id ? result.data : item));
+      setActionNotice(decision === 'approved' ? 'Candidate cluster approved as a verified incident.' :
+        decision === 'rejected' ? 'Candidate cluster dismissed and preserved in the audit trail.' :
+          'Additional information requested for this candidate cluster.');
+    } else {
+      setErrorNotice(result.error || 'Unable to save coordinator review.');
+    }
+    setIsReviewing(false);
+    stopLoading(`coord-${decision}`);
   };
+
+  if (!cluster) {
+    return (
+      <div className="min-h-screen bg-antah-ivory text-antah-navy py-8 pb-24 px-4 text-sm">
+        {isLoading ? 'Loading candidate clusters…' : errorNotice || 'No candidate clusters are available.'}
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-antah-ivory text-antah-navy py-8 pb-24">
@@ -104,6 +126,12 @@ export const CoordinatorPage: React.FC = () => {
             </motion.div>
           )}
         </AnimatePresence>
+        {errorNotice && (
+          <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-xs text-red-900 flex items-center justify-between">
+            <span>{errorNotice}</span>
+            <button onClick={() => setErrorNotice(null)} className="font-bold ml-4">Dismiss</button>
+          </div>
+        )}
 
         {/* Main Grid: Candidate Cluster Review & Incident List */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -113,8 +141,8 @@ export const CoordinatorPage: React.FC = () => {
               <CardHeader>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2.5">
-                    <AiCandidateBadge confidenceScore={cluster.confidenceScore} />
-                    <span className="font-mono text-xs font-bold text-antah-navy">{cluster.id}</span>
+                    <AiCandidateBadge confidenceScore={cluster.score} />
+                    <span className="font-mono text-xs font-bold text-antah-navy">CLUSTER-{cluster.id}</span>
                   </div>
                   <span
                     className={`text-xs font-mono px-2.5 py-0.5 rounded-full font-semibold ${
@@ -150,7 +178,7 @@ export const CoordinatorPage: React.FC = () => {
                     <span className="font-mono text-amber-800">Telemetry Metric: 94% Dependency</span>
                   </div>
                   <p className="text-xs text-antah-slate leading-relaxed">
-                    {cluster.rationale}
+                    {cluster.explanation}
                   </p>
                   <div className="pt-2 flex flex-wrap items-center gap-3 text-[11px] font-mono text-antah-muted border-t border-slate-100">
                     <span>Geographic Distance: 90 meters</span>
@@ -162,26 +190,10 @@ export const CoordinatorPage: React.FC = () => {
                 {/* Individual contributing reports */}
                 <div className="space-y-2">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-antah-navy">
-                    Contributing Community Signals (2)
+                    Cluster Evidence
                   </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {contributingSignals.map((sig) => (
-                      <div
-                        key={sig.id}
-                        className="p-3.5 rounded-xl bg-white border border-slate-200/90 text-xs space-y-1.5"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="font-mono font-bold text-antah-navy">{sig.id}</span>
-                          <CategoryBadge category={sig.category} size="sm" />
-                        </div>
-                        <h5 className="font-bold text-antah-navy">{sig.title}</h5>
-                        <p className="text-antah-slate text-[11px] line-clamp-2">{sig.description}</p>
-                        <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between text-[10px] text-antah-muted">
-                          <span>📍 {sig.locationName}</span>
-                          <span>{sig.reportedAt}</span>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="p-3.5 rounded-xl bg-white border border-slate-200/90 text-xs text-antah-slate">
+                    The current cluster endpoint provides the explanation and confidence score. Linked report details are not included.
                   </div>
                 </div>
               </CardContent>
@@ -193,7 +205,8 @@ export const CoordinatorPage: React.FC = () => {
                       variant="amber"
                       size="sm"
                       icon={<CheckCircle2 size={15} />}
-                      onClick={handleApprove}
+                      onClick={() => reviewCluster('approved')}
+                      disabled={isReviewing}
                       className="font-bold shadow-soft-xs"
                     >
                       Approve as Verified Incident
@@ -202,7 +215,8 @@ export const CoordinatorPage: React.FC = () => {
                       variant="outline"
                       size="sm"
                       icon={<HelpCircle size={15} />}
-                      onClick={() => setActionNotice('Requested pressure gauge audit on Sector 3 Trunk #14.')}
+                      onClick={() => reviewCluster('needs_info')}
+                      disabled={isReviewing}
                     >
                       Request Sensor Telemetry
                     </Button>
@@ -210,7 +224,8 @@ export const CoordinatorPage: React.FC = () => {
                       variant="ghost"
                       size="sm"
                       icon={<XCircle size={15} />}
-                      onClick={handleDismiss}
+                      onClick={() => reviewCluster('rejected')}
+                      disabled={isReviewing}
                     >
                       Dismiss Hypothesis
                     </Button>
@@ -219,7 +234,7 @@ export const CoordinatorPage: React.FC = () => {
                   <div className="flex items-center justify-between w-full">
                     <div className="flex items-center gap-2 text-xs font-bold text-teal-900">
                       <CheckCircle2 size={16} className="text-teal-600" />
-                      <span>Incident INC-2026-088 Dispatched to Crew Alpha</span>
+                      <span>Cluster approved. Incident creation is handled by the backend.</span>
                     </div>
                     <Button
                       variant="primary"

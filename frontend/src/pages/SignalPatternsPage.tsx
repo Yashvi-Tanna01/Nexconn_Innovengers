@@ -1,52 +1,67 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Layers,
-  Sparkles,
   ShieldCheck,
-  AlertTriangle,
-  ArrowRight,
   CheckCircle2,
-  Clock,
   Compass,
-  MapPin,
-  Split,
-  FileText,
-  User,
-  ChevronRight,
 } from 'lucide-react';
-import { ATLAS_CANDIDATE_CLUSTERS, ATLAS_SIGNALS, AtlasCandidateCluster } from '../components/atlas/types';
+import { API_ENDPOINTS, apiRequest, Cluster } from '../config/api';
 import { Link } from 'react-router-dom';
 
 export const SignalPatternsPage: React.FC = () => {
-  const [clusters, setClusters] = useState<AtlasCandidateCluster[]>(ATLAS_CANDIDATE_CLUSTERS);
-  const [selectedClusterId, setSelectedClusterId] = useState<string>(ATLAS_CANDIDATE_CLUSTERS[0].id);
+  const [clusters, setClusters] = useState<Cluster[]>([]);
+  const [selectedClusterId, setSelectedClusterId] = useState<number | null>(null);
   const [actionSuccessMessage, setActionSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isReviewing, setIsReviewing] = useState(false);
 
   const selectedCluster = clusters.find((c) => c.id === selectedClusterId) || clusters[0];
-  const linkedSignals = ATLAS_SIGNALS.filter((s) => selectedCluster.signals.includes(s.id));
 
-  const handleVerifyPattern = () => {
-    setClusters((prev) =>
-      prev.map((c) =>
-        c.id === selectedCluster.id ? { ...c, status: 'verified_incident' as const } : c
-      )
-    );
-    setActionSuccessMessage(
-      `Patrón ${selectedCluster.id} verificado oficialmente. Cuadrilla Hidráulica Alfa notificada.`
-    );
-    setTimeout(() => setActionSuccessMessage(null), 5000);
+  const loadClusters = async () => {
+    setIsLoading(true);
+    const result = await apiRequest<Cluster[]>(API_ENDPOINTS.clusters);
+    if (result.data) {
+      setClusters(result.data);
+      setSelectedClusterId((current) => current ?? result.data?.[0]?.id ?? null);
+    } else {
+      setErrorMessage(result.error || 'No se pudieron cargar los patrones.');
+    }
+    setIsLoading(false);
   };
 
-  const handleDismissPattern = () => {
-    setClusters((prev) =>
-      prev.map((c) =>
-        c.id === selectedCluster.id ? { ...c, status: 'dismissed' as const } : c
-      )
-    );
-    setActionSuccessMessage(`Patrón ${selectedCluster.id} desvinculado.`);
-    setTimeout(() => setActionSuccessMessage(null), 4000);
+  useEffect(() => { void loadClusters(); }, []);
+
+  const reviewCluster = async (decision: 'approved' | 'rejected' | 'needs_info') => {
+    if (!selectedCluster) return;
+    setIsReviewing(true);
+    setErrorMessage(null);
+    const result = await apiRequest<Cluster>(`/clusters/${selectedCluster.id}/review`, {
+      method: 'POST',
+      body: JSON.stringify({ decision }),
+    });
+    if (result.data) {
+      setClusters((previous) => previous.map((cluster) =>
+        cluster.id === result.data?.id ? result.data : cluster
+      ));
+      setActionSuccessMessage(
+        decision === 'approved' ? 'Patrón verificado oficialmente.' :
+          decision === 'rejected' ? 'Patrón descartado y registrado.' :
+            'Se solicitó información adicional para este patrón.'
+      );
+    } else {
+      setErrorMessage(result.error || 'No se pudo registrar la revisión.');
+    }
+    setIsReviewing(false);
   };
+
+  if (!selectedCluster) {
+    return (
+      <div className="w-full px-4 pt-3 pb-8 text-xs text-[#737C78]">
+        {isLoading ? 'Cargando patrones…' : errorMessage || 'No hay patrones para revisar.'}
+      </div>
+    );
+  }
 
   return (
     <div className="w-full px-4 pt-3 pb-8 space-y-5 select-none">
@@ -92,9 +107,17 @@ export const SignalPatternsPage: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      {errorMessage && (
+        <div className="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-red-900 text-xs flex items-center justify-between">
+          <span>{errorMessage}</span>
+          <button onClick={() => setErrorMessage(null)} className="font-bold ml-2">✕</button>
+        </div>
+      )}
 
       {/* 3. CLUSTERS LIST (Mobile Cards) */}
       <div className="space-y-3">
+        {isLoading && <div className="text-xs text-[#737C78] py-4 text-center">Cargando patrones…</div>}
+        {!isLoading && !clusters.length && <div className="text-xs text-[#737C78] py-4 text-center">No hay patrones para revisar.</div>}
         {clusters.map((cluster) => {
           const isSelected = cluster.id === selectedCluster.id;
           return (
@@ -113,12 +136,12 @@ export const SignalPatternsPage: React.FC = () => {
                 </span>
                 <span
                   className={`text-[9px] font-mono font-bold px-2 py-0.5 rounded-md uppercase ${
-                    cluster.status === 'verified_incident'
+                    cluster.status === 'approved'
                       ? 'bg-emerald-100 text-emerald-800'
                       : 'bg-red-100 text-red-800'
                   }`}
                 >
-                  {cluster.status === 'verified_incident' ? 'Verificado' : 'Pendiente'}
+                  {cluster.status === 'approved' ? 'Verificado' : cluster.status === 'rejected' ? 'Descartado' : cluster.status === 'needs_info' ? 'Info solicitada' : 'Pendiente'}
                 </span>
               </div>
 
@@ -127,15 +150,15 @@ export const SignalPatternsPage: React.FC = () => {
               </h2>
 
               <p className="text-[11px] text-[#737C78] line-clamp-2 mt-1">
-                {cluster.rationale}
+                {cluster.explanation}
               </p>
 
               <div className="flex items-center justify-between pt-2.5 mt-2.5 border-t border-stone-100 text-[10px]">
                 <span className="text-[#737C78] font-mono">
-                  {cluster.signals.length} señales conectadas
+                  Revisión humana
                 </span>
                 <span className="font-bold text-[#286B56] font-mono">
-                  {Math.round(cluster.confidenceScore * 100)}% Confianza IA
+                  {Math.round(cluster.score * 100)}% Confianza IA
                 </span>
               </div>
             </div>
@@ -151,7 +174,7 @@ export const SignalPatternsPage: React.FC = () => {
               {selectedCluster.id}
             </span>
             <span className="text-xs font-bold text-[#286B56] bg-[#E1F0E8] px-2 py-0.5 rounded-md font-mono">
-              {Math.round(selectedCluster.confidenceScore * 100)}% CONFIANZA
+              {Math.round(selectedCluster.score * 100)}% CONFIANZA
             </span>
           </div>
 
@@ -160,9 +183,9 @@ export const SignalPatternsPage: React.FC = () => {
           </h3>
 
           <div className="text-[10px] text-[#737C78] flex items-center gap-2 font-mono">
-            <span>Detectado {selectedCluster.detectedAt}</span>
+            <span>Cluster #{selectedCluster.id}</span>
             <span>•</span>
-            <span>Cuadrilla: {selectedCluster.assignedCrew?.split(' ')[0] || 'Alpha'}</span>
+            <span>Estado: {selectedCluster.status}</span>
           </div>
         </div>
 
@@ -172,7 +195,7 @@ export const SignalPatternsPage: React.FC = () => {
             EVIDENCIA DE CORRELACIÓN ESPACIAL
           </span>
           <p className="text-xs text-stone-800 leading-relaxed">
-            {selectedCluster.rationale}
+            {selectedCluster.explanation}
           </p>
         </div>
 
@@ -200,49 +223,31 @@ export const SignalPatternsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Linked Signals List */}
-        <div className="space-y-2 pt-1">
-          <h4 className="text-[10px] font-bold text-[#737C78] uppercase tracking-wider font-mono">
-            Señales Conectadas ({linkedSignals.length})
-          </h4>
-
-          {linkedSignals.map((signal, idx) => (
-            <div
-              key={signal.id}
-              className="p-3 rounded-2xl bg-[#F5F6F4] border border-[#E3E8E4] space-y-1"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-mono font-bold text-[#286B56]">
-                  SEÑAL #{idx + 1}: {signal.id}
-                </span>
-                <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-700 uppercase">
-                  {signal.severity}
-                </span>
-              </div>
-              <div className="text-xs font-bold text-[#202827]">
-                {signal.title}
-              </div>
-              <div className="text-[10px] text-[#737C78]">
-                {signal.locationName} • {signal.reporterName}
-              </div>
-            </div>
-          ))}
+        <div className="p-3 rounded-2xl bg-[#F5F6F4] border border-[#E3E8E4] text-[10px] text-[#737C78]">
+          Linked report details are not included by the current cluster API.
         </div>
 
         {/* Primary Touch Verification Action */}
         <div className="pt-2">
-          {selectedCluster.status !== 'verified_incident' ? (
+          {selectedCluster.status === 'approved' ? (
+            <div className="w-full py-3 rounded-2xl bg-[#E1F0E8] text-[#286B56] text-xs font-bold text-center flex items-center justify-center gap-2">
+              <CheckCircle2 size={16} />
+              <span>Incidente Verificado</span>
+            </div>
+          ) : (
             <button
-              onClick={handleVerifyPattern}
+              onClick={() => reviewCluster('approved')}
+              disabled={isReviewing}
               className="w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl text-xs font-semibold bg-[#286B56] hover:bg-[#1f5645] active:scale-98 text-white shadow-sm min-h-[48px] transition-all"
             >
               <ShieldCheck size={16} />
-              <span>Verificar como Incidente Municipal</span>
+              <span>{isReviewing ? 'Guardando revisión…' : 'Verificar como Incidente Municipal'}</span>
             </button>
-          ) : (
-            <div className="w-full py-3 rounded-2xl bg-[#E1F0E8] text-[#286B56] text-xs font-bold text-center flex items-center justify-center gap-2">
-              <CheckCircle2 size={16} />
-              <span>Incidente Verificado y Despachado</span>
+          )}
+          {selectedCluster.status !== 'approved' && (
+            <div className="flex gap-2 mt-2">
+              <button disabled={isReviewing} onClick={() => reviewCluster('needs_info')} className="flex-1 py-2 rounded-xl border border-amber-200 text-amber-800 text-[11px] font-semibold">Solicitar información</button>
+              <button disabled={isReviewing} onClick={() => reviewCluster('rejected')} className="flex-1 py-2 rounded-xl border border-slate-200 text-slate-700 text-[11px] font-semibold">Descartar</button>
             </div>
           )}
         </div>
