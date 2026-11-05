@@ -134,6 +134,12 @@ export const CitySignalAtlas: React.FC<CitySignalAtlasProps> = ({
       maxZoom: 18,
     });
 
+<<<<<<< HEAD
+    // OpenStreetMap provides a keyless basemap for local development.
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> • ANTAH Signal Atlas',
+=======
     // High-fidelity OpenStreetMap basemap (requires no API key, zero watermark, clean light aesthetic)
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution:
