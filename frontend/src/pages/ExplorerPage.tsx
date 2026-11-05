@@ -339,6 +339,7 @@ export const ExplorerPage: React.FC = () => {
               className="w-full h-full"
               selectedSignalId={activeSignal?.id}
               onSignalClick={(sig) => setActiveSignal(sig)}
+              onSignalClose={() => setActiveSignal(null)}
               externalStatusFilter={selectedStatus}
               externalCategoryFilter={selectedCategory}
             />

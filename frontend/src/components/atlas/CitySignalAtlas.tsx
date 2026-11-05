@@ -19,6 +19,7 @@ import { API_ENDPOINTS, apiRequest, getAuthToken, Report } from '../../config/ap
 interface CitySignalAtlasProps {
   className?: string;
   onSignalClick?: (signal: AtlasSignal) => void;
+  onSignalClose?: () => void;
   initialSelectedId?: string;
   selectedSignalId?: string;
   externalStatusFilter?: string;
@@ -32,6 +33,7 @@ const DEFAULT_ZOOM = 14;
 export const CitySignalAtlas: React.FC<CitySignalAtlasProps> = ({
   className = '',
   onSignalClick,
+  onSignalClose,
   initialSelectedId,
   selectedSignalId,
   externalStatusFilter = 'all',
@@ -389,6 +391,7 @@ export const CitySignalAtlas: React.FC<CitySignalAtlasProps> = ({
         onClose={() => {
           setSelectedSignal(null);
           setSelectedCluster(null);
+          onSignalClose?.();
         }}
         onSelectSignalById={handleSelectSignalById}
         onOpenChat={(id, title) => setActiveChat({ id, title })}
