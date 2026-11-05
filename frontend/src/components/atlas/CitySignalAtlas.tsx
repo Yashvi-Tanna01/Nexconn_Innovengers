@@ -334,7 +334,7 @@ export const CitySignalAtlas: React.FC<CitySignalAtlasProps> = ({
         />
       )}
 
-      {/* 3. Floating Map Controls & Category Filter */}
+      {/* 3. Floating Map Controls Stack (Top-Right) */}
       <AtlasToolbar
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
@@ -345,11 +345,6 @@ export const CitySignalAtlas: React.FC<CitySignalAtlasProps> = ({
         onToggleThreads={() => setShowThreads((prev) => !prev)}
         showLegend={showLegend}
         onToggleLegend={() => setShowLegend((prev) => !prev)}
-        selectedCategory={selectedCategory}
-        onSelectCategory={setSelectedCategory}
-        selectedStatus={selectedStatus}
-        onSelectStatus={setSelectedStatus}
-        totalSignals={filteredSignals.length}
       />
 
       {/* 4. Contextual Issue Detail Panel (Desktop card / Mobile bottom sheet) */}
