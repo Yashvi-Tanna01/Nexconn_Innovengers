@@ -132,7 +132,7 @@ export const CitySignalAtlas: React.FC<CitySignalAtlasProps> = ({
       maxZoom: 18,
     });
 
->>>>>>> HEAD
+<<<<<<< HEAD
     // OpenStreetMap provides a keyless basemap for local development.
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution:
@@ -143,7 +143,6 @@ export const CitySignalAtlas: React.FC<CitySignalAtlasProps> = ({
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors • ANTAH Spatial',
       subdomains: 'abc',
->>>>>>> b004da41577fd294f0be52cdf7ca4ff91e3a99af
       maxZoom: 19,
     }).addTo(map);
 
