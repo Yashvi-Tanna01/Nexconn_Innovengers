@@ -30,7 +30,7 @@ const CitySignalAtlas = React.lazy(() =>
 );
 
 export const DashboardPage: React.FC = () => {
-  const [selectedSignal, setSelectedSignal] = useState<AtlasSignal>(ATLAS_SIGNALS[0]);
+  const [selectedSignal, setSelectedSignal] = useState<AtlasSignal | null>(ATLAS_SIGNALS[0]);
   const primaryCluster = ATLAS_CANDIDATE_CLUSTERS[0];
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
 
@@ -128,8 +128,9 @@ export const DashboardPage: React.FC = () => {
           <Suspense fallback={<PageLoadingState message="Cargando mapa territorial..." />}>
             <CitySignalAtlas
               className="w-full h-full"
-              selectedSignalId={selectedSignal.id}
+              selectedSignalId={selectedSignal?.id}
               onSignalClick={(s) => setSelectedSignal(s)}
+              onSignalClose={() => setSelectedSignal(null)}
             />
           </Suspense>
         </div>
