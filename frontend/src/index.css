@@ -13,6 +13,13 @@
     --accent-blue: #3B82F6;
     --accent-amber: #D97706;
     --border-neutral: #E2E8F0;
+
+    /* Mobile & Android Bottom Layout Constants */
+    --nav-height: 64px;
+    --filter-height: 48px;
+    --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+    --combined-bottom-offset: calc(var(--nav-height) + var(--safe-area-bottom));
+    --total-bottom-space: calc(var(--nav-height) + var(--filter-height) + var(--safe-area-bottom));
   }
 
   *, *::before, *::after {

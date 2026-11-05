@@ -19,6 +19,7 @@ import {
   ChevronRight,
   Filter,
 } from 'lucide-react';
+import { AtlasCategoryBar } from '../components/atlas/AtlasCategoryBar';
 
 const CitySignalAtlas = React.lazy(() =>
   import('../components/atlas/CitySignalAtlas').then((mod) => ({ default: mod.CitySignalAtlas }))
@@ -104,7 +105,10 @@ export const ExplorerPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="w-full text-[#182322] space-y-4 select-none box-border min-w-0">
+    <div
+      className="w-full text-[#182322] space-y-4 select-none box-border min-w-0"
+      style={{ paddingBottom: 'calc(var(--total-bottom-space) + 16px)' }}
+    >
       {/* 1. MAP HEADER & CONTROLS (Responsive Two-Column Layout) */}
       <div className="w-full flex flex-col md:flex-row md:items-end justify-between gap-4 pt-1 min-w-0">
         {/* Left Column: Section label, Location badge, Heading, Supporting description */}
@@ -121,7 +125,7 @@ export const ExplorerPage: React.FC = () => {
             </span>
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#182322] whitespace-nowrap">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#182322] leading-tight">
             Community Map
           </h1>
           <p className="text-xs text-[#727C79] leading-relaxed">
@@ -130,9 +134,9 @@ export const ExplorerPage: React.FC = () => {
         </div>
 
         {/* Right Column: Location Search, Layer Selector, Refresh Button, Map/List Toggle */}
-        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap min-w-0 shrink-0">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto min-w-0 shrink-0">
           {/* Location / Signal Search Input */}
-          <div className="relative flex-1 sm:w-56 md:w-64 min-w-[170px] max-w-full">
+          <div className="relative w-full sm:w-56 md:w-64 min-w-0">
             <Search
               size={14}
               className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#727C79] pointer-events-none"
@@ -155,58 +159,61 @@ export const ExplorerPage: React.FC = () => {
             )}
           </div>
 
-          {/* Map Layer Selector */}
-          <div className="relative shrink-0">
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="appearance-none bg-white text-[#182322] text-xs font-semibold rounded-2xl border border-[#D99A45]/40 pl-3.5 pr-8 py-2.5 shadow-2xs focus:outline-none focus:ring-2 focus:ring-[#D99A45]/30 cursor-pointer min-h-[40px] box-border"
-              aria-label="Map Layer Selector"
-            >
-              <option value="all">All Layers</option>
-              <option value="active_reports">Active Reports ({summaryStats.activeReports})</option>
-              <option value="candidate_clusters">Candidate Clusters ({summaryStats.candidateClusters})</option>
-              <option value="verified_incidents">Verified Incidents ({summaryStats.verifiedIncidents})</option>
-              <option value="resolved">Resolved ({summaryStats.resolvedIssues})</option>
-            </select>
-            <Layers size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#D99A45] pointer-events-none" />
-          </div>
+          {/* Controls Row: Layer selector, Refresh button, Map/List Toggle */}
+          <div className="flex items-center gap-2 w-full sm:w-auto min-w-0">
+            {/* Map Layer Selector */}
+            <div className="relative flex-1 sm:flex-none min-w-0">
+              <select
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+                className="w-full sm:w-auto appearance-none bg-white text-[#182322] text-xs font-semibold rounded-2xl border border-[#D99A45]/40 pl-3.5 pr-8 py-2.5 shadow-2xs focus:outline-none focus:ring-2 focus:ring-[#D99A45]/30 cursor-pointer min-h-[40px] box-border truncate"
+                aria-label="Map Layer Selector"
+              >
+                <option value="all">All Layers</option>
+                <option value="active_reports">Active Reports ({summaryStats.activeReports})</option>
+                <option value="candidate_clusters">Candidate Clusters ({summaryStats.candidateClusters})</option>
+                <option value="verified_incidents">Verified Incidents ({summaryStats.verifiedIncidents})</option>
+                <option value="resolved">Resolved ({summaryStats.resolvedIssues})</option>
+              </select>
+              <Layers size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#D99A45] pointer-events-none" />
+            </div>
 
-          {/* Subtle Data Refresh Button */}
-          <button
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            className={`w-10 h-10 rounded-2xl bg-white border border-[#E6EAE6] flex items-center justify-center text-[#727C79] hover:text-[#182322] hover:bg-[#F8F8F5] active:scale-95 transition-all shadow-2xs shrink-0 ${
-              isRefreshing ? 'text-[#D99A45]' : ''
-            }`}
-            title="Refresh Civic Telemetry"
-            aria-label="Refresh telemetry data"
-          >
-            <RotateCw size={15} className={isRefreshing ? 'animate-spin text-[#D99A45]' : ''} />
-          </button>
+            {/* Subtle Data Refresh Button */}
+            <button
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className={`w-10 h-10 rounded-2xl bg-white border border-[#E6EAE6] flex items-center justify-center text-[#727C79] hover:text-[#182322] hover:bg-[#F8F8F5] active:scale-95 transition-all shadow-2xs shrink-0 ${
+                isRefreshing ? 'text-[#D99A45]' : ''
+              }`}
+              title="Refresh Civic Telemetry"
+              aria-label="Refresh telemetry data"
+            >
+              <RotateCw size={15} className={isRefreshing ? 'animate-spin text-[#D99A45]' : ''} />
+            </button>
 
-          {/* View Mode Toggle: Map vs List */}
-          <div className="flex items-center bg-white border border-[#E6EAE6] rounded-2xl p-1 shadow-2xs shrink-0">
-            <button
-              onClick={() => setViewMode('map')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                viewMode === 'map'
-                  ? 'bg-[#182322] text-white shadow-xs'
-                  : 'text-[#727C79] hover:text-[#182322]'
-              }`}
-            >
-              Map
-            </button>
-            <button
-              onClick={() => setViewMode('list')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                viewMode === 'list'
-                  ? 'bg-[#182322] text-white shadow-xs'
-                  : 'text-[#727C79] hover:text-[#182322]'
-              }`}
-            >
-              List ({filteredSignals.length})
-            </button>
+            {/* View Mode Toggle: Map vs List */}
+            <div className="flex items-center bg-white border border-[#E6EAE6] rounded-2xl p-1 shadow-2xs shrink-0">
+              <button
+                onClick={() => setViewMode('map')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                  viewMode === 'map'
+                    ? 'bg-[#182322] text-white shadow-xs'
+                    : 'text-[#727C79] hover:text-[#182322]'
+                }`}
+              >
+                Map
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                  viewMode === 'list'
+                    ? 'bg-[#182322] text-white shadow-xs'
+                    : 'text-[#727C79] hover:text-[#182322]'
+                }`}
+              >
+                List ({filteredSignals.length})
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -237,8 +244,8 @@ export const ExplorerPage: React.FC = () => {
               : 'bg-white border-[#E6EAE6] hover:border-[#CBD5E1] shadow-2xs'
           }`}
         >
-          <div className="flex items-start justify-between gap-2 min-w-0">
-            <span className="text-[10px] font-mono uppercase text-[#727C79] tracking-wider font-semibold leading-tight flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-1.5 min-w-0">
+            <span className="text-[10px] sm:text-[11px] font-mono uppercase text-[#727C79] tracking-wider font-semibold leading-tight flex-1 min-w-0">
               Active Reports
             </span>
             <span className="w-2 h-2 rounded-full bg-[#182322] shrink-0 mt-0.5" />
@@ -258,9 +265,9 @@ export const ExplorerPage: React.FC = () => {
               : 'bg-white border-[#E6EAE6] hover:border-[#D99A45]/50 shadow-2xs'
           }`}
         >
-          <div className="flex items-start justify-between gap-2 min-w-0">
-            <span className="text-[10px] font-mono uppercase text-[#D99A45] tracking-wider font-bold leading-tight flex-1 min-w-0 flex items-center gap-1">
-              <GitFork size={11} className="shrink-0" />
+          <div className="flex items-start justify-between gap-1.5 min-w-0">
+            <span className="text-[10px] sm:text-[11px] font-mono uppercase text-[#D99A45] tracking-wider font-bold leading-tight flex-1 min-w-0 flex items-center gap-1">
+              <GitFork size={12} className="shrink-0" />
               <span className="truncate">Candidate Clusters</span>
             </span>
             <span className="w-2 h-2 rounded-full bg-[#D99A45] animate-pulse shrink-0 mt-0.5" />
@@ -280,9 +287,9 @@ export const ExplorerPage: React.FC = () => {
               : 'bg-white border-[#E6EAE6] hover:border-[#D9534F]/50 shadow-2xs'
           }`}
         >
-          <div className="flex items-start justify-between gap-2 min-w-0">
-            <span className="text-[10px] font-mono uppercase text-[#D9534F] tracking-wider font-bold leading-tight flex-1 min-w-0 flex items-center gap-1">
-              <ShieldCheck size={11} className="shrink-0" />
+          <div className="flex items-start justify-between gap-1.5 min-w-0">
+            <span className="text-[10px] sm:text-[11px] font-mono uppercase text-[#D9534F] tracking-wider font-bold leading-tight flex-1 min-w-0 flex items-center gap-1">
+              <ShieldCheck size={12} className="shrink-0" />
               <span className="truncate">Verified Incidents</span>
             </span>
             <span className="w-2 h-2 rounded-full bg-[#D9534F] shrink-0 mt-0.5" />
@@ -302,9 +309,9 @@ export const ExplorerPage: React.FC = () => {
               : 'bg-white border-[#E6EAE6] hover:border-[#286B56]/50 shadow-2xs'
           }`}
         >
-          <div className="flex items-start justify-between gap-2 min-w-0">
-            <span className="text-[10px] font-mono uppercase text-[#286B56] tracking-wider font-bold leading-tight flex-1 min-w-0 flex items-center gap-1">
-              <CheckCircle2 size={11} className="shrink-0" />
+          <div className="flex items-start justify-between gap-1.5 min-w-0">
+            <span className="text-[10px] sm:text-[11px] font-mono uppercase text-[#286B56] tracking-wider font-bold leading-tight flex-1 min-w-0 flex items-center gap-1">
+              <CheckCircle2 size={12} className="shrink-0" />
               <span className="truncate">Resolved Issues</span>
             </span>
             <span className="w-2 h-2 rounded-full bg-[#286B56] shrink-0 mt-0.5" />
@@ -318,13 +325,13 @@ export const ExplorerPage: React.FC = () => {
 
       {/* 3. MAP AS VISUAL CENTERPIECE (OR LIST VIEW) */}
       {viewMode === 'map' ? (
-        <div className="relative w-full h-[calc(100vh-270px)] min-h-[500px] sm:min-h-[560px] rounded-3xl overflow-hidden border border-[#E6EAE6] bg-[#F0F2EE] shadow-[0_8px_30px_rgba(24,35,34,0.04)] box-border min-w-0">
+        <div className="relative w-full h-[500px] sm:h-[560px] lg:h-[calc(100vh-270px)] min-h-[480px] rounded-3xl overflow-hidden border border-[#E6EAE6] bg-[#F0F2EE] shadow-[0_8px_30px_rgba(24,35,34,0.04)] box-border min-w-0">
           <Suspense
             fallback={
               <PageLoadingState
                 message="LOADING TERRITORIAL ATLAS..."
                 subMessage="Synchronizing GPS nodes and active Signal Threads"
-                minHeight="h-[500px]"
+                minHeight="h-[480px] sm:h-[560px]"
               />
             }
           >
@@ -409,6 +416,13 @@ export const ExplorerPage: React.FC = () => {
           )}
         </div>
       )}
+
+      {/* 5. DEDICATED DOCKED CATEGORY FILTER BAR (Positioned directly above bottom navigation) */}
+      <AtlasCategoryBar
+        selectedCategory={selectedCategory}
+        onSelectCategory={setSelectedCategory}
+        totalSignals={ATLAS_SIGNALS.length}
+      />
     </div>
   );
 };

@@ -32,7 +32,7 @@ export const HomePage: React.FC = () => {
       {/* 1. HERO 3D SIGNAL ORB STAGE */}
       <section className="relative rounded-3xl bg-white border border-[#E3E8E4] shadow-xs p-4 sm:p-6 overflow-hidden flex flex-col items-center text-center">
         {/* Subtle radial ambient background glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-gradient-to-tr from-amber-100/50 via-emerald-50/40 to-transparent rounded-full blur-2xl pointer-events-none -z-10" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 sm:w-80 h-72 sm:h-80 bg-gradient-to-tr from-amber-100/60 via-teal-50/40 to-transparent rounded-full blur-3xl pointer-events-none -z-10" />
 
         {/* Live Grid Status Badge */}
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E1F0E8] border border-[#286B56]/20 text-[10px] font-mono text-[#286B56] font-semibold uppercase tracking-wider mb-2">
@@ -40,8 +40,8 @@ export const HomePage: React.FC = () => {
           <span>CIVIC INTELLIGENCE MESH • ONLINE</span>
         </div>
 
-        {/* The 3D Signal Orb Canvas (Scaled for mobile touch screens) */}
-        <div className="relative w-full h-[260px] sm:h-[300px] max-w-[320px] mx-auto my-1 flex items-center justify-center">
+        {/* 3D Civic Intelligence Globe Canvas (Responsive cinematic viewport) */}
+        <div className="relative w-full h-[290px] sm:h-[350px] md:h-[390px] max-w-[340px] sm:max-w-[400px] md:max-w-[450px] mx-auto my-1 sm:my-2 flex items-center justify-center">
           <SignalOrbCanvas />
         </div>
 

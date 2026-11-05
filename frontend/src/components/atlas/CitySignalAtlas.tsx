@@ -132,10 +132,18 @@ export const CitySignalAtlas: React.FC<CitySignalAtlasProps> = ({
       maxZoom: 18,
     });
 
+<<<<<<< HEAD
     // OpenStreetMap provides a keyless basemap for local development.
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> • ANTAH Signal Atlas',
+=======
+    // High-fidelity OpenStreetMap basemap (requires no API key, zero watermark, clean light aesthetic)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors • ANTAH Spatial',
+      subdomains: 'abc',
+>>>>>>> b004da41577fd294f0be52cdf7ca4ff91e3a99af
       maxZoom: 19,
     }).addTo(map);
 
@@ -172,8 +180,15 @@ export const CitySignalAtlas: React.FC<CitySignalAtlasProps> = ({
       resizeObserver.observe(containerRef.current);
     }
 
+    const initTimer = setTimeout(() => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.invalidateSize({ animate: false });
+      }
+    }, 200);
+
     return () => {
       clearTimeout(resizeTimer);
+      clearTimeout(initTimer);
       resizeObserver.disconnect();
       map.remove();
       mapInstanceRef.current = null;
@@ -344,7 +359,7 @@ export const CitySignalAtlas: React.FC<CitySignalAtlasProps> = ({
       {/* 1. Underlying Leaflet Map Canvas */}
       <div
         ref={containerRef}
-        className="w-full h-full cursor-grab active:cursor-grabbing z-0"
+        className="w-full h-full cursor-grab active:cursor-grabbing z-0 [&_.leaflet-tile-pane]:contrast-[0.96] [&_.leaflet-tile-pane]:brightness-[1.02] [&_.leaflet-tile-pane]:saturate-[0.75]"
         style={{ background: '#F0F2EE' }}
       />
 
@@ -361,7 +376,7 @@ export const CitySignalAtlas: React.FC<CitySignalAtlasProps> = ({
         />
       )}
 
-      {/* 3. Floating Map Controls & Category Filter */}
+      {/* 3. Floating Map Controls Stack (Top-Right) */}
       <AtlasToolbar
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
@@ -372,11 +387,6 @@ export const CitySignalAtlas: React.FC<CitySignalAtlasProps> = ({
         onToggleThreads={() => setShowThreads((prev) => !prev)}
         showLegend={showLegend}
         onToggleLegend={() => setShowLegend((prev) => !prev)}
-        selectedCategory={selectedCategory}
-        onSelectCategory={setSelectedCategory}
-        selectedStatus={selectedStatus}
-        onSelectStatus={setSelectedStatus}
-        totalSignals={filteredSignals.length}
       />
 
       {/* 4. Contextual Issue Detail Panel (Desktop card / Mobile bottom sheet) */}

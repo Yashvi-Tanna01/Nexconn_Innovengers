@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import {
   Home,
   MapPin,
@@ -75,9 +74,9 @@ export const AndroidBottomNav: React.FC = () => {
     <nav
       role="navigation"
       aria-label="Android Bottom Navigation"
-      className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-[#E3E8E4] shadow-[0_-4px_24px_rgba(32,40,39,0.06)] pb-[env(safe-area-inset-bottom,12px)] transition-all select-none"
+      className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-[#E3E8E4] shadow-[0_-4px_24px_rgba(32,40,39,0.06)] pb-[env(safe-area-inset-bottom,0px)] transition-all select-none box-border"
     >
-      <div className="max-w-md md:max-w-xl mx-auto flex items-center justify-around px-2 h-16">
+      <div className="w-full max-w-md md:max-w-xl mx-auto flex items-center justify-around px-2 h-16">
         {navItems.map((item) => {
           const active = isCurrentActive(item);
 
@@ -86,20 +85,19 @@ export const AndroidBottomNav: React.FC = () => {
               <Link
                 key={item.id}
                 to={item.path}
-                className="relative -top-3.5 flex flex-col items-center group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#286B56] active:scale-95 transition-transform"
+                className="flex flex-col items-center justify-center min-w-[56px] py-1 px-1 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#286B56] active:scale-95 transition-transform shrink-0"
                 aria-label="Report New Anomaly"
               >
                 <div
-                  className={`w-13 h-13 rounded-2xl flex items-center justify-center shadow-lg transition-all ${
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-md transition-all ${
                     active
-                      ? 'bg-[#1b4e3e] text-white ring-4 ring-[#E1F0E8]'
-                      : 'bg-[#286B56] text-white hover:bg-[#1f5645] ring-2 ring-white'
+                      ? 'bg-[#1b4e3e] text-white ring-2 ring-[#E1F0E8]'
+                      : 'bg-[#286B56] text-white hover:bg-[#1f5645] ring-1 ring-white'
                   }`}
-                  style={{ width: '52px', height: '52px' }}
                 >
-                  <PlusCircle size={26} strokeWidth={2.4} />
+                  <PlusCircle size={22} strokeWidth={2.4} />
                 </div>
-                <span className="text-[10px] font-semibold text-[#286B56] mt-1 font-sans">
+                <span className="text-[10px] font-bold text-[#286B56] mt-0.5 font-sans">
                   {item.label}
                 </span>
               </Link>
@@ -136,7 +134,7 @@ export const AndroidBottomNav: React.FC = () => {
 
               {/* Label */}
               <span
-                className={`text-[10px] font-medium tracking-tight mt-0.5 transition-colors font-sans ${
+                className={`text-[10px] font-medium tracking-tight mt-0.5 transition-colors font-sans truncate max-w-full text-center ${
                   active ? 'font-bold text-[#286B56]' : 'text-[#737C78]'
                 }`}
               >
