@@ -42,14 +42,14 @@ export const AndroidTopBar: React.FC = () => {
   const meta = getScreenMeta();
 
   return (
-    <header className="sticky top-0 z-30 bg-[#F5F6F4]/95 backdrop-blur-md border-b border-[#E3E8E4]/80 px-3 sm:px-6 lg:px-8 pt-[env(safe-area-inset-top,8px)] pb-2 transition-all w-full box-border">
+    <header className="sticky top-0 z-30 bg-[#FAF9F5]/90 backdrop-blur-md border-b border-[#EBE7DF]/80 px-3 sm:px-6 lg:px-8 pt-[env(safe-area-inset-top,8px)] pb-2 transition-all w-full box-border">
       <div className="w-full max-w-7xl mx-auto flex items-center justify-between h-13 min-w-0">
         {/* Left: Brand Identity */}
         <Link
           to="/home"
           className="flex items-center gap-2.5 group focus:outline-none min-w-0"
         >
-          <div className="w-8 h-8 rounded-xl bg-[#286B56] flex items-center justify-center text-white font-bold text-xs shadow-sm group-active:scale-95 transition-transform shrink-0">
+          <div className="w-8 h-8 rounded-xl bg-[#17533E] flex items-center justify-center text-white font-bold text-xs shadow-sm group-active:scale-95 transition-transform shrink-0">
             A
           </div>
           <div className="flex flex-col min-w-0">
