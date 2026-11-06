@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useNavigationTransition } from './transition';
 import {
   Bell,
   ShieldCheck,
@@ -13,6 +14,7 @@ import { ATLAS_CANDIDATE_CLUSTERS } from '../atlas/types';
 
 export const AndroidTopBar: React.FC = () => {
   const location = useLocation();
+  const { navigateWithTransition } = useNavigationTransition();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
@@ -47,6 +49,10 @@ export const AndroidTopBar: React.FC = () => {
         {/* Left: Brand Identity */}
         <Link
           to="/home"
+          onClick={(e) => {
+            e.preventDefault();
+            navigateWithTransition('/home', 'home');
+          }}
           className="flex items-center gap-2.5 group focus:outline-none min-w-0"
         >
           <div className="w-8 h-8 rounded-xl bg-[#17533E] flex items-center justify-center text-white font-bold text-xs shadow-sm group-active:scale-95 transition-transform shrink-0">

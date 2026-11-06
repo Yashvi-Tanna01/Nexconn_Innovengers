@@ -6,6 +6,7 @@ import { AppStartupLoader, GlobalLoadingOverlay } from './components/loading';
 import { NetworkBanner } from './components/common/NetworkBanner';
 import { HomePage } from './components/home/HomePage';
 import { AndroidAppShell } from './components/layout/AndroidAppShell';
+import { NavigationTransitionProvider, RouteReadySentinel } from './components/navigation/transition';
 import { pageVariants, reducedPageVariants } from './theme/motion';
 
 // Code-split secondary pages for fast initial bundle execution
@@ -46,16 +47,16 @@ function MainLayout() {
           className="w-full flex-1 flex flex-col"
         >
           <Routes location={location}>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/home" element={<HomePage />} />
-            <Route path="/dashboard" element={<Suspense fallback={<PageFallback />}><DashboardPage /></Suspense>} />
-            <Route path="/explorer" element={<Suspense fallback={<PageFallback />}><ExplorerPage /></Suspense>} />
-            <Route path="/report" element={<Suspense fallback={<PageFallback />}><ReportPage /></Suspense>} />
-            <Route path="/patterns" element={<Suspense fallback={<PageFallback />}><SignalPatternsPage /></Suspense>} />
-            <Route path="/coordinator" element={<Suspense fallback={<PageFallback />}><CoordinatorPage /></Suspense>} />
-            <Route path="/messages" element={<Suspense fallback={<PageFallback />}><MessagesPage /></Suspense>} />
-            <Route path="/auth" element={<Suspense fallback={<PageFallback />}><AuthPage /></Suspense>} />
-            <Route path="/login" element={<Suspense fallback={<PageFallback />}><AuthPage /></Suspense>} />
+            <Route path="/" element={<RouteReadySentinel path="/home"><HomePage /></RouteReadySentinel>} />
+            <Route path="/home" element={<RouteReadySentinel path="/home"><HomePage /></RouteReadySentinel>} />
+            <Route path="/dashboard" element={<Suspense fallback={<PageFallback />}><RouteReadySentinel path="/explorer"><DashboardPage /></RouteReadySentinel></Suspense>} />
+            <Route path="/explorer" element={<Suspense fallback={<PageFallback />}><RouteReadySentinel path="/explorer"><ExplorerPage /></RouteReadySentinel></Suspense>} />
+            <Route path="/report" element={<Suspense fallback={<PageFallback />}><RouteReadySentinel path="/report"><ReportPage /></RouteReadySentinel></Suspense>} />
+            <Route path="/patterns" element={<Suspense fallback={<PageFallback />}><RouteReadySentinel path="/patterns"><SignalPatternsPage /></RouteReadySentinel></Suspense>} />
+            <Route path="/coordinator" element={<Suspense fallback={<PageFallback />}><RouteReadySentinel path="/patterns"><CoordinatorPage /></RouteReadySentinel></Suspense>} />
+            <Route path="/messages" element={<Suspense fallback={<PageFallback />}><RouteReadySentinel path="/messages"><MessagesPage /></RouteReadySentinel></Suspense>} />
+            <Route path="/auth" element={<Suspense fallback={<PageFallback />}><RouteReadySentinel path="/auth"><AuthPage /></RouteReadySentinel></Suspense>} />
+            <Route path="/login" element={<Suspense fallback={<PageFallback />}><RouteReadySentinel path="/login"><AuthPage /></RouteReadySentinel></Suspense>} />
             <Route path="*" element={<Navigate to="/home" replace />} />
           </Routes>
         </motion.div>
@@ -74,9 +75,11 @@ export function App() {
       <AppStartupLoader />
       <GlobalLoadingOverlay />
       <BrowserRouter>
-        <ScrollToTop />
-        <NetworkBanner />
-        <MainLayout />
+        <NavigationTransitionProvider>
+          <ScrollToTop />
+          <NetworkBanner />
+          <MainLayout />
+        </NavigationTransitionProvider>
       </BrowserRouter>
     </LoadingProvider>
   );

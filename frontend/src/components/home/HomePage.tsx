@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
+import { useNavigationTransition } from '../navigation/transition';
 import { HomeFloatingGlobeBackground } from './HomeFloatingGlobeBackground';
 import { HowItWorksModal } from './HowItWorksModal';
 import {
@@ -21,6 +22,7 @@ import { ATLAS_SIGNALS, ATLAS_CANDIDATE_CLUSTERS } from '../atlas/types';
 export const HomePage: React.FC = React.memo(() => {
   const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
   const shouldReduceMotion = useReducedMotion();
+  const { navigateWithTransition } = useNavigationTransition();
 
   // Real recent signals and cluster for data integrity
   const recentSignals = ATLAS_SIGNALS.slice(0, 3);
@@ -74,6 +76,10 @@ export const HomePage: React.FC = React.memo(() => {
           {/* Primary Action Button: Explore Signals */}
           <Link
             to="/explorer"
+            onClick={(e) => {
+              e.preventDefault();
+              navigateWithTransition('/explorer', 'explore');
+            }}
             className="inline-flex items-center justify-center gap-2 px-6 sm:px-7 py-3 sm:py-3.5 rounded-full text-xs sm:text-sm font-semibold bg-[#17533E] hover:bg-[#124231] active:scale-98 text-white shadow-[0_4px_18px_rgba(23,83,62,0.32)] transition-all min-h-[44px]"
           >
             <span>Explore Signals</span>
@@ -108,6 +114,10 @@ export const HomePage: React.FC = React.memo(() => {
           {/* Card 1: Report Issue */}
           <Link
             to="/report"
+            onClick={(e) => {
+              e.preventDefault();
+              navigateWithTransition('/report', 'report');
+            }}
             className="group relative p-4 sm:p-5 rounded-3xl bg-white/85 backdrop-blur-md border border-[#EBE7DF] shadow-[0_4px_20px_rgba(30,40,35,0.03)] hover:shadow-[0_8px_25px_rgba(23,83,62,0.12)] hover:border-[#17533E]/30 hover:-translate-y-0.5 active:scale-98 transition-all flex items-center justify-between gap-3.5 overflow-hidden"
           >
             <div className="absolute -right-6 -bottom-6 w-20 h-20 rounded-full bg-emerald-100/40 blur-xl pointer-events-none group-hover:scale-125 transition-transform" />
@@ -132,6 +142,10 @@ export const HomePage: React.FC = React.memo(() => {
           {/* Card 2: Live Map */}
           <Link
             to="/explorer"
+            onClick={(e) => {
+              e.preventDefault();
+              navigateWithTransition('/explorer', 'explore');
+            }}
             className="group relative p-4 sm:p-5 rounded-3xl bg-white/85 backdrop-blur-md border border-[#EBE7DF] shadow-[0_4px_20px_rgba(30,40,35,0.03)] hover:shadow-[0_8px_25px_rgba(217,119,6,0.12)] hover:border-amber-400/40 hover:-translate-y-0.5 active:scale-98 transition-all flex items-center justify-between gap-3.5 overflow-hidden"
           >
             <div className="absolute -right-6 -bottom-6 w-20 h-20 rounded-full bg-amber-100/40 blur-xl pointer-events-none group-hover:scale-125 transition-transform" />
@@ -156,6 +170,10 @@ export const HomePage: React.FC = React.memo(() => {
           {/* Card 3: Signal Patterns */}
           <Link
             to="/patterns"
+            onClick={(e) => {
+              e.preventDefault();
+              navigateWithTransition('/patterns', 'patterns');
+            }}
             className="group relative p-4 sm:p-5 rounded-3xl bg-white/85 backdrop-blur-md border border-[#EBE7DF] shadow-[0_4px_20px_rgba(30,40,35,0.03)] hover:shadow-[0_8px_25px_rgba(37,99,235,0.12)] hover:border-blue-400/40 hover:-translate-y-0.5 active:scale-98 transition-all flex items-center justify-between gap-3.5 overflow-hidden"
           >
             <div className="absolute -right-6 -bottom-6 w-20 h-20 rounded-full bg-blue-100/40 blur-xl pointer-events-none group-hover:scale-125 transition-transform" />
@@ -180,6 +198,10 @@ export const HomePage: React.FC = React.memo(() => {
           {/* Card 4: Community Chat */}
           <Link
             to="/messages"
+            onClick={(e) => {
+              e.preventDefault();
+              navigateWithTransition('/messages', 'chat');
+            }}
             className="group relative p-4 sm:p-5 rounded-3xl bg-white/85 backdrop-blur-md border border-[#EBE7DF] shadow-[0_4px_20px_rgba(30,40,35,0.03)] hover:shadow-[0_8px_25px_rgba(234,88,12,0.12)] hover:border-orange-400/40 hover:-translate-y-0.5 active:scale-98 transition-all flex items-center justify-between gap-3.5 overflow-hidden"
           >
             <div className="absolute -right-6 -bottom-6 w-20 h-20 rounded-full bg-orange-100/40 blur-xl pointer-events-none group-hover:scale-125 transition-transform" />

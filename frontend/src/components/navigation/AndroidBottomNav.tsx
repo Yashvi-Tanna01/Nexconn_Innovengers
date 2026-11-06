@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useNavigationTransition, NavDestination } from './transition';
 import {
   Home,
   MapPin,
@@ -63,12 +64,22 @@ const NAV_ITEMS: NavItem[] = [
 
 export const AndroidBottomNav: React.FC = React.memo(() => {
   const location = useLocation();
+  const { navigateWithTransition, isTransitioning } = useNavigationTransition();
 
   const isCurrentActive = (item: typeof NAV_ITEMS[0]) => {
     if (location.pathname === item.path) return true;
     if (item.altPaths && item.altPaths.includes(location.pathname)) return true;
     if (item.path !== '/' && item.path !== '/home' && location.pathname.startsWith(item.path)) return true;
     return false;
+  };
+
+  const handleNavClick = (e: React.MouseEvent, item: typeof NAV_ITEMS[0]) => {
+    if (isCurrentActive(item)) {
+      e.preventDefault();
+      return;
+    }
+    e.preventDefault();
+    navigateWithTransition(item.path, item.id as NavDestination);
   };
 
   return (
@@ -87,6 +98,7 @@ export const AndroidBottomNav: React.FC = React.memo(() => {
               <Link
                 key={item.id}
                 to={item.path}
+                onClick={(e) => handleNavClick(e, item)}
                 className="flex flex-col items-center justify-center min-w-[56px] py-1 px-1 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#17533E] active:scale-95 transition-transform shrink-0"
                 aria-label="Report New Anomaly"
               >
@@ -110,6 +122,7 @@ export const AndroidBottomNav: React.FC = React.memo(() => {
             <Link
               key={item.id}
               to={item.path}
+              onClick={(e) => handleNavClick(e, item)}
               className={`relative flex-1 flex flex-col items-center justify-center min-w-[52px] min-h-[46px] py-1 px-1 rounded-2xl transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#17533E] active:scale-95 ${
                 active ? 'text-[#17533E]' : 'text-[#7B8B84] hover:text-[#1E2925]'
               }`}
