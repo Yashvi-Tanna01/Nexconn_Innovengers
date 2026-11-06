@@ -102,28 +102,6 @@ function createStarburstTexture(): THREE.CanvasTexture {
   return tex;
 }
 
-// Procedural Floating Underglow Luminous Pool (Floating light depth beneath globe)
-function createUnderglowTexture(): THREE.CanvasTexture {
-  const canvas = document.createElement('canvas');
-  canvas.width = 256;
-  canvas.height = 256;
-  const ctx = canvas.getContext('2d')!;
-  const cx = 128;
-  const cy = 128;
-
-  const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 124);
-  grad.addColorStop(0.0, 'rgba(0, 242, 254, 0.85)'); // Electric cyan intense core
-  grad.addColorStop(0.24, 'rgba(56, 189, 248, 0.55)'); // Luminous sky blue
-  grad.addColorStop(0.55, 'rgba(251, 191, 36, 0.28)'); // Radiant warm gold reflection
-  grad.addColorStop(0.82, 'rgba(0, 242, 254, 0.08)');
-  grad.addColorStop(1.0, 'rgba(0, 0, 0, 0)');
-
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, 256, 256);
-
-  const tex = new THREE.CanvasTexture(canvas);
-  return tex;
-}
 
 // Pre-calculated Arc Data with 3D quadratic curve and traveling pulse
 interface CachedNetworkArc {
@@ -161,7 +139,6 @@ function SignalOrb({ reducedMotion = false, interactionRef }: SignalOrbProps) {
   const innerHeartRef = useRef<THREE.Mesh>(null);
   const coreMotesRef = useRef<THREE.InstancedMesh>(null);
   const ambientMotesRef = useRef<THREE.InstancedMesh>(null);
-  const underglowRef = useRef<THREE.Mesh>(null);
 
   // 3D Extruded Buildings & Rooftop Beacons
   const buildingsMeshRef = useRef<THREE.InstancedMesh>(null);
@@ -198,9 +175,8 @@ function SignalOrb({ reducedMotion = false, interactionRef }: SignalOrbProps) {
     return generateLivingEarthTextures(deviceTier.isLowPower);
   }, [deviceTier.isLowPower]);
 
-  // Procedural Starburst & Underglow Textures
+  // Procedural Starburst Textures
   const starburstTexture = useMemo(() => createStarburstTexture(), []);
-  const underglowTexture = useMemo(() => createUnderglowTexture(), []);
 
   useEffect(() => {
     return () => {
@@ -208,9 +184,8 @@ function SignalOrb({ reducedMotion = false, interactionRef }: SignalOrbProps) {
       textures.emissiveMap.dispose();
       textures.bumpMap.dispose();
       starburstTexture.dispose();
-      underglowTexture.dispose();
     };
-  }, [textures, starburstTexture, underglowTexture]);
+  }, [textures, starburstTexture]);
 
   // --------------------------------------------------------------------------
   // 2. 3D SMART CITY INFRASTRUCTURE (EXTRUDED BUILDINGS ON SURFACE)
@@ -632,12 +607,6 @@ function SignalOrb({ reducedMotion = false, interactionRef }: SignalOrbProps) {
         // Continuous gentle vertical floating motion (smooth suspended levitation in 3D space)
         const floatY = Math.sin(t * 1.25) * 0.075;
         groupRef.current.position.y = floatY;
-
-        // Subtle dynamic underglow breathing synchronized with floating height
-        if (underglowRef.current) {
-          const underglowScale = 1.0 - floatY * 0.55;
-          underglowRef.current.scale.set(underglowScale, underglowScale, 1.0);
-        }
       }
     }
 
@@ -746,22 +715,6 @@ function SignalOrb({ reducedMotion = false, interactionRef }: SignalOrbProps) {
 
   return (
     <group>
-      {/* Luminous Floating Underglow Light Pool (Soft cyan & amber light depth suspended beneath globe) */}
-      <mesh
-        ref={underglowRef}
-        position={[0, -2.18, 0]}
-        rotation={[-Math.PI / 2, 0, 0]}
-      >
-        <planeGeometry args={[7.2, 7.2]} />
-        <meshBasicMaterial
-          map={underglowTexture}
-          transparent={true}
-          opacity={0.85}
-          blending={THREE.AdditiveBlending}
-          depthWrite={false}
-        />
-      </mesh>
-
       {/* Main Floating Planet Group */}
       <group ref={groupRef}>
         {/* 1. INNER VOLUMETRIC ENERGY CORE (ELECTRIC CYAN & RADIANT NUCLEUS) */}
@@ -1131,9 +1084,7 @@ class WebGLErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryStat
 // High-Fidelity Deep Midnight Navy & Cyan CSS / SVG Fallback for devices without WebGL
 function SignalOrbCSSFallback() {
   return (
-    <div className="relative w-full h-full flex items-center justify-center pointer-events-none select-none">
-      {/* Luminous Under-Glow Pool */}
-      <div className="absolute w-64 h-16 rounded-[100%] bg-cyan-400/25 blur-2xl translate-y-36" />
+    <div className="relative w-full h-full flex items-center justify-center pointer-events-none select-none bg-transparent">
       <div
         className="relative w-64 h-64 sm:w-76 sm:h-76 rounded-full shadow-[inset_0_0_50px_rgba(0,242,254,0.4),0_0_60px_rgba(0,242,254,0.35)] flex items-center justify-center overflow-hidden border border-cyan-300/40"
         style={{
@@ -1227,7 +1178,7 @@ export const SignalOrbCanvas: React.FC<SignalOrbCanvasProps> = ({ className = ''
 
   if (!webglSupported) {
     return (
-      <div className={`w-full h-full relative ${className}`}>
+      <div className={`w-full h-full relative bg-transparent ${className}`} style={{ background: 'transparent' }}>
         <SignalOrbCSSFallback />
       </div>
     );
@@ -1235,8 +1186,8 @@ export const SignalOrbCanvas: React.FC<SignalOrbCanvasProps> = ({ className = ''
 
   return (
     <div
-      className={`w-full h-full relative cursor-grab active:cursor-grabbing select-none ${className}`}
-      style={{ touchAction: 'pan-y' }}
+      className={`w-full h-full relative cursor-grab active:cursor-grabbing select-none bg-transparent ${className}`}
+      style={{ touchAction: 'pan-y', background: 'transparent' }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -1254,7 +1205,11 @@ export const SignalOrbCanvas: React.FC<SignalOrbCanvasProps> = ({ className = ''
             powerPreference: 'high-performance',
             stencil: false,
           }}
-          className="w-full h-full"
+          onCreated={({ gl }) => {
+            gl.setClearColor(0x000000, 0);
+          }}
+          style={{ background: 'transparent' }}
+          className="w-full h-full bg-transparent"
         >
           <Scene interactionRef={interactionRef} />
         </Canvas>

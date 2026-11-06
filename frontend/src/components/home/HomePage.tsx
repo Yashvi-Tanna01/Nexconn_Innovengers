@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import { SignalOrbCanvas } from './SignalOrbCanvas';
+import { AtmosphericLandscapeBackground } from './AtmosphericLandscapeBackground';
 import { HowItWorksModal } from './HowItWorksModal';
 import {
   ArrowUpRight,
@@ -27,95 +28,17 @@ export const HomePage: React.FC = () => {
   const primaryCluster = ATLAS_CANDIDATE_CLUSTERS[0];
 
   return (
-    <div className="relative w-full min-h-screen px-3 sm:px-6 pt-3 pb-36 sm:pb-44 space-y-6 select-none overflow-x-hidden">
+    <div className="relative w-full min-h-screen px-3 sm:px-6 pt-3 pb-36 sm:pb-44 select-none overflow-x-hidden">
       {/* ------------------------------------------------------------- */}
-      {/* BACKGROUND ATMOSPHERIC SILK WAVES & ORBITAL TELEMETRY GRAPHICS */}
+      {/* 1. PERMANENT ATMOSPHERIC LANDSCAPE BACKGROUND SYSTEM          */}
       {/* ------------------------------------------------------------- */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden -z-10">
-        {/* Left Organic Silk / Dune Wave (Mint-Emerald Ambient Gradient) */}
-        <svg
-          className="absolute -top-12 -left-16 w-[460px] sm:w-[680px] lg:w-[820px] h-[450px] sm:h-[600px] lg:h-[720px] opacity-80"
-          viewBox="0 0 700 600"
-          fill="none"
-        >
-          <path
-            d="M-80,600 C100,510 220,360 180,240 C140,120 280,60 440,140 C560,200 630,360 700,600 Z"
-            fill="url(#leftSilkGrad)"
-          />
-          <path
-            d="M-50,560 C120,480 230,330 195,220 C155,100 290,50 450,130 C570,190 640,350 700,560"
-            stroke="rgba(23, 83, 62, 0.4)"
-            strokeWidth="1.8"
-            fill="none"
-          />
-          <path
-            d="M-30,520 C140,440 240,300 215,200 C175,90 300,40 460,115"
-            stroke="rgba(245, 158, 11, 0.45)"
-            strokeWidth="1.2"
-            strokeDasharray="5 7"
-            fill="none"
-          />
-          <defs>
-            <linearGradient id="leftSilkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#C0DFD4" stopOpacity="0.65" />
-              <stop offset="45%" stopColor="#DDF0E9" stopOpacity="0.38" />
-              <stop offset="100%" stopColor="#FAF9F5" stopOpacity="0" />
-            </linearGradient>
-          </defs>
-        </svg>
+      <AtmosphericLandscapeBackground />
 
-        {/* Right Organic Silk / Dune Wave (Warm Champagne-Gold Ambient Gradient) */}
-        <svg
-          className="absolute -top-12 -right-16 w-[460px] sm:w-[680px] lg:w-[820px] h-[450px] sm:h-[600px] lg:h-[720px] opacity-80"
-          viewBox="0 0 700 600"
-          fill="none"
-        >
-          <path
-            d="M780,600 C580,510 470,360 510,240 C550,120 410,60 250,140 C130,200 60,360 0,600 Z"
-            fill="url(#rightSilkGrad)"
-          />
-          <path
-            d="M750,560 C560,480 460,330 495,220 C535,100 400,50 240,130 C120,190 50,350 0,560"
-            stroke="rgba(245, 158, 11, 0.5)"
-            strokeWidth="1.8"
-            fill="none"
-          />
-          <path
-            d="M730,520 C540,440 440,300 475,200 C515,90 390,40 220,115"
-            stroke="rgba(45, 212, 191, 0.35)"
-            strokeWidth="1.2"
-            strokeDasharray="5 7"
-            fill="none"
-          />
-          <defs>
-            <linearGradient id="rightSilkGrad" x1="100%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#FBEFE3" stopOpacity="0.7" />
-              <stop offset="50%" stopColor="#FDF6EE" stopOpacity="0.4" />
-              <stop offset="100%" stopColor="#FAF9F5" stopOpacity="0" />
-            </linearGradient>
-          </defs>
-        </svg>
-
-        {/* Concentric Telemetry Orbital Rings & Warm Radial Halo behind Globe */}
-        <div className="absolute top-[240px] sm:top-[280px] md:top-[310px] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[560px] sm:w-[760px] md:w-[860px] h-[560px] sm:h-[760px] md:h-[860px] pointer-events-none">
-          {/* Luminous Warm Golden & Cyan Bloom */}
-          <div className="absolute inset-10 rounded-full bg-gradient-to-tr from-amber-300/35 via-teal-200/30 to-transparent blur-3xl scale-80" />
-          {/* Outer Orbital Telemetry Circle */}
-          <div className="absolute inset-0 rounded-full border border-teal-500/25" />
-          {/* Mid Orbital Circle with dashed telemetry marks */}
-          <div className="absolute inset-12 rounded-full border border-amber-400/30 border-dashed" />
-          {/* Inner Horizon Circle */}
-          <div className="absolute inset-24 rounded-full border border-teal-400/30" />
-          {/* Sparkle flares on rings */}
-          <div className="absolute top-12 left-1/4 w-2 h-2 rounded-full bg-amber-400/70 blur-[1px] animate-pulse" />
-          <div className="absolute bottom-20 right-1/4 w-2.5 h-2.5 rounded-full bg-teal-400/80 blur-[1px] animate-pulse" />
-        </div>
-      </div>
-
-      {/* ------------------------------------------------------------- */}
-      {/* 1. HERO 3D DIGITAL EARTH SUSPENDED STAGE */}
-      {/* ------------------------------------------------------------- */}
-      <section className="relative w-full flex flex-col items-center text-center pt-1 sm:pt-3">
+      <div className="relative z-10 space-y-6">
+        {/* ------------------------------------------------------------- */}
+        {/* 2. HERO 3D DIGITAL EARTH SUSPENDED STAGE                     */}
+        {/* ------------------------------------------------------------- */}
+        <section className="relative w-full flex flex-col items-center text-center pt-1 sm:pt-3 bg-transparent">
         {/* Top Status Pill: CIVIC INTELLIGENCE MESH  ●  ONLINE */}
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#E1F2EB]/90 backdrop-blur-md border border-[#17533E]/20 text-[11px] font-mono font-semibold tracking-wider text-[#17533E] shadow-[0_2px_14px_rgba(23,83,62,0.10)] mb-1 sm:mb-2">
           <Radio size={13} className="text-[#17533E] animate-pulse" />
@@ -127,8 +50,8 @@ export const HomePage: React.FC = () => {
           </span>
         </div>
 
-        {/* 3D Living Digital Earth Canvas (Centered & Dominant) */}
-        <div className="relative w-full h-[360px] sm:h-[420px] md:h-[470px] lg:h-[510px] max-w-[380px] sm:max-w-[460px] md:max-w-[530px] lg:max-w-[580px] mx-auto flex items-center justify-center my-0.5">
+        {/* 3D Living Digital Earth Canvas (Centered & Dominant, 100% Transparent) */}
+        <div className="relative w-full h-[360px] sm:h-[420px] md:h-[470px] lg:h-[510px] max-w-[380px] sm:max-w-[460px] md:max-w-[530px] lg:max-w-[580px] mx-auto flex items-center justify-center my-0.5 bg-transparent">
           <SignalOrbCanvas />
         </div>
 
@@ -380,6 +303,7 @@ export const HomePage: React.FC = () => {
           </div>
         </div>
       </section>
+      </div>
 
       {/* How It Works Modal */}
       <HowItWorksModal
