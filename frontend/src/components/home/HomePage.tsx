@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
-import { SignalOrbCanvas } from './SignalOrbCanvas';
-import { AtmosphericLandscapeBackground } from './AtmosphericLandscapeBackground';
+import { HomeFloatingGlobeBackground } from './HomeFloatingGlobeBackground';
 import { HowItWorksModal } from './HowItWorksModal';
 import {
   ArrowUpRight,
@@ -19,7 +18,7 @@ import {
 } from 'lucide-react';
 import { ATLAS_SIGNALS, ATLAS_CANDIDATE_CLUSTERS } from '../atlas/types';
 
-export const HomePage: React.FC = () => {
+export const HomePage: React.FC = React.memo(() => {
   const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
   const shouldReduceMotion = useReducedMotion();
 
@@ -28,15 +27,15 @@ export const HomePage: React.FC = () => {
   const primaryCluster = ATLAS_CANDIDATE_CLUSTERS[0];
 
   return (
-    <div className="relative w-full min-h-screen px-3 sm:px-6 pt-3 pb-36 sm:pb-44 select-none overflow-x-hidden">
+    <div className="relative w-full min-h-screen px-3 sm:px-6 pt-3 pb-36 sm:pb-44 select-none overflow-x-hidden bg-transparent">
       {/* ------------------------------------------------------------- */}
-      {/* 1. PERMANENT ATMOSPHERIC LANDSCAPE BACKGROUND SYSTEM          */}
+      {/* 1. PERMANENT FIXED FLOATING 3D GLOBE & LANDSCAPE BACKGROUND   */}
       {/* ------------------------------------------------------------- */}
-      <AtmosphericLandscapeBackground />
+      <HomeFloatingGlobeBackground />
 
       <div className="relative z-10 space-y-6">
         {/* ------------------------------------------------------------- */}
-        {/* 2. HERO 3D DIGITAL EARTH SUSPENDED STAGE                     */}
+        {/* 2. HERO 3D DIGITAL EARTH SUSPENDED STAGE (TRANSPARENT SPACER) */}
         {/* ------------------------------------------------------------- */}
         <section className="relative w-full flex flex-col items-center text-center pt-1 sm:pt-3 bg-transparent">
         {/* Top Status Pill: CIVIC INTELLIGENCE MESH  ●  ONLINE */}
@@ -50,10 +49,11 @@ export const HomePage: React.FC = () => {
           </span>
         </div>
 
-        {/* 3D Living Digital Earth Canvas (Centered & Dominant, 100% Transparent) */}
-        <div className="relative w-full h-[360px] sm:h-[420px] md:h-[470px] lg:h-[510px] max-w-[380px] sm:max-w-[460px] md:max-w-[530px] lg:max-w-[580px] mx-auto flex items-center justify-center my-0.5 bg-transparent">
-          <SignalOrbCanvas />
-        </div>
+        {/* Transparent Spacer reserving the Stage for the Fixed Floating Earth */}
+        <div
+          className="relative w-full h-[360px] sm:h-[420px] md:h-[470px] lg:h-[510px] max-w-[380px] sm:max-w-[460px] md:max-w-[530px] lg:max-w-[580px] mx-auto flex items-center justify-center my-0.5 bg-transparent pointer-events-none"
+          aria-hidden="true"
+        />
 
         {/* Editorial Headline & Supporting Description */}
         <div className="space-y-2 max-w-xl mx-auto mt-1 sm:mt-2">
@@ -305,13 +305,15 @@ export const HomePage: React.FC = () => {
       </section>
       </div>
 
-      {/* How It Works Modal */}
-      <HowItWorksModal
-        isOpen={isHowItWorksOpen}
-        onClose={() => setIsHowItWorksOpen(false)}
-      />
+      {/* How It Works Modal (Rendered on demand) */}
+      {isHowItWorksOpen && (
+        <HowItWorksModal
+          isOpen={isHowItWorksOpen}
+          onClose={() => setIsHowItWorksOpen(false)}
+        />
+      )}
     </div>
   );
-};
+});
 
 export default HomePage;

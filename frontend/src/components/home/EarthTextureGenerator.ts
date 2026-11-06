@@ -223,7 +223,18 @@ export interface GeneratedEarthTextures {
   bumpMap: THREE.CanvasTexture;
 }
 
+// Global texture cache to prevent expensive multi-pass canvas re-generation on re-renders/navigation
+let cachedDesktopTextures: GeneratedEarthTextures | null = null;
+let cachedLowPowerTextures: GeneratedEarthTextures | null = null;
+
 export function generateLivingEarthTextures(isLowPower: boolean = false): GeneratedEarthTextures {
+  if (isLowPower && cachedLowPowerTextures) {
+    return cachedLowPowerTextures;
+  }
+  if (!isLowPower && cachedDesktopTextures) {
+    return cachedDesktopTextures;
+  }
+
   const width = isLowPower ? 1024 : 2048;
   const height = isLowPower ? 512 : 1024;
 
@@ -494,5 +505,12 @@ export function generateLivingEarthTextures(isLowPower: boolean = false): Genera
   bumpMap.wrapT = THREE.ClampToEdgeWrapping;
   bumpMap.generateMipmaps = true;
 
-  return { diffuseMap, emissiveMap, bumpMap };
+  const result: GeneratedEarthTextures = { diffuseMap, emissiveMap, bumpMap };
+  if (isLowPower) {
+    cachedLowPowerTextures = result;
+  } else {
+    cachedDesktopTextures = result;
+  }
+
+  return result;
 }

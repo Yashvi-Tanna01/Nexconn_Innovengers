@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { LoadingProvider } from './context/LoadingContext';
@@ -6,14 +6,19 @@ import { AppStartupLoader, GlobalLoadingOverlay } from './components/loading';
 import { NetworkBanner } from './components/common/NetworkBanner';
 import { HomePage } from './components/home/HomePage';
 import { AndroidAppShell } from './components/layout/AndroidAppShell';
-import { DashboardPage } from './pages/DashboardPage';
-import { ExplorerPage } from './pages/ExplorerPage';
-import { ReportPage } from './pages/ReportPage';
-import { SignalPatternsPage } from './pages/SignalPatternsPage';
-import { CoordinatorPage } from './pages/CoordinatorPage';
-import { MessagesPage } from './pages/MessagesPage';
-import { AuthPage } from './pages/AuthPage';
 import { pageVariants, reducedPageVariants } from './theme/motion';
+
+// Code-split secondary pages for fast initial bundle execution
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const ExplorerPage = lazy(() => import('./pages/ExplorerPage'));
+const ReportPage = lazy(() => import('./pages/ReportPage'));
+const SignalPatternsPage = lazy(() => import('./pages/SignalPatternsPage'));
+const CoordinatorPage = lazy(() => import('./pages/CoordinatorPage'));
+const MessagesPage = lazy(() => import('./pages/MessagesPage'));
+const AuthPage = lazy(() => import('./pages/AuthPage'));
+
+// Lightweight suspense fallback with zero layout shift
+const PageFallback = () => <div className="w-full min-h-[60vh] bg-transparent" aria-hidden="true" />;
 
 // Scroll to top helper on route change
 function ScrollToTop() {
@@ -43,14 +48,14 @@ function MainLayout() {
           <Routes location={location}>
             <Route path="/" element={<HomePage />} />
             <Route path="/home" element={<HomePage />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/explorer" element={<ExplorerPage />} />
-            <Route path="/report" element={<ReportPage />} />
-            <Route path="/patterns" element={<SignalPatternsPage />} />
-            <Route path="/coordinator" element={<CoordinatorPage />} />
-            <Route path="/messages" element={<MessagesPage />} />
-            <Route path="/auth" element={<AuthPage />} />
-            <Route path="/login" element={<AuthPage />} />
+            <Route path="/dashboard" element={<Suspense fallback={<PageFallback />}><DashboardPage /></Suspense>} />
+            <Route path="/explorer" element={<Suspense fallback={<PageFallback />}><ExplorerPage /></Suspense>} />
+            <Route path="/report" element={<Suspense fallback={<PageFallback />}><ReportPage /></Suspense>} />
+            <Route path="/patterns" element={<Suspense fallback={<PageFallback />}><SignalPatternsPage /></Suspense>} />
+            <Route path="/coordinator" element={<Suspense fallback={<PageFallback />}><CoordinatorPage /></Suspense>} />
+            <Route path="/messages" element={<Suspense fallback={<PageFallback />}><MessagesPage /></Suspense>} />
+            <Route path="/auth" element={<Suspense fallback={<PageFallback />}><AuthPage /></Suspense>} />
+            <Route path="/login" element={<Suspense fallback={<PageFallback />}><AuthPage /></Suspense>} />
             <Route path="*" element={<Navigate to="/home" replace />} />
           </Routes>
         </motion.div>

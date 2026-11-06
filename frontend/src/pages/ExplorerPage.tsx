@@ -105,10 +105,7 @@ export const ExplorerPage: React.FC = () => {
   }, []);
 
   return (
-    <div
-      className="w-full text-[#182322] space-y-4 select-none box-border min-w-0"
-      style={{ paddingBottom: 'calc(var(--total-bottom-space) + 16px)' }}
-    >
+    <div className="w-full text-[#182322] space-y-4 select-none box-border min-w-0">
       {/* 1. MAP HEADER & CONTROLS (Responsive Two-Column Layout) */}
       <div className="w-full flex flex-col md:flex-row md:items-end justify-between gap-4 pt-1 min-w-0">
         {/* Left Column: Section label, Location badge, Heading, Supporting description */}
@@ -323,7 +320,14 @@ export const ExplorerPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 3. MAP AS VISUAL CENTERPIECE (OR LIST VIEW) */}
+      {/* 3. DEDICATED CATEGORY FILTER BAR */}
+      <AtlasCategoryBar
+        selectedCategory={selectedCategory}
+        onSelectCategory={setSelectedCategory}
+        totalSignals={ATLAS_SIGNALS.length}
+      />
+
+      {/* 4. MAP AS VISUAL CENTERPIECE (OR LIST VIEW) */}
       {viewMode === 'map' ? (
         <div className="relative w-full h-[500px] sm:h-[560px] lg:h-[calc(100vh-270px)] min-h-[480px] rounded-3xl overflow-hidden border border-[#E6EAE6] bg-[#F0F2EE] shadow-[0_8px_30px_rgba(24,35,34,0.04)] box-border min-w-0">
           <Suspense
@@ -417,13 +421,6 @@ export const ExplorerPage: React.FC = () => {
           )}
         </div>
       )}
-
-      {/* 5. DEDICATED DOCKED CATEGORY FILTER BAR (Positioned directly above bottom navigation) */}
-      <AtlasCategoryBar
-        selectedCategory={selectedCategory}
-        onSelectCategory={setSelectedCategory}
-        totalSignals={ATLAS_SIGNALS.length}
-      />
     </div>
   );
 };

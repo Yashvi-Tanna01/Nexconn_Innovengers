@@ -412,3 +412,5 @@ export const ReportPage: React.FC = () => {
     </div>
   );
 };
+
+export default ReportPage;

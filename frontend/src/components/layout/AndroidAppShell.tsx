@@ -23,7 +23,7 @@ export const AndroidAppShell: React.FC<AndroidAppShellProps> = ({ children }) =>
   }, [navigate, location]);
 
   return (
-    <div className="min-h-screen bg-[#FAF9F5] text-[#202827] flex flex-col antialiased selection:bg-[#17533E]/20 selection:text-[#17533E] overflow-x-hidden w-full">
+    <div className={`min-h-screen ${isHomePage ? 'bg-transparent' : 'bg-[#FAF9F5]'} text-[#202827] flex flex-col antialiased selection:bg-[#17533E]/20 selection:text-[#17533E] overflow-x-hidden w-full`}>
       {/* 1. Top Android Application Bar (Active for internal telemetry routes; omitted on Home to match reference) */}
       {!isHomePage && <AndroidTopBar />}
 

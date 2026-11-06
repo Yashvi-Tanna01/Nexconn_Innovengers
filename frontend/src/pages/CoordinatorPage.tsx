@@ -321,3 +321,5 @@ export const CoordinatorPage: React.FC = () => {
     </div>
   );
 };
+
+export default CoordinatorPage;

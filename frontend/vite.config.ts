@@ -20,7 +20,8 @@ export default defineConfig({
       output: {
         manualChunks: {
           'three-vendor': ['three', '@react-three/fiber', '@react-three/drei'],
-          'ui-vendor': ['lucide-react', 'react-router-dom'],
+          'ui-vendor': ['lucide-react', 'react-router-dom', 'framer-motion'],
+          'map-vendor': ['leaflet', 'react-leaflet'],
         },
       },
     },

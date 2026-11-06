@@ -10,13 +10,15 @@ import React from 'react';
  *
  * 100% lightweight procedural SVG + CSS gradients — 0 external image dependencies.
  */
-export const AtmosphericLandscapeBackground: React.FC = () => {
+export const AtmosphericLandscapeBackground: React.FC = React.memo(() => {
   return (
     <div
       className="fixed inset-0 pointer-events-none select-none z-0 overflow-hidden w-full h-full"
       aria-hidden="true"
       style={{
         backgroundColor: '#FAF8F3', // Warm ivory and pearl-white base
+        transform: 'translate3d(0, 0, 0)',
+        willChange: 'transform',
       }}
     >
       {/* ------------------------------------------------------------- */}
@@ -28,6 +30,9 @@ export const AtmosphericLandscapeBackground: React.FC = () => {
           background:
             'radial-gradient(circle at center, rgba(254, 243, 199, 0.50) 0%, rgba(204, 251, 241, 0.30) 36%, rgba(224, 242, 254, 0.12) 60%, transparent 75%)',
           filter: 'blur(50px)',
+          transform: 'translate3d(-50%, 0, 0)',
+          contain: 'strict',
+          willChange: 'transform',
         }}
       />
 
@@ -38,6 +43,9 @@ export const AtmosphericLandscapeBackground: React.FC = () => {
           background:
             'radial-gradient(ellipse at center, rgba(254, 243, 199, 0.45) 0%, rgba(204, 251, 241, 0.25) 50%, transparent 80%)',
           filter: 'blur(60px)',
+          transform: 'translate3d(-50%, 0, 0)',
+          contain: 'strict',
+          willChange: 'transform',
         }}
       />
 
@@ -296,6 +304,6 @@ export const AtmosphericLandscapeBackground: React.FC = () => {
       </svg>
     </div>
   );
-};
+});
 
 export default AtmosphericLandscapeBackground;

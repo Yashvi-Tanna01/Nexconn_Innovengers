@@ -2,6 +2,7 @@ import React, { useRef, useMemo, useState, useEffect, Component, ErrorInfo, Reac
 import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { detectDeviceTier } from '../../utils/device';
+import { useLoading } from '../../context/LoadingContext';
 import {
   generateLivingEarthTextures,
   METROPOLITAN_HUBS,
@@ -46,7 +47,10 @@ function generateFibonacciPoints(count: number, radius: number) {
 }
 
 // Procedural 4-Point Starburst / Light Flare Texture for Major Telemetry Hubs
+let cachedStarburstTexture: THREE.CanvasTexture | null = null;
 function createStarburstTexture(): THREE.CanvasTexture {
+  if (cachedStarburstTexture) return cachedStarburstTexture;
+
   const canvas = document.createElement('canvas');
   canvas.width = 128;
   canvas.height = 128;
@@ -98,16 +102,16 @@ function createStarburstTexture(): THREE.CanvasTexture {
   ctx.fillRect(-38, -1.2, 76, 2.4);
   ctx.restore();
 
-  const tex = new THREE.CanvasTexture(canvas);
-  return tex;
+  cachedStarburstTexture = new THREE.CanvasTexture(canvas);
+  return cachedStarburstTexture;
 }
 
-
-// Pre-calculated Arc Data with 3D quadratic curve and traveling pulse
+// Pre-calculated Arc Data with 3D quadratic curve, shared line object, and traveling pulse
 interface CachedNetworkArc {
   curve: THREE.QuadraticBezierCurve3;
   geometry: THREE.BufferGeometry;
   material: THREE.LineBasicMaterial;
+  line: THREE.Line;
   phaseOffset: number;
   speed: number;
   color: string;
@@ -130,9 +134,10 @@ interface SignalOrbProps {
     dragVelocity: { x: number; y: number };
     rotationOffset: { x: number; y: number };
   }>;
+  isActive: boolean;
 }
 
-function SignalOrb({ reducedMotion = false, interactionRef }: SignalOrbProps) {
+function SignalOrb({ reducedMotion = false, interactionRef, isActive }: SignalOrbProps) {
   const groupRef = useRef<THREE.Group>(null);
   const outerAtmosphereRef = useRef<THREE.Mesh>(null);
   const coreRef = useRef<THREE.Mesh>(null);
@@ -175,17 +180,40 @@ function SignalOrb({ reducedMotion = false, interactionRef }: SignalOrbProps) {
     return generateLivingEarthTextures(deviceTier.isLowPower);
   }, [deviceTier.isLowPower]);
 
-  // Procedural Starburst Textures
+  // Procedural Starburst Textures (Global Singleton Cached)
   const starburstTexture = useMemo(() => createStarburstTexture(), []);
+
+  // Shared reusable materials & geometries for pulse photons & starbursts
+  const sharedPulseGeometry = useMemo(() => new THREE.SphereGeometry(0.034, 8, 8), []);
+  const cyanPulseMaterial = useMemo(
+    () => new THREE.MeshBasicMaterial({ color: '#FFFFFF', transparent: true, opacity: 0.95 }),
+    []
+  );
+  const goldPulseMaterial = useMemo(
+    () => new THREE.MeshBasicMaterial({ color: '#FEF08A', transparent: true, opacity: 0.95 }),
+    []
+  );
+  const starburstMaterial = useMemo(
+    () =>
+      new THREE.SpriteMaterial({
+        map: starburstTexture,
+        transparent: true,
+        opacity: 0.95,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      }),
+    [starburstTexture]
+  );
+  const tempArcPos = useMemo(() => new THREE.Vector3(), []);
 
   useEffect(() => {
     return () => {
-      textures.diffuseMap.dispose();
-      textures.emissiveMap.dispose();
-      textures.bumpMap.dispose();
-      starburstTexture.dispose();
+      sharedPulseGeometry.dispose();
+      cyanPulseMaterial.dispose();
+      goldPulseMaterial.dispose();
+      starburstMaterial.dispose();
     };
-  }, [textures, starburstTexture]);
+  }, [sharedPulseGeometry, cyanPulseMaterial, goldPulseMaterial, starburstMaterial]);
 
   // --------------------------------------------------------------------------
   // 2. 3D SMART CITY INFRASTRUCTURE (EXTRUDED BUILDINGS ON SURFACE)
@@ -427,8 +455,9 @@ function SignalOrb({ reducedMotion = false, interactionRef }: SignalOrbProps) {
         transparent: true,
         opacity: 0.82,
       });
+      const line = new THREE.Line(geometry, material);
 
-      return { curve, geometry, material, speed, phaseOffset: phase, color };
+      return { curve, geometry, material, line, speed, phaseOffset: phase, color };
     });
   }, [hubPos, cyanPoints, amberPoints, radius, deviceTier.isLowPower]);
 
@@ -454,6 +483,10 @@ function SignalOrb({ reducedMotion = false, interactionRef }: SignalOrbProps) {
       r1Pts.push(new THREE.Vector3(2.54 * Math.cos(th), 0, 2.54 * Math.sin(th)));
     }
     const r1Geom = new THREE.BufferGeometry().setFromPoints(r1Pts);
+    const r1Line = new THREE.Line(
+      r1Geom,
+      new THREE.LineBasicMaterial({ color: '#FFFFFF', transparent: true, opacity: 0.85 })
+    );
 
     // Ring 2: Oblique Warm Golden Telemetry Orbit (Radius 2.82)
     const r2Pts: THREE.Vector3[] = [];
@@ -462,6 +495,10 @@ function SignalOrb({ reducedMotion = false, interactionRef }: SignalOrbProps) {
       r2Pts.push(new THREE.Vector3(2.82 * Math.cos(th), 0, 2.82 * Math.sin(th)));
     }
     const r2Geom = new THREE.BufferGeometry().setFromPoints(r2Pts);
+    const r2Line = new THREE.Line(
+      r2Geom,
+      new THREE.LineBasicMaterial({ color: '#FEF08A', transparent: true, opacity: 0.8 })
+    );
 
     // Ring 3: Counter-Oblique Turquoise Orbit (Radius 2.68)
     const r3Pts: THREE.Vector3[] = [];
@@ -470,6 +507,10 @@ function SignalOrb({ reducedMotion = false, interactionRef }: SignalOrbProps) {
       r3Pts.push(new THREE.Vector3(2.68 * Math.cos(th), 0, 2.68 * Math.sin(th)));
     }
     const r3Geom = new THREE.BufferGeometry().setFromPoints(r3Pts);
+    const r3Line = new THREE.Line(
+      r3Geom,
+      new THREE.LineBasicMaterial({ color: '#38BDF8', transparent: true, opacity: 0.75 })
+    );
 
     // Ring 4: Outer Horizon Orbit (Radius 3.12)
     const r4Pts: THREE.Vector3[] = [];
@@ -478,16 +519,24 @@ function SignalOrb({ reducedMotion = false, interactionRef }: SignalOrbProps) {
       r4Pts.push(new THREE.Vector3(3.12 * Math.cos(th), 0, 3.12 * Math.sin(th)));
     }
     const r4Geom = new THREE.BufferGeometry().setFromPoints(r4Pts);
+    const r4Line = new THREE.Line(
+      r4Geom,
+      new THREE.LineBasicMaterial({ color: '#2DD4BF', transparent: true, opacity: 0.35 })
+    );
 
-    return { r1Geom, r2Geom, r3Geom, r4Geom };
+    return { r1Geom, r2Geom, r3Geom, r4Geom, r1Line, r2Line, r3Line, r4Line };
   }, [deviceTier.isLowPower]);
 
   useEffect(() => {
     return () => {
       orbitalRingsData.r1Geom.dispose();
+      (orbitalRingsData.r1Line.material as THREE.Material).dispose();
       orbitalRingsData.r2Geom.dispose();
+      (orbitalRingsData.r2Line.material as THREE.Material).dispose();
       orbitalRingsData.r3Geom.dispose();
+      (orbitalRingsData.r3Line.material as THREE.Material).dispose();
       orbitalRingsData.r4Geom.dispose();
+      (orbitalRingsData.r4Line.material as THREE.Material).dispose();
     };
   }, [orbitalRingsData]);
 
@@ -567,6 +616,11 @@ function SignalOrb({ reducedMotion = false, interactionRef }: SignalOrbProps) {
   // 5. UNIFIED 60FPS ANIMATION LOOP (FLOATING 3D DYNAMICS & NETWORK PULSES)
   // --------------------------------------------------------------------------
   useFrame((state, delta) => {
+    // 0. PERFORMANCE GUARD: Skip frame calculations if offscreen, tab hidden, or app in background
+    if (!isActive || (typeof document !== 'undefined' && document.hidden)) {
+      return;
+    }
+
     const t = state.clock.elapsedTime;
     const { pointer } = state;
     const interaction = interactionRef.current;
@@ -672,8 +726,8 @@ function SignalOrb({ reducedMotion = false, interactionRef }: SignalOrbProps) {
       const pulseMesh = pulseRefs.current[idx];
       if (pulseMesh) {
         const progress = (arcT * 0.28) % 1;
-        const pos = arc.curve.getPoint(progress);
-        pulseMesh.position.copy(pos);
+        arc.curve.getPoint(progress, tempArcPos);
+        pulseMesh.position.copy(tempArcPos);
         const pScale = 0.8 + 0.35 * Math.sin(progress * Math.PI);
         pulseMesh.scale.set(pScale, pScale, pScale);
       }
@@ -880,15 +934,8 @@ function SignalOrb({ reducedMotion = false, interactionRef }: SignalOrbProps) {
               ref={(el) => (starburstSpritesRef.current[idx] = el)}
               position={sb.pos}
               scale={[sb.baseScale, sb.baseScale, sb.baseScale]}
-            >
-              <spriteMaterial
-                map={starburstTexture}
-                transparent={true}
-                opacity={0.95}
-                blending={THREE.AdditiveBlending}
-                depthWrite={false}
-              />
-            </sprite>
+              material={starburstMaterial}
+            />
           ))}
         </group>
 
@@ -896,17 +943,11 @@ function SignalOrb({ reducedMotion = false, interactionRef }: SignalOrbProps) {
         <group>
           {networkArcs.map((arc, idx) => (
             <group key={idx}>
-              <primitive object={new THREE.Line(arc.geometry, arc.material)} />
+              <primitive object={arc.line} />
               <mesh
                 ref={(el) => (pulseRefs.current[idx] = el)}
-                geometry={new THREE.SphereGeometry(0.034, 8, 8)}
-                material={
-                  new THREE.MeshBasicMaterial({
-                    color: arc.color === '#00F2FE' ? '#FFFFFF' : '#FEF08A',
-                    transparent: true,
-                    opacity: 0.95,
-                  })
-                }
+                geometry={sharedPulseGeometry}
+                material={arc.color === '#00F2FE' ? cyanPulseMaterial : goldPulseMaterial}
               />
             </group>
           ))}
@@ -915,14 +956,7 @@ function SignalOrb({ reducedMotion = false, interactionRef }: SignalOrbProps) {
         {/* 5. LAYER 4: CINEMATIC ORBITAL SYSTEMS (4 DISTINCT LUMINOUS RINGS) */}
         {/* Ring 1: Equatorial Electric Cyan Orbit */}
         <group rotation={[0.38, 0, -0.22]}>
-          <primitive
-            object={
-              new THREE.Line(
-                orbitalRingsData.r1Geom,
-                new THREE.LineBasicMaterial({ color: '#FFFFFF', transparent: true, opacity: 0.85 })
-              )
-            }
-          />
+          <primitive object={orbitalRingsData.r1Line} />
           <mesh>
             <ringGeometry args={[2.48, 2.60, deviceTier.isLowPower ? 36 : 64]} />
             <meshBasicMaterial
@@ -945,14 +979,7 @@ function SignalOrb({ reducedMotion = false, interactionRef }: SignalOrbProps) {
 
         {/* Ring 2: Oblique Warm Golden Telemetry Orbit */}
         <group rotation={[-0.68, 0.48, 0.28]}>
-          <primitive
-            object={
-              new THREE.Line(
-                orbitalRingsData.r2Geom,
-                new THREE.LineBasicMaterial({ color: '#FEF08A', transparent: true, opacity: 0.8 })
-              )
-            }
-          />
+          <primitive object={orbitalRingsData.r2Line} />
           <mesh>
             <ringGeometry args={[2.76, 2.88, deviceTier.isLowPower ? 36 : 64]} />
             <meshBasicMaterial
@@ -975,14 +1002,7 @@ function SignalOrb({ reducedMotion = false, interactionRef }: SignalOrbProps) {
 
         {/* Ring 3: Counter-Oblique Turquoise Orbit */}
         <group rotation={[0.42, -0.55, -0.35]}>
-          <primitive
-            object={
-              new THREE.Line(
-                orbitalRingsData.r3Geom,
-                new THREE.LineBasicMaterial({ color: '#38BDF8', transparent: true, opacity: 0.75 })
-              )
-            }
-          />
+          <primitive object={orbitalRingsData.r3Line} />
           <mesh>
             <ringGeometry args={[2.64, 2.72, deviceTier.isLowPower ? 36 : 64]} />
             <meshBasicMaterial
@@ -1001,14 +1021,7 @@ function SignalOrb({ reducedMotion = false, interactionRef }: SignalOrbProps) {
 
         {/* Ring 4: Outer Precision Telemetry Orbit */}
         <group rotation={[0.15, -0.78, 0.12]}>
-          <primitive
-            object={
-              new THREE.Line(
-                orbitalRingsData.r4Geom,
-                new THREE.LineBasicMaterial({ color: '#2DD4BF', transparent: true, opacity: 0.35 })
-              )
-            }
-          />
+          <primitive object={orbitalRingsData.r4Line} />
         </group>
 
         {/* Ambient Stardust Motes */}
@@ -1029,9 +1042,10 @@ interface SceneProps {
     dragVelocity: { x: number; y: number };
     rotationOffset: { x: number; y: number };
   }>;
+  isActive: boolean;
 }
 
-function Scene({ reducedMotion, interactionRef }: SceneProps) {
+function Scene({ reducedMotion, interactionRef, isActive }: SceneProps) {
   return (
     <>
       {/* Studio Ambient & Directional Lighting */}
@@ -1044,7 +1058,7 @@ function Scene({ reducedMotion, interactionRef }: SceneProps) {
       <directionalLight position={[0, -6, 2]} intensity={2.0} color="#38BDF8" />
 
       {/* Living 3D Digital Earth (Floating suspended in 3D space) */}
-      <SignalOrb reducedMotion={reducedMotion} interactionRef={interactionRef} />
+      <SignalOrb reducedMotion={reducedMotion} interactionRef={interactionRef} isActive={isActive} />
     </>
   );
 }
@@ -1123,8 +1137,43 @@ export interface SignalOrbCanvasProps {
   className?: string;
 }
 
-export const SignalOrbCanvas: React.FC<SignalOrbCanvasProps> = ({ className = '' }) => {
+export const SignalOrbCanvas: React.FC<SignalOrbCanvasProps> = React.memo(({ className = '' }) => {
   const [webglSupported, setWebglSupported] = useState(true);
+  const { isAppInitialized } = useLoading();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isInView, setIsInView] = useState(true);
+  const [isTabVisible, setIsTabVisible] = useState(
+    typeof document !== 'undefined' ? !document.hidden : true
+  );
+
+  const deviceTier = useMemo(() => detectDeviceTier(), []);
+
+  // Viewport intersection observer to completely halt rendering when offscreen
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsInView(entry.isIntersecting);
+      },
+      { threshold: 0.05, rootMargin: '100px 0px' }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  // Tab visibility observer to halt 3D render loop when minimized or tab hidden
+  useEffect(() => {
+    const handleVisibility = () => {
+      setIsTabVisible(!document.hidden);
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, []);
+
+  const isActive = isAppInitialized && isInView && isTabVisible;
 
   // Drag interaction state (ref-based for zero rerender lag)
   const interactionRef = useRef({
@@ -1186,6 +1235,7 @@ export const SignalOrbCanvas: React.FC<SignalOrbCanvasProps> = ({ className = ''
 
   return (
     <div
+      ref={containerRef}
       className={`w-full h-full relative cursor-grab active:cursor-grabbing select-none bg-transparent ${className}`}
       style={{ touchAction: 'pan-y', background: 'transparent' }}
       onPointerDown={handlePointerDown}
@@ -1198,12 +1248,14 @@ export const SignalOrbCanvas: React.FC<SignalOrbCanvasProps> = ({ className = ''
       <WebGLErrorBoundary fallback={<SignalOrbCSSFallback />}>
         <Canvas
           camera={{ position: [0, 0, 6.4], fov: 46 }}
-          dpr={[1, 1.5]}
+          dpr={deviceTier.dpr}
+          frameloop={isActive ? 'always' : 'never'}
           gl={{
-            antialias: true,
+            antialias: !deviceTier.isLowPower,
             alpha: true,
             powerPreference: 'high-performance',
             stencil: false,
+            precision: deviceTier.isLowPower ? 'mediump' : 'highp',
           }}
           onCreated={({ gl }) => {
             gl.setClearColor(0x000000, 0);
@@ -1211,11 +1263,11 @@ export const SignalOrbCanvas: React.FC<SignalOrbCanvasProps> = ({ className = ''
           style={{ background: 'transparent' }}
           className="w-full h-full bg-transparent"
         >
-          <Scene interactionRef={interactionRef} />
+          <Scene interactionRef={interactionRef} isActive={isActive} />
         </Canvas>
       </WebGLErrorBoundary>
     </div>
   );
-};
+});
 
 export default SignalOrbCanvas;

@@ -20,51 +20,51 @@ interface NavItem {
   icon: React.ReactNode;
 }
 
-export const AndroidBottomNav: React.FC = () => {
+const NAV_ITEMS: NavItem[] = [
+  {
+    id: 'home',
+    label: 'Home',
+    path: '/home',
+    altPaths: ['/'],
+    icon: <Home size={20} />,
+  },
+  {
+    id: 'explore',
+    label: 'Explore',
+    path: '/explorer',
+    altPaths: ['/dashboard'],
+    icon: <Compass size={20} />,
+  },
+  {
+    id: 'report',
+    label: 'Report',
+    path: '/report',
+    altPaths: [],
+    isCenterAction: true,
+    icon: <Plus size={22} strokeWidth={2.5} />,
+  },
+  {
+    id: 'patterns',
+    label: 'Patterns',
+    path: '/patterns',
+    altPaths: ['/coordinator'],
+    badge: '1',
+    icon: <Layers size={20} />,
+  },
+  {
+    id: 'chat',
+    label: 'Chat',
+    path: '/messages',
+    altPaths: [],
+    badge: '2',
+    icon: <MessageSquare size={20} />,
+  },
+];
+
+export const AndroidBottomNav: React.FC = React.memo(() => {
   const location = useLocation();
 
-  const navItems: NavItem[] = [
-    {
-      id: 'home',
-      label: 'Home',
-      path: '/home',
-      altPaths: ['/'],
-      icon: <Home size={20} />,
-    },
-    {
-      id: 'explore',
-      label: 'Explore',
-      path: '/explorer',
-      altPaths: ['/dashboard'],
-      icon: <Compass size={20} />,
-    },
-    {
-      id: 'report',
-      label: 'Report',
-      path: '/report',
-      altPaths: [],
-      isCenterAction: true,
-      icon: <Plus size={22} strokeWidth={2.5} />,
-    },
-    {
-      id: 'patterns',
-      label: 'Patterns',
-      path: '/patterns',
-      altPaths: ['/coordinator'],
-      badge: '1',
-      icon: <Layers size={20} />,
-    },
-    {
-      id: 'chat',
-      label: 'Chat',
-      path: '/messages',
-      altPaths: [],
-      badge: '2',
-      icon: <MessageSquare size={20} />,
-    },
-  ];
-
-  const isCurrentActive = (item: typeof navItems[0]) => {
+  const isCurrentActive = (item: typeof NAV_ITEMS[0]) => {
     if (location.pathname === item.path) return true;
     if (item.altPaths && item.altPaths.includes(location.pathname)) return true;
     if (item.path !== '/' && item.path !== '/home' && location.pathname.startsWith(item.path)) return true;
@@ -79,7 +79,7 @@ export const AndroidBottomNav: React.FC = () => {
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       <div className="w-full max-w-md sm:max-w-xl mx-auto h-16 bg-white/95 backdrop-blur-2xl rounded-full border border-white/80 shadow-[0_10px_35px_rgba(20,30,25,0.08)] flex items-center justify-around px-3 pointer-events-auto">
-        {navItems.map((item) => {
+        {NAV_ITEMS.map((item) => {
           const active = isCurrentActive(item);
 
           if (item.isCenterAction) {
@@ -148,6 +148,6 @@ export const AndroidBottomNav: React.FC = () => {
       </div>
     </nav>
   );
-};
+});
 
 export default AndroidBottomNav;

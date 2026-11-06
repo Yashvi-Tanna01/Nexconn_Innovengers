@@ -20,17 +20,13 @@ export const AtlasCategoryBar: React.FC<AtlasCategoryBarProps> = ({
   return (
     <nav
       aria-label="Category filters"
-      className={`fixed left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-[#E6EAE6] shadow-[0_-2px_10px_rgba(24,35,34,0.04)] select-none box-border ${className}`}
-      style={{
-        bottom: 'var(--combined-bottom-offset)',
-        height: 'var(--filter-height)',
-      }}
+      className={`w-full bg-white/95 backdrop-blur-md border border-[#E6EAE6] rounded-2xl p-1.5 sm:p-2 shadow-2xs select-none box-border ${className}`}
     >
-      <div className="w-full max-w-7xl mx-auto h-full px-3 sm:px-6 flex items-center">
+      <div className="w-full flex items-center">
         <div
           tabIndex={0}
           aria-label="Filter by category"
-          className="flex items-center gap-1.5 overflow-x-auto w-full scrollbar-none py-1 overscroll-x-contain touch-pan-x"
+          className="flex items-center gap-1.5 overflow-x-auto w-full scrollbar-none py-0.5 overscroll-x-contain touch-pan-x"
         >
           {/* All Signals chip */}
           <button

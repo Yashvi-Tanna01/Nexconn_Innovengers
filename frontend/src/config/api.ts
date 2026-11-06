@@ -95,14 +95,65 @@ export async function register(
 
 export function logout(): void {
   setAuthToken(null);
+  clearApiCache();
+}
+
+// In-flight request deduplication map & short-term read cache
+const inFlightRequests = new Map<string, Promise<ApiResponse<any>>>();
+const readCache = new Map<string, { timestamp: number; response: ApiResponse<any> }>();
+const CACHE_TTL_MS = 6000; // 6 seconds memory cache for read requests
+
+export function clearApiCache(): void {
+  readCache.clear();
+  inFlightRequests.clear();
 }
 
 export async function apiRequest<T>(path: string, options: RequestInit = {}, timeoutMs = 8000): Promise<ApiResponse<T>> {
+  const method = (options.method || 'GET').toUpperCase();
   const token = getAuthToken();
-  return fetchWithTimeout<T>(path.startsWith('http') ? path : `${API_BASE_URL}${path}`, {
-    ...options,
-    headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(options.headers || {}) },
-  }, timeoutMs);
+  const fullUrl = path.startsWith('http') ? path : `${API_BASE_URL}${path}`;
+
+  // On data mutations, invalidate read cache so UI gets fresh data
+  if (method !== 'GET') {
+    readCache.clear();
+    return fetchWithTimeout<T>(fullUrl, {
+      ...options,
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(options.headers || {}) },
+    }, timeoutMs);
+  }
+
+  // 1. Check in-memory cache for recent GET response
+  const cacheKey = `${token ? 'auth:' : 'anon:'}${fullUrl}`;
+  const cached = readCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+    return cached.response as ApiResponse<T>;
+  }
+
+  // 2. Check for in-flight identical request to deduplicate
+  if (inFlightRequests.has(cacheKey)) {
+    return inFlightRequests.get(cacheKey)!;
+  }
+
+  // 3. Initiate request with in-flight tracking
+  const requestPromise = (async () => {
+    try {
+      const res = await fetchWithTimeout<T>(fullUrl, {
+        ...options,
+        headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(options.headers || {}) },
+      }, timeoutMs);
+
+      // Cache successful responses
+      if (res.data) {
+        readCache.set(cacheKey, { timestamp: Date.now(), response: res });
+      }
+      return res;
+    } finally {
+      inFlightRequests.delete(cacheKey);
+    }
+  })();
+
+  inFlightRequests.set(cacheKey, requestPromise);
+  return requestPromise;
 }
 
 export interface ApiResponse<T> {
