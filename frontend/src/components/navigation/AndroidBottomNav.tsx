@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useNavigationTransition, NavDestination } from './transition';
 import {
   Home,
@@ -86,7 +87,7 @@ export const AndroidBottomNav: React.FC = React.memo(() => {
     <nav
       role="navigation"
       aria-label="Android Bottom Navigation"
-      className="fixed bottom-3 sm:bottom-4 left-0 right-0 z-40 px-3 sm:px-6 pointer-events-none select-none box-border"
+      className="fixed bottom-3 sm:bottom-4 left-0 right-0 z-[1100] px-3 sm:px-6 pointer-events-none select-none box-border"
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       <div className="w-full max-w-md sm:max-w-xl mx-auto h-16 bg-white/95 backdrop-blur-2xl rounded-full border border-white/80 shadow-[0_10px_35px_rgba(20,30,25,0.08)] flex items-center justify-around px-3 pointer-events-auto">
@@ -128,17 +129,22 @@ export const AndroidBottomNav: React.FC = React.memo(() => {
               }`}
             >
               {/* Active Indicator Pill */}
-              <div
-                className={`relative px-3.5 py-1.5 rounded-full transition-all flex items-center justify-center ${
-                  active ? 'bg-[#E1F2EB] text-[#17533E]' : 'text-[#7B8B84]'
-                }`}
-              >
-                {item.icon}
+              <div className="relative px-3.5 py-1.5 rounded-full flex items-center justify-center">
+                {active && (
+                  <motion.div
+                    layoutId="activeBottomNavPill"
+                    className="absolute inset-0 bg-[#E1F2EB] rounded-full"
+                    transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                  />
+                )}
+                <span className={`relative z-10 transition-colors ${active ? 'text-[#17533E]' : 'text-[#7B8B84]'}`}>
+                  {item.icon}
+                </span>
 
                 {/* Badge indicator */}
                 {item.badge && (
                   <span
-                    className={`absolute -top-1 -right-1 px-1 min-w-[15px] h-[15px] rounded-full text-[9px] font-mono font-bold flex items-center justify-center text-white shadow-xs ${
+                    className={`absolute -top-1 -right-1 z-20 px-1 min-w-[15px] h-[15px] rounded-full text-[9px] font-mono font-bold flex items-center justify-center text-white shadow-xs ${
                       item.id === 'patterns' ? 'bg-[#E11D48]' : 'bg-[#EA580C]'
                     }`}
                   >

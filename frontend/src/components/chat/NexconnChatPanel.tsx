@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Button } from '../common/Button';
 import { Send, ShieldCheck, User, Wrench, Radio, MessageSquare, AlertCircle } from 'lucide-react';
+import { messageSlideVariants } from '../../theme/motion';
 
 interface ChatMessage {
   id: string;
@@ -49,21 +51,56 @@ export const NexconnChatPanel: React.FC<NexconnChatPanelProps> = ({
 
   const [inputText, setInputText] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [isPeerTyping, setIsPeerTyping] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const shouldReduceMotion = useReducedMotion();
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isPeerTyping]);
+
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputText.trim()) return;
 
+    const userText = inputText.trim();
     setIsSending(true);
     const newMsg: ChatMessage = {
-        id: `m-${Date.now()}`,
-        sender: 'You (Municipal Responder)',
-        role: 'crew',
-        text: inputText.trim(),
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      id: `m-${Date.now()}`,
+      sender: 'You (Municipal Responder)',
+      role: 'crew',
+      text: userText,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
     setMessages((prev) => [...prev, newMsg]);
     setInputText('');
     setIsSending(false);
+
+    // Dynamic peer response simulation connected to actual transmission
+    const typingTimer = setTimeout(() => {
+      setIsPeerTyping(true);
+    }, 800);
+
+    const replyTimer = setTimeout(() => {
+      setIsPeerTyping(false);
+      const replyMsg: ChatMessage = {
+        id: `m-reply-${Date.now()}`,
+        sender: 'Coordinator Maya V.',
+        role: 'coordinator',
+        text: 'Telemetry telemetry received. Sensor feed confirms pressure stabilized at 4th Main. Work order #WO-409 updated. Stand by for site clearance.',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
+      setMessages((prev) => [...prev, replyMsg]);
+    }, 2600);
+
+    return () => {
+      clearTimeout(typingTimer);
+      clearTimeout(replyTimer);
+    };
   };
 
   const handleQuickAction = (quickText: string) => {
@@ -111,34 +148,56 @@ export const NexconnChatPanel: React.FC<NexconnChatPanelProps> = ({
             </span>
           </div>
 
-          {messages.map((m) => {
-            const isCoordinator = m.role === 'coordinator';
-            const isCrew = m.role === 'crew';
+          <AnimatePresence initial={false}>
+            {messages.map((m) => {
+              const isCoordinator = m.role === 'coordinator';
+              const isCrew = m.role === 'crew';
 
-            return (
-              <div
-                key={m.id}
-                className={`p-3 rounded-xl border text-xs leading-relaxed space-y-1 transition-all ${
-                  isCoordinator
-                    ? 'bg-amber-50/60 border-amber-200 text-amber-950 ml-2'
-                    : isCrew
-                    ? 'bg-teal-50/60 border-teal-200 text-teal-950 mr-2'
-                    : 'bg-slate-50 border-antah-border text-slate-800'
-                }`}
-              >
-                <div className="flex items-center justify-between text-[11px] font-semibold">
-                  <span className="flex items-center gap-1.5">
-                    {isCoordinator && <ShieldCheck size={12} className="text-amber-600" />}
-                    {isCrew && <Wrench size={12} className="text-teal-600" />}
-                    {!isCoordinator && !isCrew && <User size={12} className="text-slate-500" />}
-                    <span>{m.sender}</span>
-                  </span>
-                  <span className="text-[10px] font-mono text-antah-muted">{m.timestamp}</span>
-                </div>
-                <p className="pt-0.5">{m.text}</p>
-              </div>
-            );
-          })}
+              return (
+                <motion.div
+                  key={m.id}
+                  variants={shouldReduceMotion ? undefined : messageSlideVariants}
+                  initial={shouldReduceMotion ? undefined : "initial"}
+                  animate={shouldReduceMotion ? undefined : "animate"}
+                  exit={shouldReduceMotion ? undefined : "exit"}
+                  layout
+                  className={`p-3 rounded-2xl border text-xs leading-relaxed space-y-1 transition-all ${
+                    isCoordinator
+                      ? 'bg-amber-50/70 border-amber-200/90 text-amber-950 ml-2 shadow-xs'
+                      : isCrew
+                      ? 'bg-teal-50/70 border-teal-200/90 text-teal-950 mr-2 shadow-xs'
+                      : 'bg-slate-50 border-antah-border text-slate-800'
+                  }`}
+                >
+                  <div className="flex items-center justify-between text-[11px] font-semibold">
+                    <span className="flex items-center gap-1.5">
+                      {isCoordinator && <ShieldCheck size={12} className="text-amber-600" />}
+                      {isCrew && <Wrench size={12} className="text-teal-600" />}
+                      {!isCoordinator && !isCrew && <User size={12} className="text-slate-500" />}
+                      <span>{m.sender}</span>
+                    </span>
+                    <span className="text-[10px] font-mono text-antah-muted">{m.timestamp}</span>
+                  </div>
+                  <p className="pt-0.5">{m.text}</p>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+
+          {/* COMMUNICATE: Harmonic 3-Particle Wave Typing Indicator */}
+          <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white/90 border border-[#087B56]/20 shadow-2xs max-w-fit transition-all">
+            <div className="relative flex items-center gap-1.5 py-1 px-1">
+              <div className="absolute inset-x-0 h-0.5 top-1/2 -translate-y-1/2 bg-gradient-to-r from-[#087B56]/20 via-[#3DD6A5]/40 to-[#087B56]/20" />
+              <span className={`relative w-2 h-2 rounded-full ${isPeerTyping ? 'bg-[#D99A45] animate-typing-wave-1' : 'bg-[#087B56] animate-pulse'}`} />
+              <span className={`relative w-2 h-2 rounded-full ${isPeerTyping ? 'bg-[#3DD6A5] animate-typing-wave-2' : 'bg-[#3DD6A5]'}`} />
+              <span className={`relative w-2 h-2 rounded-full ${isPeerTyping ? 'bg-[#D99A45] animate-typing-wave-3' : 'bg-[#087B56]'}`} />
+            </div>
+            <span className={`text-[10px] font-mono font-medium tracking-tight ${isPeerTyping ? 'text-amber-800 font-bold' : 'text-[#087B56]'}`}>
+              {isPeerTyping ? 'Coordinator Maya V. is typing...' : 'Municipal mesh gateway online'}
+            </span>
+          </div>
+
+          <div ref={messagesEndRef} />
       </div>
 
       {/* Quick Situation Action Pills */}
@@ -183,6 +242,7 @@ export const NexconnChatPanel: React.FC<NexconnChatPanelProps> = ({
           isLoading={isSending}
           icon={<Send size={14} />}
           disabled={!inputText.trim()}
+          className="font-bold shadow-soft-xs active:scale-95 transition-transform"
         >
           Send
         </Button>

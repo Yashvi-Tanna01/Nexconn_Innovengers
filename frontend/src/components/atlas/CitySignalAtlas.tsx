@@ -60,8 +60,26 @@ export const CitySignalAtlas: React.FC<CitySignalAtlasProps> = ({
   const [activeChat, setActiveChat] = useState<{ id: string; title: string } | null>(null);
   const [pulseCycle, setPulseCycle] = useState<number>(0);
   const [isLocating, setIsLocating] = useState(false);
+  const [isRadarScanning, setIsRadarScanning] = useState(true);
   const [liveReports, setLiveReports] = useState<Report[]>([]);
   const [reportsLoaded, setReportsLoaded] = useState(false);
+
+  // Initial deliberate radar sweep scan (3.2s)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsRadarScanning(false);
+    }, 3200);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleTriggerRadar = useCallback(() => {
+    setIsRadarScanning(true);
+    setPulseCycle((prev) => prev + 1);
+    const timer = setTimeout(() => {
+      setIsRadarScanning(false);
+    }, 3200);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -358,6 +376,39 @@ export const CitySignalAtlas: React.FC<CitySignalAtlasProps> = ({
         style={{ background: '#F0F2EE' }}
       />
 
+      {/* DISCOVER: Tactical Radar Grid Scanning Overlay */}
+      {isRadarScanning && (
+        <div className="pointer-events-none absolute inset-0 z-[450] flex items-center justify-center overflow-hidden">
+          {/* Tactical Telemetry HUD Notification */}
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full bg-white/95 backdrop-blur-md border border-[#087B56]/30 shadow-md text-center z-10 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-[#087B56] animate-ping" />
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#087B56]">
+              Tactical Mesh Grid Scan Active
+            </span>
+            <span className="text-[9px] font-mono text-stone-500">
+              12.9754° N, 77.6410° E
+            </span>
+          </div>
+
+          {/* Cartographic Coordinate Crosshairs */}
+          <div className="absolute w-48 h-px bg-[#087B56]/20" />
+          <div className="absolute h-48 w-px bg-[#087B56]/20" />
+
+          {/* Expanding Concentric Sonar Pulse Rings */}
+          <div className="absolute w-[520px] h-[520px] rounded-full border border-[#087B56]/30 animate-discovery-ring" />
+          <div className="absolute w-[360px] h-[360px] rounded-full border border-[#3DD6A5]/40 animate-discovery-ring" style={{ animationDelay: '0.4s' }} />
+          <div className="absolute w-[200px] h-[200px] rounded-full border border-[#F5C77D]/50 animate-discovery-ring" style={{ animationDelay: '0.8s' }} />
+
+          {/* 360-degree Conical Radar Laser Sweep Beam */}
+          <div
+            className="absolute w-[760px] h-[760px] rounded-full animate-radar-sweep"
+            style={{
+              background: 'conic-gradient(from 0deg at 50% 50%, rgba(8,123,86,0.25) 0deg, rgba(61,214,165,0.10) 45deg, transparent 90deg, transparent 360deg)',
+            }}
+          />
+        </div>
+      )}
+
       {/* 2. SVG Signal Threads Layer */}
       {mapReady && (
         <SignalThreadsLayer
@@ -378,6 +429,8 @@ export const CitySignalAtlas: React.FC<CitySignalAtlasProps> = ({
         onRecenter={handleRecenter}
         onLocateUser={handleLocateUser}
         isLocating={isLocating}
+        onTriggerRadar={handleTriggerRadar}
+        isScanningRadar={isRadarScanning}
         showThreads={showThreads}
         onToggleThreads={() => setShowThreads((prev) => !prev)}
         showLegend={showLegend}

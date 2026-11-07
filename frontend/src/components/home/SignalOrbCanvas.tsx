@@ -166,6 +166,12 @@ function SignalOrb({ reducedMotion = false, interactionRef, isActive }: SignalOr
   const sat3TrailRef = useRef<THREE.Mesh>(null);
   const sat4Ref = useRef<THREE.Mesh>(null);
 
+  // Orbital Ring group refs for independent celestial mechanics
+  const ring1Ref = useRef<THREE.Group>(null);
+  const ring2Ref = useRef<THREE.Group>(null);
+  const ring3Ref = useRef<THREE.Group>(null);
+  const ring4Ref = useRef<THREE.Group>(null);
+
   // Traveling pulses along arcs
   const pulseRefs = useRef<(THREE.Mesh | null)[]>([]);
 
@@ -645,16 +651,17 @@ function SignalOrb({ reducedMotion = false, interactionRef, isActive }: SignalOr
         const targetRotX = 0.18 + interaction.rotationOffset.x + pointer.y * 0.22;
         const targetRotY = interaction.rotationOffset.y + ambientY + pointer.x * 0.38;
 
+        const dampFactor = interaction.isDragging ? 14.0 : 4.0;
         groupRef.current.rotation.x = THREE.MathUtils.damp(
           groupRef.current.rotation.x,
           targetRotX,
-          3.8,
+          dampFactor,
           delta
         );
         groupRef.current.rotation.y = THREE.MathUtils.damp(
           groupRef.current.rotation.y,
           targetRotY,
-          3.8,
+          dampFactor,
           delta
         );
 
@@ -764,6 +771,32 @@ function SignalOrb({ reducedMotion = false, interactionRef, isActive }: SignalOr
     if (sat4Ref.current) {
       const a4 = t * 0.26 + 1.5;
       sat4Ref.current.position.set(2.68 * Math.cos(a4), 0, 2.68 * Math.sin(a4));
+    }
+
+    // I. Independent Celestial Rotation of Orbital Rings
+    if (ring1Ref.current) ring1Ref.current.rotation.z += delta * 0.08;
+    if (ring2Ref.current) ring2Ref.current.rotation.z -= delta * 0.06;
+    if (ring3Ref.current) ring3Ref.current.rotation.z += delta * 0.05;
+    if (ring4Ref.current) ring4Ref.current.rotation.z -= delta * 0.035;
+
+    // J. Ambient Stardust Motes Levitation & 3D Drift
+    if (ambientMotesRef.current) {
+      for (let i = 0; i < ambientMotesData.length; i++) {
+        const mote = ambientMotesData[i];
+        const ang = t * mote.speed + mote.offset;
+        const radiusOsc = 2.22 + Math.sin(t * 1.2 + i) * 0.12;
+        const x = radiusOsc * Math.cos(ang);
+        const y = mote.pos.y + Math.sin(t * 0.7 + i) * 0.06;
+        const z = radiusOsc * Math.sin(ang);
+
+        tempPos.set(x, y, z);
+        const scaleVal = 0.8 + 0.35 * Math.sin(t * 1.8 + i);
+        tempScale.set(scaleVal, scaleVal, scaleVal);
+        tempRot.identity();
+        tempMatrix.compose(tempPos, tempRot, tempScale);
+        ambientMotesRef.current.setMatrixAt(i, tempMatrix);
+      }
+      ambientMotesRef.current.instanceMatrix.needsUpdate = true;
     }
   });
 
@@ -955,7 +988,7 @@ function SignalOrb({ reducedMotion = false, interactionRef, isActive }: SignalOr
 
         {/* 5. LAYER 4: CINEMATIC ORBITAL SYSTEMS (4 DISTINCT LUMINOUS RINGS) */}
         {/* Ring 1: Equatorial Electric Cyan Orbit */}
-        <group rotation={[0.38, 0, -0.22]}>
+        <group ref={ring1Ref} rotation={[0.38, 0, -0.22]}>
           <primitive object={orbitalRingsData.r1Line} />
           <mesh>
             <ringGeometry args={[2.48, 2.60, deviceTier.isLowPower ? 36 : 64]} />
@@ -978,7 +1011,7 @@ function SignalOrb({ reducedMotion = false, interactionRef, isActive }: SignalOr
         </group>
 
         {/* Ring 2: Oblique Warm Golden Telemetry Orbit */}
-        <group rotation={[-0.68, 0.48, 0.28]}>
+        <group ref={ring2Ref} rotation={[-0.68, 0.48, 0.28]}>
           <primitive object={orbitalRingsData.r2Line} />
           <mesh>
             <ringGeometry args={[2.76, 2.88, deviceTier.isLowPower ? 36 : 64]} />
@@ -1001,7 +1034,7 @@ function SignalOrb({ reducedMotion = false, interactionRef, isActive }: SignalOr
         </group>
 
         {/* Ring 3: Counter-Oblique Turquoise Orbit */}
-        <group rotation={[0.42, -0.55, -0.35]}>
+        <group ref={ring3Ref} rotation={[0.42, -0.55, -0.35]}>
           <primitive object={orbitalRingsData.r3Line} />
           <mesh>
             <ringGeometry args={[2.64, 2.72, deviceTier.isLowPower ? 36 : 64]} />
@@ -1020,7 +1053,7 @@ function SignalOrb({ reducedMotion = false, interactionRef, isActive }: SignalOr
         </group>
 
         {/* Ring 4: Outer Precision Telemetry Orbit */}
-        <group rotation={[0.15, -0.78, 0.12]}>
+        <group ref={ring4Ref} rotation={[0.15, -0.78, 0.12]}>
           <primitive object={orbitalRingsData.r4Line} />
         </group>
 
@@ -1046,14 +1079,28 @@ interface SceneProps {
 }
 
 function Scene({ reducedMotion, interactionRef, isActive }: SceneProps) {
+  const keyLightRef = useRef<THREE.DirectionalLight>(null);
+  const rimLightRef = useRef<THREE.DirectionalLight>(null);
+
+  useFrame(({ clock }) => {
+    if (reducedMotion) return;
+    const t = clock.elapsedTime;
+    if (keyLightRef.current) {
+      keyLightRef.current.intensity = 3.2 + Math.sin(t * 0.75) * 0.35;
+    }
+    if (rimLightRef.current) {
+      rimLightRef.current.intensity = 4.0 + Math.cos(t * 0.95) * 0.45;
+    }
+  });
+
   return (
     <>
       {/* Studio Ambient & Directional Lighting */}
       <ambientLight intensity={1.35} color="#E0F2FE" />
       {/* Key Warm Sun Light (Highlights golden city blocks & specular reflections) */}
-      <directionalLight position={[6, 8, 6]} intensity={3.2} color="#FFFBEB" />
+      <directionalLight ref={keyLightRef} position={[6, 8, 6]} intensity={3.2} color="#FFFBEB" />
       {/* Electric Cyan Rim Light (Dramatic atmospheric edge illumination) */}
-      <directionalLight position={[-6, -4, -6]} intensity={4.0} color="#00F2FE" />
+      <directionalLight ref={rimLightRef} position={[-6, -4, -6]} intensity={4.0} color="#00F2FE" />
       {/* Soft Luminous Under-Fill (Deep blue under-illumination) */}
       <directionalLight position={[0, -6, 2]} intensity={2.0} color="#38BDF8" />
 
@@ -1237,7 +1284,7 @@ export const SignalOrbCanvas: React.FC<SignalOrbCanvasProps> = React.memo(({ cla
     <div
       ref={containerRef}
       className={`w-full h-full relative cursor-grab active:cursor-grabbing select-none bg-transparent ${className}`}
-      style={{ touchAction: 'pan-y', background: 'transparent' }}
+      style={{ touchAction: 'none', background: 'transparent' }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}

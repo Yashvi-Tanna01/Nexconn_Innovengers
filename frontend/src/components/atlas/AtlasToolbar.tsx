@@ -6,6 +6,7 @@ import {
   GitFork,
   HelpCircle,
   Navigation,
+  Radio,
 } from 'lucide-react';
 
 interface AtlasToolbarProps {
@@ -14,6 +15,8 @@ interface AtlasToolbarProps {
   onRecenter: () => void;
   onLocateUser?: () => void;
   isLocating?: boolean;
+  onTriggerRadar?: () => void;
+  isScanningRadar?: boolean;
   showThreads: boolean;
   onToggleThreads: () => void;
   showLegend: boolean;
@@ -31,6 +34,8 @@ export const AtlasToolbar: React.FC<AtlasToolbarProps> = ({
   onRecenter,
   onLocateUser,
   isLocating = false,
+  onTriggerRadar,
+  isScanningRadar = false,
   showThreads,
   onToggleThreads,
   showLegend,
@@ -87,6 +92,23 @@ export const AtlasToolbar: React.FC<AtlasToolbarProps> = ({
               aria-label="Locate My Position"
             >
               <Navigation size={15} className={isLocating ? 'rotate-45' : ''} />
+            </button>
+          )}
+
+          {/* Tactical Radar Scan */}
+          {onTriggerRadar && (
+            <button
+              onClick={onTriggerRadar}
+              disabled={isScanningRadar}
+              className={`w-10 h-10 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center active:scale-95 transition-all ${
+                isScanningRadar
+                  ? 'text-[#087B56] bg-emerald-50 ring-2 ring-[#087B56]/30'
+                  : 'text-[#727C79] hover:text-[#087B56] hover:bg-[#F8F8F5]'
+              }`}
+              title="Initiate Tactical Radar Grid Scan"
+              aria-label="Initiate Tactical Radar Scan"
+            >
+              <Radio size={15} className={isScanningRadar ? 'animate-pulse text-[#087B56]' : ''} />
             </button>
           )}
 

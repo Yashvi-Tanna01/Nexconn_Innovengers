@@ -30,6 +30,12 @@ export function resolveDestinationFromPath(path: string): NavDestination {
       return 'patterns';
     case '/messages':
       return 'chat';
+    case '/profile':
+    case '/auth':
+    case '/login':
+      return 'profile';
+    case '/settings':
+      return 'settings';
     default:
       return 'home';
   }
@@ -42,6 +48,7 @@ export function isSameRoute(currentPath: string, targetPath: string): boolean {
   if ((current === '/' || current === '/home') && (target === '/' || target === '/home')) return true;
   if ((current === '/explorer' || current === '/dashboard') && (target === '/explorer' || target === '/dashboard')) return true;
   if ((current === '/patterns' || current === '/coordinator') && (target === '/patterns' || target === '/coordinator')) return true;
+  if ((current === '/profile' || current === '/auth' || current === '/login') && (target === '/profile' || target === '/auth' || target === '/login')) return true;
   return false;
 }
 
@@ -96,7 +103,7 @@ export const NavigationTransitionProvider: React.FC<ProviderProps> = ({ children
         isReadyRef.current = true;
         const elapsed = performance.now() - startTimeRef.current;
         const destination = activeDestination || resolveDestinationFromPath(mountedPath);
-        const minDuration = TRANSITION_CONFIGS[destination]?.minimumDisplayDuration || 1500;
+        const minDuration = TRANSITION_CONFIGS[destination]?.minimumDisplayDuration || 2500;
 
         // finalDuration = Math.max(actualLoadingDuration, minimumDisplayDuration)
         if (elapsed >= minDuration) {
@@ -138,7 +145,7 @@ export const NavigationTransitionProvider: React.FC<ProviderProps> = ({ children
       clearTimers();
 
       const destination = explicitDestination || resolveDestinationFromPath(targetPath);
-      const minDuration = TRANSITION_CONFIGS[destination]?.minimumDisplayDuration || 1500;
+      const minDuration = TRANSITION_CONFIGS[destination]?.minimumDisplayDuration || 2500;
 
       startTimeRef.current = performance.now();
       pendingPathRef.current = targetPath;
@@ -159,14 +166,25 @@ export const NavigationTransitionProvider: React.FC<ProviderProps> = ({ children
         // If not ready yet, reportDestinationReady will trigger completeTransition() once it mounts!
       }, minDuration);
 
-      // 6. Hard safety ceiling (8 seconds) so user is NEVER permanently locked out on errors
+      // 6. Hard safety ceiling (12 seconds) so user is NEVER permanently locked out on errors
       safetyTimerRef.current = setTimeout(() => {
         console.warn('[NavTransition] Safety ceiling triggered. Dismissing transition.');
         completeTransition();
-      }, 8000);
+      }, 12000);
     },
     [location.pathname, isTransitioning, shouldReduceMotion, navigate, clearTimers, completeTransition]
   );
+
+  // Browser back/forward navigation handler (popstate)
+  useEffect(() => {
+    const handlePopState = () => {
+      if (isTransitioning) {
+        completeTransition();
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [isTransitioning, completeTransition]);
 
   // Clean up timers on unmount
   useEffect(() => {

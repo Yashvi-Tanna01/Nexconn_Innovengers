@@ -50,7 +50,7 @@ export const DashboardPage: React.FC = () => {
   ];
 
   return (
-    <div className="w-full px-4 pt-3 pb-8 space-y-5 select-none">
+    <div className="w-full px-4 pt-3 pb-32 sm:pb-40 space-y-5 select-none">
       {/* 1. COMPACT WELCOME HEADER */}
       <div className="flex items-center justify-between pb-2 border-b border-[#E3E8E4]">
         <div>

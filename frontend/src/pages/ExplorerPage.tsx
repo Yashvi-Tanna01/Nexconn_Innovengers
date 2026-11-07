@@ -105,7 +105,7 @@ export const ExplorerPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="w-full text-[#182322] space-y-4 select-none box-border min-w-0">
+    <div className="w-full text-[#182322] space-y-4 select-none box-border min-w-0 pb-32 sm:pb-40">
       {/* 1. MAP HEADER & CONTROLS (Responsive Two-Column Layout) */}
       <div className="w-full flex flex-col md:flex-row md:items-end justify-between gap-4 pt-1 min-w-0">
         {/* Left Column: Section label, Location badge, Heading, Supporting description */}

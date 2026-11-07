@@ -154,10 +154,10 @@ export const createAtlasMarkerIcon = (
       ? 'shadow-[0_0_0_3px_rgba(217,154,69,0.35),0_12px_28px_rgba(217,154,69,0.25)]'
       : isResolved
       ? 'shadow-[0_0_0_3px_rgba(40,107,86,0.35),0_12px_28px_rgba(40,107,86,0.25)]'
-      : 'shadow-[0_0_0_3px_rgba(24,35,34,0.15),0_12px_28px_rgba(24,35,34,0.18)]'
+      : 'shadow-[0_0_0_3px_rgba(8,123,86,0.25),0_12px_28px_rgba(8,123,86,0.20)]'
     : isRelatedToSelected
-    ? 'shadow-[0_0_0_2px_rgba(217,154,69,0.4),0_6px_16px_rgba(24,35,34,0.08)]'
-    : 'shadow-[0_2px_8px_rgba(24,35,34,0.08)] hover:shadow-[0_6px_16px_rgba(24,35,34,0.12)]';
+    ? 'shadow-[0_0_0_2px_rgba(217,154,69,0.4),0_6px_16px_rgba(24,35,34,0.08)] hover:-translate-y-0.5'
+    : 'shadow-[0_2px_8px_rgba(24,35,34,0.08)] hover:shadow-[0_8px_20px_rgba(24,35,34,0.16)] hover:-translate-y-0.5 active:scale-95';
 
   const transformStyle = isSelected
     ? 'transform: scale(1.12); z-index: 100;'
@@ -170,9 +170,13 @@ export const createAtlasMarkerIcon = (
     ? `<span class="absolute -bottom-1.5 -right-1.5 px-1 py-0.2 rounded text-[7px] font-mono font-bold bg-[#FFF7ED] text-[#D99A45] border border-[#D99A45]/40 shadow-2xs">LINK</span>`
     : '';
 
-  // Single-shot subtle expanding pulse ONLY on the actively selected signal
+  // DISCOVER: Triple concentric expanding discovery pulse wave ONLY on the actively selected signal
   const pulseHtml = isSelected
-    ? `<span class="atlas-signal-pulse" data-cycle="${pulseCycle}" style="border-color: ${pulseColor};"></span>`
+    ? `
+      <span class="atlas-signal-pulse" data-cycle="${pulseCycle}" style="border-color: ${pulseColor};"></span>
+      <span class="atlas-signal-pulse" data-cycle="${pulseCycle}" style="border-color: #087B56; animation-delay: 0.18s; opacity: 0.8;"></span>
+      <span class="atlas-signal-pulse" data-cycle="${pulseCycle}" style="border-color: #3DD6A5; animation-delay: 0.36s; opacity: 0.6;"></span>
+    `
     : '';
 
   const glyph = getCategoryGlyph(signal.category, meta.color);

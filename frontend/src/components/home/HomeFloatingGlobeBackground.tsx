@@ -42,7 +42,7 @@ export const HomeFloatingGlobeBackground: React.FC = React.memo(() => {
 
       {/* 2. LAYER 2: PERMANENT FIXED FLOATING 3D DIGITAL EARTH SUSPENDED STAGE */}
       <div
-        className="absolute left-1/2 -translate-x-1/2 top-[50px] sm:top-[56px] md:top-[62px] lg:top-[66px] w-full max-w-[380px] sm:max-w-[460px] md:max-w-[530px] lg:max-w-[580px] h-[360px] sm:h-[420px] md:h-[470px] lg:h-[510px] flex items-center justify-center pointer-events-none"
+        className="absolute left-1/2 -translate-x-1/2 top-[50px] sm:top-[56px] md:top-[62px] lg:top-[66px] w-full max-w-[380px] sm:max-w-[460px] md:max-w-[530px] lg:max-w-[580px] h-[360px] sm:h-[420px] md:h-[470px] lg:h-[510px] flex items-center justify-center pointer-events-auto"
         style={{
           transform: 'translate3d(-50%, 0, 0)',
           willChange: 'transform',

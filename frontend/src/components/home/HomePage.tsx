@@ -39,9 +39,9 @@ export const HomePage: React.FC = React.memo(() => {
         {/* ------------------------------------------------------------- */}
         {/* 2. HERO 3D DIGITAL EARTH SUSPENDED STAGE (TRANSPARENT SPACER) */}
         {/* ------------------------------------------------------------- */}
-        <section className="relative w-full flex flex-col items-center text-center pt-1 sm:pt-3 bg-transparent">
+        <section className="relative w-full flex flex-col items-center text-center pt-1 sm:pt-3 bg-transparent pointer-events-none">
         {/* Top Status Pill: CIVIC INTELLIGENCE MESH  ●  ONLINE */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#E1F2EB]/90 backdrop-blur-md border border-[#17533E]/20 text-[11px] font-mono font-semibold tracking-wider text-[#17533E] shadow-[0_2px_14px_rgba(23,83,62,0.10)] mb-1 sm:mb-2">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#E1F2EB]/90 backdrop-blur-md border border-[#17533E]/20 text-[11px] font-mono font-semibold tracking-wider text-[#17533E] shadow-[0_2px_14px_rgba(23,83,62,0.10)] mb-1 sm:mb-2 pointer-events-auto">
           <Radio size={13} className="text-[#17533E] animate-pulse" />
           <span>CIVIC INTELLIGENCE MESH</span>
           <span className="text-[#17533E]/50">●</span>
@@ -58,7 +58,7 @@ export const HomePage: React.FC = React.memo(() => {
         />
 
         {/* Editorial Headline & Supporting Description */}
-        <div className="space-y-2 max-w-xl mx-auto mt-1 sm:mt-2">
+        <div className="space-y-2 max-w-xl mx-auto mt-1 sm:mt-2 pointer-events-auto">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl font-light text-[#1E2925] tracking-tight font-sans leading-tight">
             Small Signals.<br />
             <span className="font-extrabold text-[#1E2925]">
@@ -72,7 +72,7 @@ export const HomePage: React.FC = React.memo(() => {
         </div>
 
         {/* Primary and Secondary Action Buttons */}
-        <div className="flex flex-row items-center justify-center gap-3 w-full max-w-sm mx-auto mt-4 sm:mt-5">
+        <div className="flex flex-row items-center justify-center gap-3 w-full max-w-sm mx-auto mt-4 sm:mt-5 pointer-events-auto">
           {/* Primary Action Button: Explore Signals */}
           <Link
             to="/explorer"
@@ -118,11 +118,11 @@ export const HomePage: React.FC = React.memo(() => {
               e.preventDefault();
               navigateWithTransition('/report', 'report');
             }}
-            className="group relative p-4 sm:p-5 rounded-3xl bg-white/85 backdrop-blur-md border border-[#EBE7DF] shadow-[0_4px_20px_rgba(30,40,35,0.03)] hover:shadow-[0_8px_25px_rgba(23,83,62,0.12)] hover:border-[#17533E]/30 hover:-translate-y-0.5 active:scale-98 transition-all flex items-center justify-between gap-3.5 overflow-hidden"
+            className="group relative p-4 sm:p-5 rounded-3xl bg-white/85 backdrop-blur-md border border-[#EBE7DF] shadow-[0_4px_20px_rgba(30,40,35,0.03)] hover:shadow-[0_12px_32px_rgba(8,123,86,0.14)] hover:border-[#087B56]/50 hover:-translate-y-1.5 active:scale-[0.98] transition-all duration-300 flex items-center justify-between gap-3.5 overflow-hidden"
           >
-            <div className="absolute -right-6 -bottom-6 w-20 h-20 rounded-full bg-emerald-100/40 blur-xl pointer-events-none group-hover:scale-125 transition-transform" />
+            <div className="absolute -right-6 -bottom-6 w-20 h-20 rounded-full bg-emerald-100/40 blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-500" />
             <div className="flex items-center gap-3.5 min-w-0">
-              <div className="w-12 h-12 rounded-2xl bg-[#E1F2EB] text-[#17533E] flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform">
+              <div className="w-12 h-12 rounded-2xl bg-[#E1F2EB] text-[#17533E] flex items-center justify-center shrink-0 shadow-xs group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
                 <Plus size={22} strokeWidth={2.5} />
               </div>
               <div className="min-w-0">
@@ -134,8 +134,8 @@ export const HomePage: React.FC = React.memo(() => {
                 </div>
               </div>
             </div>
-            <div className="w-8 h-8 rounded-full bg-[#FAF9F5] border border-[#EBE7DF] text-[#7B8B84] group-hover:text-[#17533E] group-hover:bg-[#E1F2EB] group-hover:border-[#17533E]/20 flex items-center justify-center shrink-0 transition-colors">
-              <ArrowRight size={14} strokeWidth={2} />
+            <div className="w-8 h-8 rounded-full bg-[#FAF9F5] border border-[#EBE7DF] text-[#7B8B84] group-hover:text-[#17533E] group-hover:bg-[#E1F2EB] group-hover:border-[#17533E]/20 flex items-center justify-center shrink-0 transition-all duration-200">
+              <ArrowRight size={14} strokeWidth={2} className="group-hover:translate-x-1 transition-transform duration-250" />
             </div>
           </Link>
 
@@ -146,11 +146,11 @@ export const HomePage: React.FC = React.memo(() => {
               e.preventDefault();
               navigateWithTransition('/explorer', 'explore');
             }}
-            className="group relative p-4 sm:p-5 rounded-3xl bg-white/85 backdrop-blur-md border border-[#EBE7DF] shadow-[0_4px_20px_rgba(30,40,35,0.03)] hover:shadow-[0_8px_25px_rgba(217,119,6,0.12)] hover:border-amber-400/40 hover:-translate-y-0.5 active:scale-98 transition-all flex items-center justify-between gap-3.5 overflow-hidden"
+            className="group relative p-4 sm:p-5 rounded-3xl bg-white/85 backdrop-blur-md border border-[#EBE7DF] shadow-[0_4px_20px_rgba(30,40,35,0.03)] hover:shadow-[0_12px_32px_rgba(217,119,6,0.14)] hover:border-amber-400/50 hover:-translate-y-1.5 active:scale-[0.98] transition-all duration-300 flex items-center justify-between gap-3.5 overflow-hidden"
           >
-            <div className="absolute -right-6 -bottom-6 w-20 h-20 rounded-full bg-amber-100/40 blur-xl pointer-events-none group-hover:scale-125 transition-transform" />
+            <div className="absolute -right-6 -bottom-6 w-20 h-20 rounded-full bg-amber-100/40 blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-500" />
             <div className="flex items-center gap-3.5 min-w-0">
-              <div className="w-12 h-12 rounded-2xl bg-[#FEF3E2] text-[#D97706] flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform">
+              <div className="w-12 h-12 rounded-2xl bg-[#FEF3E2] text-[#D97706] flex items-center justify-center shrink-0 shadow-xs group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-300">
                 <MapPin size={22} strokeWidth={2.2} />
               </div>
               <div className="min-w-0">
@@ -162,8 +162,8 @@ export const HomePage: React.FC = React.memo(() => {
                 </div>
               </div>
             </div>
-            <div className="w-8 h-8 rounded-full bg-[#FAF9F5] border border-[#EBE7DF] text-[#7B8B84] group-hover:text-[#D97706] group-hover:bg-[#FEF3E2] group-hover:border-amber-400/20 flex items-center justify-center shrink-0 transition-colors">
-              <ArrowRight size={14} strokeWidth={2} />
+            <div className="w-8 h-8 rounded-full bg-[#FAF9F5] border border-[#EBE7DF] text-[#7B8B84] group-hover:text-[#D97706] group-hover:bg-[#FEF3E2] group-hover:border-amber-400/20 flex items-center justify-center shrink-0 transition-all duration-200">
+              <ArrowRight size={14} strokeWidth={2} className="group-hover:translate-x-1 transition-transform duration-250" />
             </div>
           </Link>
 
@@ -174,11 +174,11 @@ export const HomePage: React.FC = React.memo(() => {
               e.preventDefault();
               navigateWithTransition('/patterns', 'patterns');
             }}
-            className="group relative p-4 sm:p-5 rounded-3xl bg-white/85 backdrop-blur-md border border-[#EBE7DF] shadow-[0_4px_20px_rgba(30,40,35,0.03)] hover:shadow-[0_8px_25px_rgba(37,99,235,0.12)] hover:border-blue-400/40 hover:-translate-y-0.5 active:scale-98 transition-all flex items-center justify-between gap-3.5 overflow-hidden"
+            className="group relative p-4 sm:p-5 rounded-3xl bg-white/85 backdrop-blur-md border border-[#EBE7DF] shadow-[0_4px_20px_rgba(30,40,35,0.03)] hover:shadow-[0_12px_32px_rgba(37,99,235,0.14)] hover:border-blue-400/50 hover:-translate-y-1.5 active:scale-[0.98] transition-all duration-300 flex items-center justify-between gap-3.5 overflow-hidden"
           >
-            <div className="absolute -right-6 -bottom-6 w-20 h-20 rounded-full bg-blue-100/40 blur-xl pointer-events-none group-hover:scale-125 transition-transform" />
+            <div className="absolute -right-6 -bottom-6 w-20 h-20 rounded-full bg-blue-100/40 blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-500" />
             <div className="flex items-center gap-3.5 min-w-0">
-              <div className="w-12 h-12 rounded-2xl bg-[#E8F1FC] text-[#2563EB] flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform">
+              <div className="w-12 h-12 rounded-2xl bg-[#E8F1FC] text-[#2563EB] flex items-center justify-center shrink-0 shadow-xs group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
                 <BarChart2 size={22} strokeWidth={2.2} />
               </div>
               <div className="min-w-0">
@@ -190,8 +190,8 @@ export const HomePage: React.FC = React.memo(() => {
                 </div>
               </div>
             </div>
-            <div className="w-8 h-8 rounded-full bg-[#FAF9F5] border border-[#EBE7DF] text-[#7B8B84] group-hover:text-[#2563EB] group-hover:bg-[#E8F1FC] group-hover:border-blue-400/20 flex items-center justify-center shrink-0 transition-colors">
-              <ArrowRight size={14} strokeWidth={2} />
+            <div className="w-8 h-8 rounded-full bg-[#FAF9F5] border border-[#EBE7DF] text-[#7B8B84] group-hover:text-[#2563EB] group-hover:bg-[#E8F1FC] group-hover:border-blue-400/20 flex items-center justify-center shrink-0 transition-all duration-200">
+              <ArrowRight size={14} strokeWidth={2} className="group-hover:translate-x-1 transition-transform duration-250" />
             </div>
           </Link>
 
@@ -202,11 +202,11 @@ export const HomePage: React.FC = React.memo(() => {
               e.preventDefault();
               navigateWithTransition('/messages', 'chat');
             }}
-            className="group relative p-4 sm:p-5 rounded-3xl bg-white/85 backdrop-blur-md border border-[#EBE7DF] shadow-[0_4px_20px_rgba(30,40,35,0.03)] hover:shadow-[0_8px_25px_rgba(234,88,12,0.12)] hover:border-orange-400/40 hover:-translate-y-0.5 active:scale-98 transition-all flex items-center justify-between gap-3.5 overflow-hidden"
+            className="group relative p-4 sm:p-5 rounded-3xl bg-white/85 backdrop-blur-md border border-[#EBE7DF] shadow-[0_4px_20px_rgba(30,40,35,0.03)] hover:shadow-[0_12px_32px_rgba(234,88,12,0.14)] hover:border-orange-400/50 hover:-translate-y-1.5 active:scale-[0.98] transition-all duration-300 flex items-center justify-between gap-3.5 overflow-hidden"
           >
-            <div className="absolute -right-6 -bottom-6 w-20 h-20 rounded-full bg-orange-100/40 blur-xl pointer-events-none group-hover:scale-125 transition-transform" />
+            <div className="absolute -right-6 -bottom-6 w-20 h-20 rounded-full bg-orange-100/40 blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-500" />
             <div className="flex items-center gap-3.5 min-w-0">
-              <div className="w-12 h-12 rounded-2xl bg-[#FEECE8] text-[#EA580C] flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform">
+              <div className="w-12 h-12 rounded-2xl bg-[#FEECE8] text-[#EA580C] flex items-center justify-center shrink-0 shadow-xs group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-300">
                 <MessageSquare size={22} strokeWidth={2.2} />
               </div>
               <div className="min-w-0">
@@ -218,8 +218,8 @@ export const HomePage: React.FC = React.memo(() => {
                 </div>
               </div>
             </div>
-            <div className="w-8 h-8 rounded-full bg-[#FAF9F5] border border-[#EBE7DF] text-[#7B8B84] group-hover:text-[#EA580C] group-hover:bg-[#FEECE8] group-hover:border-orange-400/20 flex items-center justify-center shrink-0 transition-colors">
-              <ArrowRight size={14} strokeWidth={2} />
+            <div className="w-8 h-8 rounded-full bg-[#FAF9F5] border border-[#EBE7DF] text-[#7B8B84] group-hover:text-[#EA580C] group-hover:bg-[#FEECE8] group-hover:border-orange-400/20 flex items-center justify-center shrink-0 transition-all duration-200">
+              <ArrowRight size={14} strokeWidth={2} className="group-hover:translate-x-1 transition-transform duration-250" />
             </div>
           </Link>
         </div>

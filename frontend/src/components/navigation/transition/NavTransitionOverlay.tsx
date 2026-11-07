@@ -33,6 +33,10 @@ export const NavTransitionOverlay: React.FC<NavTransitionOverlayProps> = ({
         return <NeuralConnectionsPortal />;
       case 'chat':
         return <CommunicationPortal />;
+      case 'profile':
+        return <LivingEarthPortal />;
+      case 'settings':
+        return <EnergyFormationPortal />;
       default:
         return <LivingEarthPortal />;
     }
@@ -44,8 +48,8 @@ export const NavTransitionOverlay: React.FC<NavTransitionOverlayProps> = ({
         <motion.div
           key={`nav-transition-${destination}`}
           initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0, transition: { duration: 0.35, ease: 'easeOut' } }}
+          animate={{ opacity: 1, transition: { duration: 0.30 } }}
+          exit={{ opacity: 0, transition: { duration: 0.40, ease: 'easeOut' } }}
           className="fixed inset-0 z-[9990] bg-[#064C3B]/15 backdrop-blur-sm flex items-center justify-center p-4 pointer-events-auto select-none"
           role="status"
           aria-live="polite"
@@ -58,9 +62,9 @@ export const NavTransitionOverlay: React.FC<NavTransitionOverlayProps> = ({
             exit={
               shouldReduceMotion
                 ? { opacity: 0 }
-                : { scale: 0.95, opacity: 0, y: -8, transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] } }
+                : { scale: 0.95, opacity: 0, y: -8, transition: { duration: 0.40, ease: [0.16, 1, 0.3, 1] } }
             }
-            transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.30, ease: [0.16, 1, 0.3, 1] }}
             className="relative w-full max-w-[340px] sm:max-w-[370px] p-6 sm:p-7 rounded-3xl bg-[#F7F5EF]/90 backdrop-blur-2xl border border-[#087B56]/20 shadow-[0_24px_60px_-12px_rgba(6,76,59,0.22),0_0_0_1px_rgba(255,255,255,0.8)_inset] flex flex-col items-center text-center overflow-hidden"
           >
             {/* Top Atmospheric Ambient Light Glow */}

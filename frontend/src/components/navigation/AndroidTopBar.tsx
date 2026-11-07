@@ -176,10 +176,26 @@ export const AndroidTopBar: React.FC = () => {
                   </Link>
                   <Link
                     to="/messages"
-                    onClick={() => setProfileOpen(false)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setProfileOpen(false);
+                      navigateWithTransition('/messages', 'chat');
+                    }}
                     className="flex items-center justify-between p-2 rounded-xl hover:bg-stone-50 text-stone-800"
                   >
                     <span>Nexconn Incident Room</span>
+                    <ChevronRight size={13} className="text-stone-400" />
+                  </Link>
+                  <Link
+                    to="/auth"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setProfileOpen(false);
+                      navigateWithTransition('/auth', 'profile');
+                    }}
+                    className="flex items-center justify-between p-2 rounded-xl hover:bg-stone-50 text-stone-800"
+                  >
+                    <span>Profile & Authentication</span>
                     <ChevronRight size={13} className="text-stone-400" />
                   </Link>
                 </div>

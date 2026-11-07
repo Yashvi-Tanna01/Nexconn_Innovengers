@@ -102,16 +102,19 @@ export const ReportPage: React.FC = () => {
             { num: 3, label: '03. Verification & Submit' },
           ].map((s) => {
             const isActive = step === s.num;
+            const isCompleted = step > s.num;
             return (
               <div
                 key={s.num}
-                className={`relative p-2.5 rounded-xl border text-center transition-all ${
+                className={`relative p-2.5 rounded-xl border text-center transition-all duration-200 ${
                   isActive
-                    ? 'bg-white border-antah-teal text-antah-teal shadow-soft-xs font-bold'
+                    ? 'bg-white border-[#087B56] text-[#087B56] shadow-sm font-bold ring-1 ring-[#087B56]/30'
+                    : isCompleted
+                    ? 'bg-emerald-50/70 border-emerald-200 text-[#087B56] font-semibold'
                     : 'bg-slate-50/80 border-slate-200 text-antah-muted'
                 }`}
               >
-                <span className="text-xs font-mono">{s.label}</span>
+                <span className="text-xs font-mono">{isCompleted ? '✓ ' : ''}{s.label}</span>
               </div>
             );
           })}
@@ -122,21 +125,73 @@ export const ReportPage: React.FC = () => {
             key={`submitted-${submittedId}`}
             initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.95 }}
             animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, scale: 1 }}
-            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
           >
-            <Card variant="panel" className="border-teal-200 bg-teal-50/30 p-8 text-center space-y-4">
-              <div className="w-14 h-14 rounded-full bg-teal-100 text-antah-teal flex items-center justify-center mx-auto shadow-teal-glow">
-                <CheckCircle2 size={32} />
+            <Card variant="panel" className="relative overflow-hidden border-teal-200/90 bg-white/95 p-8 text-center space-y-5 shadow-xl">
+              {/* Expanding Emerald Aura & Golden Synaptic Halo */}
+              <div className="relative w-24 h-24 mx-auto flex items-center justify-center">
+                {!shouldReduceMotion && (
+                  <>
+                    <motion.span
+                      initial={{ scale: 0.7, opacity: 0.9 }}
+                      animate={{ scale: [0.7, 1.8], opacity: [0.8, 0] }}
+                      transition={{ duration: 1.4, repeat: Infinity, ease: 'easeOut' }}
+                      className="absolute inset-0 rounded-full border-2 border-[#087B56]"
+                    />
+                    <motion.span
+                      initial={{ scale: 0.5, opacity: 0.9 }}
+                      animate={{ scale: [0.5, 2.2], opacity: [0.6, 0] }}
+                      transition={{ duration: 1.4, repeat: Infinity, ease: 'easeOut', delay: 0.25 }}
+                      className="absolute inset-0 rounded-full border border-[#3DD6A5]"
+                    />
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#D99A45]/25 via-[#3DD6A5]/20 to-[#087B56]/25 blur-lg" />
+                  </>
+                )}
+                {/* Central Verified Emerald Badge */}
+                <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-[#087B56] to-[#064C3B] text-white flex items-center justify-center shadow-lg shadow-[#087B56]/30">
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="w-8 h-8 stroke-white"
+                    fill="none"
+                    strokeWidth={2.8}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <motion.path
+                      d="M20 6L9 17l-5-5"
+                      initial={shouldReduceMotion ? { pathLength: 1 } : { pathLength: 0 }}
+                      animate={{ pathLength: 1 }}
+                      transition={{ duration: 0.55, delay: 0.15, ease: 'easeOut' }}
+                    />
+                  </svg>
+                </div>
               </div>
-              <h2 className="text-2xl font-bold text-antah-navy">Observation Logged Successfully</h2>
-              <div className="font-mono text-sm font-bold text-antah-teal bg-white border border-teal-200 px-4 py-2 rounded-xl inline-block shadow-soft-xs">
+
+              {/* Exact Choreographed Success Messaging */}
+              <motion.div
+                initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.2 }}
+                className="space-y-1.5"
+              >
+                <h2 className="text-2xl font-bold text-antah-navy tracking-tight">
+                  Signal successfully submitted.
+                </h2>
+                <p className="text-sm font-semibold text-[#087B56]">
+                  Your observation is now part of the civic intelligence network.
+                </p>
+              </motion.div>
+
+              <div className="font-mono text-sm font-bold text-[#087B56] bg-teal-50/70 border border-teal-200/90 px-4 py-2 rounded-xl inline-block shadow-soft-xs">
                 Report Ticket ID: {submittedId}
               </div>
+
               <p className="text-xs text-antah-slate max-w-md mx-auto leading-relaxed">
                 Your observation has been geo-indexed in <span className="font-bold text-antah-navy">{selectedDistrict.name}</span>. The correlation engine is actively evaluating nearby infrastructure dependencies.
               </p>
-              <div className="pt-4 flex items-center justify-center gap-3">
-                <Button variant="primary" size="md" onClick={resetForm} className="font-bold">
+
+              <div className="pt-2 flex items-center justify-center gap-3">
+                <Button variant="primary" size="md" onClick={resetForm} className="font-bold shadow-soft-xs">
                   Submit Another Observation
                 </Button>
               </div>
@@ -369,21 +424,26 @@ export const ReportPage: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Photo Upload Simulation Box */}
+                      {/* Photo Upload Box with Holographic Scanning Feedback */}
                       <div
                         onClick={() => setHasPhoto(!hasPhoto)}
-                        className={`p-6 rounded-xl border-2 border-dashed text-center cursor-pointer transition-all ${
+                        className={`relative overflow-hidden p-6 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all duration-300 transform active:scale-[0.99] ${
                           hasPhoto
-                            ? 'border-antah-teal bg-teal-50/30'
-                            : 'border-slate-200 hover:border-slate-300 bg-white'
+                            ? 'border-[#087B56] bg-teal-50/40 shadow-[0_0_20px_rgba(8,123,86,0.18)] ring-1 ring-[#3DD6A5]/40'
+                            : 'border-slate-200 hover:border-[#087B56]/50 hover:bg-[#FBFBF9] hover:shadow-sm bg-white'
                         }`}
                       >
-                        <Camera size={24} className={`mx-auto mb-2 ${hasPhoto ? 'text-antah-teal' : 'text-slate-400'}`} />
+                        {hasPhoto && !shouldReduceMotion && (
+                          <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden">
+                            <div className="absolute inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-[#3DD6A5] to-transparent shadow-[0_0_8px_#3DD6A5] animate-pulse" />
+                          </div>
+                        )}
+                        <Camera size={26} className={`mx-auto mb-2 transition-transform duration-200 ${hasPhoto ? 'text-[#087B56] scale-110' : 'text-slate-400'}`} />
                         <span className="text-xs font-semibold text-antah-navy block">
-                          {hasPhoto ? 'Photograph Attached: site_inspection.jpg' : 'Attach Optional Site Photo'}
+                          {hasPhoto ? 'Site Evidence Attached: site_inspection.jpg' : 'Attach Optional Site Photo'}
                         </span>
-                        <span className="text-[11px] text-antah-muted block mt-0.5">
-                          {hasPhoto ? 'Click to detach' : 'Click to simulate camera capture or gallery upload'}
+                        <span className="text-[11px] font-mono text-[#087B56] block mt-0.5">
+                          {hasPhoto ? '✓ EXIF Verified • GPS Geotagged • Click to detach' : 'Click to simulate camera capture or gallery upload'}
                         </span>
                       </div>
                     </CardContent>

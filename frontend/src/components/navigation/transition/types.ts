@@ -1,4 +1,4 @@
-export type NavDestination = 'home' | 'explore' | 'report' | 'patterns' | 'chat';
+export type NavDestination = 'home' | 'explore' | 'report' | 'patterns' | 'chat' | 'profile' | 'settings';
 
 export interface TransitionMeta {
   id: NavDestination;
@@ -19,7 +19,7 @@ export const TRANSITION_CONFIGS: Record<NavDestination, TransitionMeta> = {
     path: '/home',
     primaryColor: '#087B56',
     accentColor: '#54D8C4',
-    minimumDisplayDuration: 1500,
+    minimumDisplayDuration: 2500,
   },
   explore: {
     id: 'explore',
@@ -28,7 +28,7 @@ export const TRANSITION_CONFIGS: Record<NavDestination, TransitionMeta> = {
     path: '/explorer',
     primaryColor: '#087B56',
     accentColor: '#54D8C4',
-    minimumDisplayDuration: 1600,
+    minimumDisplayDuration: 3000,
   },
   report: {
     id: 'report',
@@ -37,7 +37,7 @@ export const TRANSITION_CONFIGS: Record<NavDestination, TransitionMeta> = {
     path: '/report',
     primaryColor: '#087B56',
     accentColor: '#F5C77D',
-    minimumDisplayDuration: 1500,
+    minimumDisplayDuration: 2500,
   },
   patterns: {
     id: 'patterns',
@@ -46,7 +46,7 @@ export const TRANSITION_CONFIGS: Record<NavDestination, TransitionMeta> = {
     path: '/patterns',
     primaryColor: '#087B56',
     accentColor: '#F5C77D',
-    minimumDisplayDuration: 1800,
+    minimumDisplayDuration: 3500,
   },
   chat: {
     id: 'chat',
@@ -55,7 +55,25 @@ export const TRANSITION_CONFIGS: Record<NavDestination, TransitionMeta> = {
     path: '/messages',
     primaryColor: '#087B56',
     accentColor: '#54D8C4',
-    minimumDisplayDuration: 1500,
+    minimumDisplayDuration: 2500,
+  },
+  profile: {
+    id: 'profile',
+    title: 'Loading Civic Profile...',
+    subtitle: 'Accessing municipal credentials & identity',
+    path: '/auth',
+    primaryColor: '#087B56',
+    accentColor: '#54D8C4',
+    minimumDisplayDuration: 2500,
+  },
+  settings: {
+    id: 'settings',
+    title: 'Loading System Settings...',
+    subtitle: 'Configuring telemetry parameters & mesh sync',
+    path: '/settings',
+    primaryColor: '#087B56',
+    accentColor: '#F5C77D',
+    minimumDisplayDuration: 2500,
   },
 };
 

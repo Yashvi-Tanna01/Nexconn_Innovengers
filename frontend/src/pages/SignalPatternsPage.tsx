@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { API_ENDPOINTS, apiRequest, Cluster } from '../config/api';
 import { Link } from 'react-router-dom';
+import { PatternNeuralGraph } from '../components/patterns/PatternNeuralGraph';
 
 export const SignalPatternsPage: React.FC = () => {
   const [clusters, setClusters] = useState<Cluster[]>([]);
@@ -15,6 +16,7 @@ export const SignalPatternsPage: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isReviewing, setIsReviewing] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
 
   const selectedCluster = clusters.find((c) => c.id === selectedClusterId) || clusters[0];
 
@@ -44,6 +46,10 @@ export const SignalPatternsPage: React.FC = () => {
       setClusters((previous) => previous.map((cluster) =>
         cluster.id === result.data?.id ? result.data : cluster
       ));
+      if (decision === 'approved') {
+        setIsScanning(true);
+        setTimeout(() => setIsScanning(false), 1900);
+      }
       setActionSuccessMessage(
         decision === 'approved' ? 'Patrón verificado oficialmente.' :
           decision === 'rejected' ? 'Patrón descartado y registrado.' :
@@ -121,13 +127,16 @@ export const SignalPatternsPage: React.FC = () => {
         {clusters.map((cluster) => {
           const isSelected = cluster.id === selectedCluster.id;
           return (
-            <div
+            <motion.div
               key={cluster.id}
               onClick={() => setSelectedClusterId(cluster.id)}
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.985 }}
+              transition={{ duration: 0.18 }}
               className={`p-4 rounded-3xl border transition-all cursor-pointer ${
                 isSelected
                   ? 'bg-white border-[#286B56] shadow-sm ring-2 ring-[#286B56]/15'
-                  : 'bg-white/80 border-[#E3E8E4] hover:bg-white'
+                  : 'bg-white/80 border-[#E3E8E4] hover:bg-white hover:border-[#286B56]/30'
               }`}
             >
               <div className="flex items-center justify-between mb-1.5">
@@ -161,13 +170,20 @@ export const SignalPatternsPage: React.FC = () => {
                   {Math.round(cluster.score * 100)}% Confianza IA
                 </span>
               </div>
-            </div>
+            </motion.div>
           );
         })}
       </div>
 
       {/* 4. DEEP CLUSTER INSPECTION PANEL */}
-      <div className="bg-white rounded-3xl border border-[#E3E8E4] p-4 sm:p-5 shadow-xs space-y-4">
+      <div className="relative overflow-hidden bg-white rounded-3xl border border-[#E3E8E4] p-4 sm:p-5 shadow-xs space-y-4">
+        {/* CONFIRM: Golden Laser Scan Sweep */}
+        {isScanning && (
+          <div className="pointer-events-none absolute inset-0 z-30 overflow-hidden">
+            <div className="absolute inset-y-0 w-36 bg-gradient-to-r from-transparent via-[#F5C77D]/50 to-[#087B56]/30 blur-sm animate-golden-scan" />
+            <div className="absolute inset-y-0 w-1.5 bg-white shadow-[0_0_12px_#F5C77D] animate-golden-scan" />
+          </div>
+        )}
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="text-xs font-mono font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
@@ -188,6 +204,13 @@ export const SignalPatternsPage: React.FC = () => {
             <span>Estado: {selectedCluster.status}</span>
           </div>
         </div>
+
+        {/* CONNECT: Neural Network Correlation Graph */}
+        <PatternNeuralGraph
+          clusterId={selectedCluster.id}
+          clusterTitle={selectedCluster.title}
+          confidenceScore={selectedCluster.score}
+        />
 
         {/* Rationale Callout */}
         <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200/80">

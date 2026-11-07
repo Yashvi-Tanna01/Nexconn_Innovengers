@@ -170,12 +170,22 @@ export const SignalThreadsLayer: React.FC<SignalThreadsLayerProps> = ({
               className="transition-all duration-300"
             />
 
-            {/* Animated Directional Telemetry Pulse Gliding Along the Curve when Selected */}
+            {/* Continuous Synaptic Data Flow along Infrastructure Conduits */}
+            <circle r={isSelected ? '3.8' : '2.4'} fill={color} opacity={isSelected ? 0.95 : 0.6}>
+              <animateMotion
+                path={pathD}
+                dur={isSelected ? '1.8s' : '3.6s'}
+                repeatCount="indefinite"
+                rotate="auto"
+              />
+            </circle>
+
+            {/* High-Energy Synaptic Acceleration Pulse for Selected Cluster */}
             {isSelected && (
-              <circle r="3.5" fill={color} opacity="0.9">
+              <circle r="2" fill="#FFFFFF" opacity="0.95">
                 <animateMotion
                   path={pathD}
-                  dur="2.4s"
+                  dur="1.8s"
                   repeatCount="indefinite"
                   rotate="auto"
                 />

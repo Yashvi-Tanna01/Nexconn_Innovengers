@@ -9,6 +9,7 @@ import { API_ENDPOINTS, apiRequest, Cluster } from '../config/api';
 import { panelVariants } from '../theme/motion';
 import {
   ShieldAlert,
+  ShieldCheck,
   Sparkles,
   CheckCircle2,
   XCircle,
@@ -25,6 +26,7 @@ export const CoordinatorPage: React.FC = () => {
   const [errorNotice, setErrorNotice] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isReviewing, setIsReviewing] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
   const shouldReduceMotion = useReducedMotion();
   const { startLoading, stopLoading } = useLoading();
 
@@ -59,6 +61,10 @@ export const CoordinatorPage: React.FC = () => {
     });
     if (result.data) {
       setClusters((previous) => previous.map((item) => item.id === result.data?.id ? result.data : item));
+      if (decision === 'approved') {
+        setIsScanning(true);
+        setTimeout(() => setIsScanning(false), 1900);
+      }
       setActionNotice(decision === 'approved' ? 'Candidate cluster approved as a verified incident.' :
         decision === 'rejected' ? 'Candidate cluster dismissed and preserved in the audit trail.' :
           'Additional information requested for this candidate cluster.');
@@ -137,28 +143,42 @@ export const CoordinatorPage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left 2 Cols: The Candidate Pattern Review Space */}
           <div className="lg:col-span-2 space-y-6">
-            <Card variant="panel" tilt={true} className="border-amber-200/90 bg-amber-50/25">
+            <Card variant="panel" tilt={true} className="relative overflow-hidden border-amber-200/90 bg-amber-50/25">
+              {/* CONFIRM: Golden Laser Scan Sweep Line */}
+              {isScanning && !shouldReduceMotion && (
+                <div className="pointer-events-none absolute inset-0 z-30 overflow-hidden">
+                  <div className="absolute inset-y-0 w-36 bg-gradient-to-r from-transparent via-[#F5C77D]/50 to-[#087B56]/30 blur-sm animate-golden-scan" />
+                  <div className="absolute inset-y-0 w-1.5 bg-white shadow-[0_0_12px_#F5C77D] animate-golden-scan" />
+                </div>
+              )}
               <CardHeader>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2.5">
                     <AiCandidateBadge confidenceScore={cluster.score} />
                     <span className="font-mono text-xs font-bold text-antah-navy">CLUSTER-{cluster.id}</span>
                   </div>
-                  <span
-                    className={`text-xs font-mono px-2.5 py-0.5 rounded-full font-semibold ${
+                  <motion.span
+                    layout
+                    transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                    className={`inline-flex items-center gap-1.5 text-xs font-mono px-3 py-1 rounded-full font-semibold transition-all ${
                       clusterState === 'verified'
-                        ? 'bg-teal-100 text-teal-900'
+                        ? 'bg-[#E1F0E8] text-[#087B56] border border-[#087B56]/30 shadow-xs'
                         : clusterState === 'dismissed'
                         ? 'bg-slate-200 text-slate-700'
-                        : 'bg-amber-100 text-amber-900'
+                        : 'bg-amber-100 text-amber-900 border border-amber-200'
                     }`}
                   >
-                    {clusterState === 'verified'
-                      ? 'INCIDENT VERIFIED & ACTIVE'
-                      : clusterState === 'dismissed'
-                      ? 'DISMISSED AS UNRELATED'
-                      : 'STATUS: PENDING HUMAN REVIEW'}
-                  </span>
+                    {clusterState === 'verified' ? (
+                      <>
+                        <ShieldCheck size={14} className="text-[#087B56]" />
+                        <span>Incident verified</span>
+                      </>
+                    ) : clusterState === 'dismissed' ? (
+                      'DISMISSED AS UNRELATED'
+                    ) : (
+                      'STATUS: PENDING HUMAN REVIEW'
+                    )}
+                  </motion.span>
                 </div>
 
                 <CardTitle className="text-lg mt-3">{cluster.title}</CardTitle>
