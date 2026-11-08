@@ -85,3 +85,27 @@ def test_route_inspection_uses_public_route_type():
         if isinstance(route, APIRoute)
     }
     assert "/api/v1/health" in paths
+
+
+def test_chatroom_membership_and_authenticated_sender():
+    create_user("resident@example.com")
+    token = login("resident@example.com")
+    rooms = client.get("/api/v1/chat/rooms", headers=auth(token))
+    assert rooms.status_code == 200
+    community = next(room for room in rooms.json() if room["room_type"] == "community")
+
+    sent = client.post(
+        f"/api/v1/chat/rooms/{community['id']}/messages",
+        headers=auth(token),
+        json={"text": "A real authenticated message"},
+    )
+    assert sent.status_code == 201
+    assert sent.json()["sender_id"] > 0
+    assert sent.json()["sender_name"] == "Reporter"
+
+    history = client.get(
+        f"/api/v1/chat/rooms/{community['id']}/messages",
+        headers=auth(token),
+    )
+    assert history.status_code == 200
+    assert history.json()[0]["text"] == "A real authenticated message"

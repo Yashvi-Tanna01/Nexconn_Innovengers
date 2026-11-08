@@ -79,11 +79,28 @@ function PublicAuthRoute({ children }: { children: React.ReactNode }) {
         if (active) setState(result.data ? 'authenticated' : 'public');
       });
     }
+
     return () => { active = false; };
   }, []);
 
   if (state === 'checking') return <PageFallback />;
   return state === 'authenticated' ? <Navigate to="/dashboard" replace /> : <>{children}</>;
+}
+
+function RoleDashboard() {
+  const [role, setRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    void apiRequest<User>(API_ENDPOINTS.authMe).then((result) => {
+      if (result.data) setRole(result.data.role);
+    });
+  }, []);
+
+  if (!role) return <PageFallback />;
+  if (role === 'coordinator' || role === 'admin') {
+    return <CoordinatorPage />;
+  }
+  return <DashboardPage />;
 }
 
 // Scroll to top helper on route change
@@ -123,7 +140,7 @@ function MainLayout() {
           <Routes location={location}>
             <Route path="/" element={<RouteReadySentinel path="/home"><HomePage /></RouteReadySentinel>} />
             <Route path="/home" element={<RouteReadySentinel path="/home"><HomePage /></RouteReadySentinel>} />
-            <Route path="/dashboard" element={<Suspense fallback={<PageFallback />}><RequireAuth><RouteReadySentinel path="/explorer"><DashboardPage /></RouteReadySentinel></RequireAuth></Suspense>} />
+            <Route path="/dashboard" element={<Suspense fallback={<PageFallback />}><RequireAuth><RouteReadySentinel path="/explorer"><RoleDashboard /></RouteReadySentinel></RequireAuth></Suspense>} />
             <Route path="/explorer" element={<Suspense fallback={<PageFallback />}><RequireAuth><RouteReadySentinel path="/explorer"><ExplorerPage /></RouteReadySentinel></RequireAuth></Suspense>} />
             <Route path="/report" element={<Suspense fallback={<PageFallback />}><RequireAuth><RouteReadySentinel path="/report"><ReportPage /></RouteReadySentinel></RequireAuth></Suspense>} />
             <Route path="/patterns" element={<Suspense fallback={<PageFallback />}><RequireAuth roles={['coordinator', 'admin']}><RouteReadySentinel path="/patterns"><SignalPatternsPage /></RouteReadySentinel></RequireAuth></Suspense>} />

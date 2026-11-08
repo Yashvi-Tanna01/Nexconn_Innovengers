@@ -45,9 +45,10 @@ export const API_ENDPOINTS = {
   analytics: `${API_BASE_URL}/analytics`,
   authMe: `${API_BASE_URL}/auth/me`,
   notifications: `${API_BASE_URL}/notifications`,
+  chatRooms: `${API_BASE_URL}/chat/rooms`,
 } as const;
 
-export interface User { id: number; email: string; full_name: string; role: string; }
+export interface User { id: number; email: string; full_name: string; role: string; is_active: boolean; }
 export interface Report {
   id: number; title: string; description: string; category: string;
   location: string; urgency: number; status: string; reporter_id: number;
@@ -62,6 +63,19 @@ export interface Cluster {
 }
 export interface Notification {
   id: number; user_id: number; message: string; read: boolean; created_at: string;
+}
+export interface ChatRoom {
+  id: number; room_key: string; title: string; room_type: string; incident_id?: number | null;
+}
+export interface ChatMessage {
+  id: number; room_id: number; sender_id: number; sender_name: string; text: string; created_at: string;
+}
+export interface NexconnToken {
+  access_token: string;
+  nexconn_user_id: string;
+  channel_id: string;
+  channel_type: 'community' | 'group';
+  area_code: number;
 }
 export interface AuthToken { access_token: string; token_type: string; }
 
@@ -96,6 +110,7 @@ export async function register(
 export function logout(): void {
   setAuthToken(null);
   clearApiCache();
+  if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('antah-logout'));
 }
 
 // In-flight request deduplication map & short-term read cache
@@ -112,13 +127,14 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}, tim
   const method = (options.method || 'GET').toUpperCase();
   const token = getAuthToken();
   const fullUrl = path.startsWith('http') ? path : `${API_BASE_URL}${path}`;
+  const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
   // On data mutations, invalidate read cache so UI gets fresh data
   if (method !== 'GET') {
     readCache.clear();
     return fetchWithTimeout<T>(fullUrl, {
       ...options,
-      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(options.headers || {}) },
+      headers: { ...authHeaders, ...(options.headers || {}) },
     }, timeoutMs);
   }
 
@@ -139,7 +155,7 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}, tim
     try {
       const res = await fetchWithTimeout<T>(fullUrl, {
         ...options,
-        headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(options.headers || {}) },
+        headers: { ...authHeaders, ...(options.headers || {}) },
       }, timeoutMs);
 
       // Cache successful responses
