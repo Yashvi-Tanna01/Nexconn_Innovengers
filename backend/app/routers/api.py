@@ -15,8 +15,12 @@ def log(db, actor, action, entity, entity_id, details=""):
 def register(data: UserCreate, db: Session = Depends(get_db)):
     if db.query(User).filter(User.email == data.email.lower()).first():
         raise HTTPException(409, "Email already registered")
-    role = data.role if data.role in {"reporter", "coordinator", "responder"} else "reporter"
-    user = User(email=data.email.lower(), full_name=data.full_name, password_hash=hash_password(data.password), role=role)
+    user = User(
+        email=data.email.lower(),
+        full_name=data.full_name,
+        password_hash=hash_password(data.password),
+        role="reporter",
+    )
     db.add(user); db.commit(); db.refresh(user)
     return user
 

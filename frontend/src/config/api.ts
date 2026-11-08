@@ -160,6 +160,7 @@ export interface ApiResponse<T> {
   data?: T;
   error?: string;
   isOffline?: boolean;
+  status?: number;
 }
 
 export async function fetchWithTimeout<T>(
@@ -198,7 +199,25 @@ export async function fetchWithTimeout<T>(
       } catch {
         // Some proxies return an empty response for errors.
       }
-      return { error: `${detail} (${response.status})` };
+      const errorMessages: Record<number, string> = {
+        400: 'The request could not be completed.',
+        401: 'Your session is invalid or has expired.',
+        403: 'You do not have permission to perform this action.',
+        404: 'The requested resource was not found.',
+        422: 'Please check the submitted information.',
+        429: 'Too many requests. Please try again shortly.',
+        500: 'The server encountered an error.',
+        502: 'The service is temporarily unavailable.',
+        503: 'The service is temporarily unavailable.',
+        504: 'The service took too long to respond.',
+      };
+      const isAuthEndpoint = endpoint.includes('/auth/login') || endpoint.includes('/auth/register') || endpoint.includes('/auth/me');
+      if (response.status === 401 && !isAuthEndpoint && typeof window !== 'undefined') {
+        setAuthToken(null);
+        clearApiCache();
+        window.dispatchEvent(new CustomEvent('antah-auth-expired'));
+      }
+      return { error: errorMessages[response.status] || `${detail} (${response.status})`, status: response.status };
     }
 
     const data = await response.json();
@@ -208,7 +227,6 @@ export async function fetchWithTimeout<T>(
     if (err.name === 'AbortError') {
       return { error: 'Request timed out. Please check your network connection.' };
     }
-    return { error: err.message || 'Network request failed.' };
+    return { error: 'Unable to connect to the server. Please try again.' };
   }
 }
-

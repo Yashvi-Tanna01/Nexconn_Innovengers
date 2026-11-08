@@ -1,9 +1,10 @@
-import React, { useEffect, Suspense, lazy } from 'react';
-import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import React, { useEffect, useState, Suspense, lazy } from 'react';
+import { BrowserRouter, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { LoadingProvider } from './context/LoadingContext';
 import { AppStartupLoader, GlobalLoadingOverlay } from './components/loading';
 import { NetworkBanner } from './components/common/NetworkBanner';
+import { API_ENDPOINTS, apiRequest, getAuthToken, User } from './config/api';
 import { HomePage } from './components/home/HomePage';
 import { AndroidAppShell } from './components/layout/AndroidAppShell';
 import { NavigationTransitionProvider, RouteReadySentinel } from './components/navigation/transition';
@@ -21,6 +22,70 @@ const AuthPage = lazy(() => import('./pages/AuthPage'));
 // Lightweight suspense fallback with zero layout shift
 const PageFallback = () => <div className="w-full min-h-[60vh] bg-transparent" aria-hidden="true" />;
 
+function AccessDenied() {
+  return (
+    <div className="mx-auto flex min-h-[50vh] max-w-md flex-col items-center justify-center px-6 text-center">
+      <h1 className="text-lg font-bold text-[#202827]">Access denied</h1>
+      <p className="mt-2 text-sm text-[#737C78]">Your account does not have permission to open this area.</p>
+      <a href="/home" className="mt-5 rounded-xl bg-[#286B56] px-4 py-2 text-sm font-semibold text-white">
+        Return home
+      </a>
+    </div>
+  );
+}
+
+function RequireAuth({ children, roles }: { children: React.ReactNode; roles?: string[] }) {
+  const location = useLocation();
+  const roleKey = roles?.join('|') || '';
+  const [state, setState] = useState<'checking' | 'authenticated' | 'unauthenticated' | 'forbidden'>('checking');
+
+  useEffect(() => {
+    let active = true;
+    const token = getAuthToken();
+    if (!token) {
+      setState('unauthenticated');
+      return () => { active = false; };
+    }
+
+    void apiRequest<User>(API_ENDPOINTS.authMe).then((result) => {
+      if (!active) return;
+      if (!result.data) {
+        setState(result.status === 403 ? 'forbidden' : 'unauthenticated');
+        return;
+      }
+      setState(roles && !roles.includes(result.data.role) ? 'forbidden' : 'authenticated');
+    });
+
+    return () => { active = false; };
+  }, [roleKey]);
+
+  if (state === 'checking') return <PageFallback />;
+  if (state === 'unauthenticated') {
+    return <Navigate to="/auth" replace state={{ from: `${location.pathname}${location.search}` }} />;
+  }
+  if (state === 'forbidden') return <AccessDenied />;
+  return <>{children}</>;
+}
+
+function PublicAuthRoute({ children }: { children: React.ReactNode }) {
+  const [state, setState] = useState<'checking' | 'public' | 'authenticated'>('checking');
+
+  useEffect(() => {
+    let active = true;
+    if (!getAuthToken()) {
+      setState('public');
+    } else {
+      void apiRequest<User>(API_ENDPOINTS.authMe).then((result) => {
+        if (active) setState(result.data ? 'authenticated' : 'public');
+      });
+    }
+    return () => { active = false; };
+  }, []);
+
+  if (state === 'checking') return <PageFallback />;
+  return state === 'authenticated' ? <Navigate to="/dashboard" replace /> : <>{children}</>;
+}
+
 // Scroll to top helper on route change
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -32,8 +97,17 @@ function ScrollToTop() {
 
 function MainLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
   const shouldReduceMotion = useReducedMotion();
   const variants = shouldReduceMotion ? reducedPageVariants : pageVariants;
+
+  useEffect(() => {
+    const handleExpiredSession = () => {
+      navigate('/auth', { replace: true, state: { from: location.pathname, message: 'Your session has expired. Please sign in again.' } });
+    };
+    window.addEventListener('antah-auth-expired', handleExpiredSession);
+    return () => window.removeEventListener('antah-auth-expired', handleExpiredSession);
+  }, [location.pathname, navigate]);
 
   return (
     <AndroidAppShell>
@@ -49,14 +123,14 @@ function MainLayout() {
           <Routes location={location}>
             <Route path="/" element={<RouteReadySentinel path="/home"><HomePage /></RouteReadySentinel>} />
             <Route path="/home" element={<RouteReadySentinel path="/home"><HomePage /></RouteReadySentinel>} />
-            <Route path="/dashboard" element={<Suspense fallback={<PageFallback />}><RouteReadySentinel path="/explorer"><DashboardPage /></RouteReadySentinel></Suspense>} />
-            <Route path="/explorer" element={<Suspense fallback={<PageFallback />}><RouteReadySentinel path="/explorer"><ExplorerPage /></RouteReadySentinel></Suspense>} />
-            <Route path="/report" element={<Suspense fallback={<PageFallback />}><RouteReadySentinel path="/report"><ReportPage /></RouteReadySentinel></Suspense>} />
-            <Route path="/patterns" element={<Suspense fallback={<PageFallback />}><RouteReadySentinel path="/patterns"><SignalPatternsPage /></RouteReadySentinel></Suspense>} />
-            <Route path="/coordinator" element={<Suspense fallback={<PageFallback />}><RouteReadySentinel path="/patterns"><CoordinatorPage /></RouteReadySentinel></Suspense>} />
-            <Route path="/messages" element={<Suspense fallback={<PageFallback />}><RouteReadySentinel path="/messages"><MessagesPage /></RouteReadySentinel></Suspense>} />
-            <Route path="/auth" element={<Suspense fallback={<PageFallback />}><RouteReadySentinel path="/auth"><AuthPage /></RouteReadySentinel></Suspense>} />
-            <Route path="/login" element={<Suspense fallback={<PageFallback />}><RouteReadySentinel path="/login"><AuthPage /></RouteReadySentinel></Suspense>} />
+            <Route path="/dashboard" element={<Suspense fallback={<PageFallback />}><RequireAuth><RouteReadySentinel path="/explorer"><DashboardPage /></RouteReadySentinel></RequireAuth></Suspense>} />
+            <Route path="/explorer" element={<Suspense fallback={<PageFallback />}><RequireAuth><RouteReadySentinel path="/explorer"><ExplorerPage /></RouteReadySentinel></RequireAuth></Suspense>} />
+            <Route path="/report" element={<Suspense fallback={<PageFallback />}><RequireAuth><RouteReadySentinel path="/report"><ReportPage /></RouteReadySentinel></RequireAuth></Suspense>} />
+            <Route path="/patterns" element={<Suspense fallback={<PageFallback />}><RequireAuth roles={['coordinator', 'admin']}><RouteReadySentinel path="/patterns"><SignalPatternsPage /></RouteReadySentinel></RequireAuth></Suspense>} />
+            <Route path="/coordinator" element={<Suspense fallback={<PageFallback />}><RequireAuth roles={['coordinator', 'admin']}><RouteReadySentinel path="/patterns"><CoordinatorPage /></RouteReadySentinel></RequireAuth></Suspense>} />
+            <Route path="/messages" element={<Suspense fallback={<PageFallback />}><RequireAuth><RouteReadySentinel path="/messages"><MessagesPage /></RouteReadySentinel></RequireAuth></Suspense>} />
+            <Route path="/auth" element={<Suspense fallback={<PageFallback />}><PublicAuthRoute><RouteReadySentinel path="/auth"><AuthPage /></RouteReadySentinel></PublicAuthRoute></Suspense>} />
+            <Route path="/login" element={<Suspense fallback={<PageFallback />}><PublicAuthRoute><RouteReadySentinel path="/login"><AuthPage /></RouteReadySentinel></PublicAuthRoute></Suspense>} />
             <Route path="*" element={<Navigate to="/home" replace />} />
           </Routes>
         </motion.div>
