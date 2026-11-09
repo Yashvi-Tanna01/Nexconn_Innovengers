@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useNavigationTransition } from './transition';
 import {
@@ -11,12 +11,18 @@ import {
   User,
 } from 'lucide-react';
 import { ATLAS_CANDIDATE_CLUSTERS } from '../atlas/types';
+import { API_ENDPOINTS, apiRequest, logout, User as AuthUser } from '../../config/api';
 
 export const AndroidTopBar: React.FC = () => {
   const location = useLocation();
   const { navigateWithTransition } = useNavigationTransition();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  useEffect(() => {
+    void apiRequest<AuthUser>(API_ENDPOINTS.authMe).then((result) => setUser(result.data || null));
+  }, [location.pathname]);
+  const initials = user?.full_name.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase() || '?';
 
   // Dynamic screen title based on current path
   const getScreenMeta = () => {
@@ -141,7 +147,7 @@ export const AndroidTopBar: React.FC = () => {
               className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#286B56] to-[#E7A65B] flex items-center justify-center text-white text-xs font-bold shadow-xs active:scale-95 transition-transform"
               aria-label="User Account"
             >
-              R
+              {initials}
             </button>
 
             {/* Profile Drawer Popup */}
@@ -149,11 +155,11 @@ export const AndroidTopBar: React.FC = () => {
               <div className="absolute right-0 mt-2 w-[calc(100vw-24px)] max-w-64 sm:w-64 bg-white rounded-2xl shadow-xl border border-[#E3E8E4] p-3.5 z-50 text-xs">
                 <div className="flex items-center gap-2.5 pb-3 border-b border-stone-100">
                   <div className="w-9 h-9 rounded-xl bg-[#286B56] text-white flex items-center justify-center font-bold text-xs">
-                    R
+                    {initials}
                   </div>
                   <div>
-                    <div className="font-bold text-[#202827]">Raj</div>
-                    <div className="text-[10px] text-[#737C78]">Coordinator Desk • Admin</div>
+                    <div className="font-bold text-[#202827]">{user?.full_name || 'Account'}</div>
+                    <div className="text-[10px] text-[#737C78]">{user?.email || 'Loading account…'} • {user?.role || 'user'}</div>
                   </div>
                 </div>
 
@@ -187,17 +193,23 @@ export const AndroidTopBar: React.FC = () => {
                     <ChevronRight size={13} className="text-stone-400" />
                   </Link>
                   <Link
-                    to="/auth"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setProfileOpen(false);
-                      navigateWithTransition('/auth', 'profile');
-                    }}
+                    to="/profile"
+                    onClick={() => setProfileOpen(false)}
                     className="flex items-center justify-between p-2 rounded-xl hover:bg-stone-50 text-stone-800"
                   >
-                    <span>Profile & Authentication</span>
+                    <span>Profile</span>
                     <ChevronRight size={13} className="text-stone-400" />
                   </Link>
+                  <button
+                    onClick={() => {
+                      setProfileOpen(false);
+                      void logout().then(() => navigateWithTransition('/login', 'profile'));
+                    }}
+                    className="flex w-full items-center justify-between p-2 rounded-xl hover:bg-red-50 text-red-700"
+                  >
+                    <span>Log out</span>
+                    <ChevronRight size={13} />
+                  </button>
                 </div>
               </div>
             )}

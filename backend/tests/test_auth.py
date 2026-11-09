@@ -78,6 +78,32 @@ def test_current_user_and_role_authorization():
     assert permitted.status_code == 200
 
 
+def test_admin_can_list_and_update_users_but_last_admin_is_protected():
+    create_user("admin@example.com", "admin")
+    create_user("managed@example.com")
+    admin_token = login("admin@example.com")
+    managed = client.get("/api/v1/admin/users", headers=auth(admin_token))
+    assert managed.status_code == 200
+    target = next(item for item in managed.json() if item["email"] == "managed@example.com")
+
+    updated = client.patch(
+        f"/api/v1/admin/users/{target['id']}",
+        headers=auth(admin_token),
+        json={"role": "coordinator", "is_active": False},
+    )
+    assert updated.status_code == 200
+    assert updated.json()["role"] == "coordinator"
+    assert updated.json()["is_active"] is False
+
+    admin_id = next(item["id"] for item in managed.json() if item["email"] == "admin@example.com")
+    last_admin = client.patch(
+        f"/api/v1/admin/users/{admin_id}",
+        headers=auth(admin_token),
+        json={"is_active": False},
+    )
+    assert last_admin.status_code == 400
+
+
 def test_route_inspection_uses_public_route_type():
     paths = {
         route.path

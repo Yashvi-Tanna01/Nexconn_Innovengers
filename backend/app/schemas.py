@@ -10,6 +10,12 @@ class UserCreate(BaseModel):
 class UserOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int; email: str; full_name: str; role: str; is_active: bool
+class AdminUserUpdate(BaseModel):
+    full_name: Optional[str] = None
+    role: Optional[str] = None
+    is_active: Optional[bool] = None
+class ProfileUpdate(BaseModel):
+    full_name: str = Field(min_length=2, max_length=160)
 class Token(BaseModel):
     access_token: str; token_type: str = "bearer"
 class Login(BaseModel):

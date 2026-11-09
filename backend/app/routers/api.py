@@ -64,10 +64,77 @@ def login(data: Login, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == data.email.lower()).first()
     if not user or not user.is_active or not verify_password(data.password, user.password_hash):
         raise HTTPException(401, "Invalid email or password")
-    return Token(access_token=create_token(user))
+    token = create_token(user)
+    db.add(ActivityLog(actor_id=user.id, action="login", entity_type="user", entity_id=user.id))
+    db.commit()
+    return Token(access_token=token)
 
 @router.get("/auth/me", response_model=UserOut)
 def me(user: User = Depends(current_user)): return user
+
+@router.patch("/users/me", response_model=UserOut)
+def update_profile(data: ProfileUpdate, db: Session = Depends(get_db), user: User = Depends(current_user)):
+    user.full_name = data.full_name.strip()
+    log(db, user, "updated", "profile", user.id)
+    db.commit()
+    db.refresh(user)
+    return user
+
+@router.post("/auth/logout", status_code=204)
+def logout(db: Session = Depends(get_db), user: User = Depends(current_user)):
+    log(db, user, "logout", "user", user.id)
+    db.commit()
+
+@router.get("/admin/users", response_model=list[UserOut])
+def admin_users(db: Session = Depends(get_db), user: User = Depends(require_roles("admin"))):
+    return db.query(User).order_by(User.created_at.desc()).all()
+
+@router.patch("/admin/users/{user_id}", response_model=UserOut)
+def admin_update_user(
+    user_id: int,
+    data: AdminUserUpdate,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_roles("admin")),
+):
+    target = db.get(User, user_id)
+    if not target:
+        raise HTTPException(404, "User not found")
+    valid_roles = {"admin", "reporter", "coordinator", "responder"}
+    if data.role is not None and data.role not in valid_roles:
+        raise HTTPException(422, "Invalid role")
+    if target.id == user.id and data.is_active is False:
+        raise HTTPException(400, "You cannot deactivate your own account")
+    if target.role == "admin" and (data.role == "reporter" or data.is_active is False):
+        active_admins = db.query(User).filter(User.role == "admin", User.is_active.is_(True)).count()
+        if active_admins <= 1:
+            raise HTTPException(400, "The last active admin cannot be removed")
+    before = f"role={target.role},active={target.is_active}"
+    if data.full_name is not None:
+        target.full_name = data.full_name.strip()
+    if data.role is not None:
+        target.role = data.role
+    if data.is_active is not None:
+        target.is_active = data.is_active
+    log(db, user, "updated", "user", target.id, f"{before}; role={target.role},active={target.is_active}")
+    db.commit()
+    db.refresh(target)
+    return target
+
+@router.get("/admin/audit", response_model=list[dict])
+def admin_audit(db: Session = Depends(get_db), user: User = Depends(require_roles("admin"))):
+    rows = db.query(ActivityLog).order_by(ActivityLog.created_at.desc()).limit(200).all()
+    return [
+        {
+            "id": row.id,
+            "actor_id": row.actor_id,
+            "action": row.action,
+            "entity_type": row.entity_type,
+            "entity_id": row.entity_id,
+            "details": row.details,
+            "created_at": row.created_at,
+        }
+        for row in rows
+    ]
 
 @router.post("/reports", response_model=ReportOut, status_code=201)
 def create_report(data: ReportCreate, db: Session = Depends(get_db), user: User = Depends(current_user)):
@@ -154,11 +221,28 @@ def activity(db: Session = Depends(get_db), user: User = Depends(require_roles("
     return db.query(ActivityLog).order_by(ActivityLog.created_at.desc()).limit(100).all()
 
 @router.get("/analytics")
-def analytics(db: Session = Depends(get_db), user: User = Depends(require_roles("coordinator", "admin"))):
-    return {"reports": db.query(func.count(Report.id)).scalar(), "clusters": db.query(func.count(Cluster.id)).scalar(),
-            "approved_clusters": db.query(func.count(Cluster.id)).filter(Cluster.status == "approved").scalar(),
-            "incidents": db.query(func.count(Incident.id)).scalar(),
-            "resolved_incidents": db.query(func.count(Incident.id)).filter(Incident.status == "resolved").scalar()}
+def analytics(db: Session = Depends(get_db), user: User = Depends(current_user)):
+    reports = db.query(Report)
+    incidents = db.query(Incident)
+    if user.role == "reporter":
+        reports = reports.filter(Report.reporter_id == user.id)
+        incident_ids = db.query(Assignment.incident_id).filter(Assignment.responder_id == user.id)
+        incidents = incidents.filter(Incident.id.in_(incident_ids))
+    elif user.role == "responder":
+        incident_ids = db.query(Assignment.incident_id).filter(Assignment.responder_id == user.id)
+        incidents = incidents.filter(Incident.id.in_(incident_ids))
+    elif user.role not in {"coordinator", "admin"}:
+        raise HTTPException(403, "Analytics access denied")
+
+    report_count = reports.count()
+    incident_count = incidents.count()
+    return {
+        "reports": report_count,
+        "clusters": db.query(func.count(Cluster.id)).scalar() if user.role in {"coordinator", "admin"} else 0,
+        "approved_clusters": db.query(func.count(Cluster.id)).filter(Cluster.status == "approved").scalar() if user.role in {"coordinator", "admin"} else 0,
+        "incidents": incident_count,
+        "resolved_incidents": incidents.filter(Incident.status == "resolved").count(),
+    }
 
 @router.get("/chat/rooms", response_model=list[ChatRoomOut])
 def chat_rooms(db: Session = Depends(get_db), user: User = Depends(current_user)):

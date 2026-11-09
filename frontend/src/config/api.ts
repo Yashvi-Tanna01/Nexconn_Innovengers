@@ -46,6 +46,8 @@ export const API_ENDPOINTS = {
   authMe: `${API_BASE_URL}/auth/me`,
   notifications: `${API_BASE_URL}/notifications`,
   chatRooms: `${API_BASE_URL}/chat/rooms`,
+  profile: `${API_BASE_URL}/users/me`,
+  logout: `${API_BASE_URL}/auth/logout`,
 } as const;
 
 export interface User { id: number; email: string; full_name: string; role: string; is_active: boolean; }
@@ -107,7 +109,8 @@ export async function register(
   });
 }
 
-export function logout(): void {
+export async function logout(): Promise<void> {
+  await apiRequest('/auth/logout', { method: 'POST' });
   setAuthToken(null);
   clearApiCache();
   if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('antah-logout'));

@@ -74,13 +74,18 @@ export function createChannelIdentifier(token: NexconnToken) {
 }
 
 export async function loadHistory(token: NexconnToken) {
+  const channel = createChannel(token);
   const query = BaseChannel.createMessagesQuery({
-    channelIdentifier: createChannelIdentifier(token),
+    channelIdentifier: channel.identifier,
+    startTime: Date.now(),
     pageSize: 50,
     isAscending: true,
   });
   const result = await query.loadNextPage();
-  if (!result.isOk || !result.data) throw new Error('Unable to load Nexconn message history.');
+  if (!result.isOk || !result.data) {
+    const code = 'code' in result && typeof result.code === 'number' ? ` (code ${result.code})` : '';
+    throw new Error(`Unable to load Nexconn message history${code}.`);
+  }
   return result.data.data;
 }
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, ShieldCheck } from 'lucide-react';
 import { AntahLogo } from '../components/brand/AntahLogo';
 import { Button } from '../components/common/Button';
@@ -9,7 +9,6 @@ import { login, register } from '../config/api';
 
 export const AuthPage: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -37,8 +36,7 @@ export const AuthPage: React.FC = () => {
       setError(result.error || 'Unable to sign in.');
       return;
     }
-    const requestedPath = typeof location.state?.from === 'string' ? location.state.from : '/dashboard';
-    navigate(requestedPath, { replace: true });
+    navigate('/home', { replace: true });
   };
 
   return (

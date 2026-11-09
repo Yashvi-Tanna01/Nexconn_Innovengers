@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useNavigationTransition, NavDestination } from './transition';
@@ -11,6 +11,7 @@ import {
   MessageSquare,
   Compass,
 } from 'lucide-react';
+import { API_ENDPOINTS, apiRequest, User } from '../../config/api';
 
 interface NavItem {
   id: string;
@@ -22,7 +23,7 @@ interface NavItem {
   icon: React.ReactNode;
 }
 
-const NAV_ITEMS: NavItem[] = [
+const BASE_NAV_ITEMS: NavItem[] = [
   {
     id: 'home',
     label: 'Home',
@@ -65,7 +66,12 @@ const NAV_ITEMS: NavItem[] = [
 
 export const AndroidBottomNav: React.FC = React.memo(() => {
   const location = useLocation();
+  const [role, setRole] = useState<string | null>(null);
   const { navigateWithTransition, isTransitioning } = useNavigationTransition();
+  useEffect(() => {
+    void apiRequest<User>(API_ENDPOINTS.authMe).then((result) => setRole(result.data?.role || null));
+  }, [location.pathname]);
+  const NAV_ITEMS = BASE_NAV_ITEMS.filter((item) => item.id !== 'patterns' || role === 'admin' || role === 'coordinator');
 
   const isCurrentActive = (item: typeof NAV_ITEMS[0]) => {
     if (location.pathname === item.path) return true;
