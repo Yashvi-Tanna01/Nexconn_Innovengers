@@ -11,6 +11,7 @@ export const AndroidAppShell: React.FC<AndroidAppShellProps> = ({ children }) =>
   const navigate = useNavigate();
   const location = useLocation();
   const isHomePage = location.pathname === '/' || location.pathname === '/home';
+  const isAuthPage = location.pathname === '/auth' || location.pathname === '/login';
 
   // Android Hardware / Gesture Back Button Handling
   useEffect(() => {
@@ -28,12 +29,12 @@ export const AndroidAppShell: React.FC<AndroidAppShellProps> = ({ children }) =>
       {!isHomePage && <AndroidTopBar />}
 
       {/* 2. Main Responsive Viewport with Safe-Area Padding */}
-      <main className={`flex-1 w-full max-w-7xl mx-auto ${isHomePage ? 'px-2 sm:px-4 lg:px-6' : 'px-3 sm:px-6 lg:px-8'} pb-[calc(5.5rem+env(safe-area-inset-bottom,16px))] min-w-0 box-border overflow-x-hidden`}>
+      <main className={`flex-1 w-full max-w-7xl mx-auto ${isHomePage ? 'px-2 sm:px-4 lg:px-6' : 'px-3 sm:px-6 lg:px-8'} ${isAuthPage ? '' : 'pb-[calc(5.5rem+env(safe-area-inset-bottom,16px))]'} min-w-0 box-border overflow-x-hidden`}>
         {children}
       </main>
 
       {/* 3. Bottom Native Navigation Bar */}
-      <AndroidBottomNav />
+      {!isAuthPage && <AndroidBottomNav />}
     </div>
   );
 };

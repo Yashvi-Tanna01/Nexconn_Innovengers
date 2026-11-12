@@ -1,7 +1,7 @@
-import os
-os.environ["DATABASE_URL"] = "sqlite:///./test_antah_workflow.db"
-
 from fastapi.testclient import TestClient
+from app.db import SessionLocal
+from app.models import User
+from app.security import hash_password
 from app.main import app
 
 client = TestClient(app)
@@ -20,6 +20,16 @@ def token(email):
 
 def auth(value): return {"Authorization": f"Bearer {value}"}
 
+def create_role_user(email, role):
+    with SessionLocal() as db:
+        db.add(User(
+            email=email,
+            full_name=role.title(),
+            password_hash=hash_password("secure-password"),
+            role=role,
+        ))
+        db.commit()
+
 def test_report_cluster_approval_assignment_completion():
     suffix = "workflow@example.com"
     reporter = register(suffix)
@@ -32,7 +42,7 @@ def test_report_cluster_approval_assignment_completion():
         assert response.status_code == 201
 
     coordinator_email = "coordinator-workflow@example.com"
-    register(coordinator_email, "coordinator")
+    create_role_user(coordinator_email, "coordinator")
     coordinator_token = token(coordinator_email)
     clusters = client.post("/api/v1/intelligence/clusters", headers=auth(coordinator_token))
     assert clusters.status_code == 200
@@ -43,7 +53,8 @@ def test_report_cluster_approval_assignment_completion():
     assert reviewed.status_code == 200
 
     responder_email = "responder-workflow@example.com"
-    responder = register(responder_email, "responder")
+    create_role_user(responder_email, "responder")
+    responder = client.get("/api/v1/auth/me", headers=auth(token(responder_email))).json()
     incident_id = client.get("/api/v1/analytics", headers=auth(coordinator_token)).json()["incidents"]
     assigned = client.post(f"/api/v1/incidents/{incident_id}/assign", headers=auth(coordinator_token),
                            json={"responder_id": responder["id"]})

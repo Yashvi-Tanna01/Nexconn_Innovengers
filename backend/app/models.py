@@ -79,3 +79,27 @@ class ActivityLog(Base):
     entity_id: Mapped[int] = mapped_column(Integer)
     details: Mapped[str] = mapped_column(Text, default="")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+class ChatRoom(Base):
+    __tablename__ = "chat_rooms"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    room_key: Mapped[str] = mapped_column(String(120), unique=True, index=True)
+    title: Mapped[str] = mapped_column(String(200))
+    room_type: Mapped[str] = mapped_column(String(30))
+    incident_id: Mapped[int | None] = mapped_column(ForeignKey("incidents.id"), nullable=True)
+    nexconn_channel_id: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+class ChatMembership(Base):
+    __tablename__ = "chat_memberships"
+    room_id: Mapped[int] = mapped_column(ForeignKey("chat_rooms.id"), primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+class ChatMessage(Base):
+    __tablename__ = "chat_messages"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    room_id: Mapped[int] = mapped_column(ForeignKey("chat_rooms.id"), index=True)
+    sender_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    text: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)

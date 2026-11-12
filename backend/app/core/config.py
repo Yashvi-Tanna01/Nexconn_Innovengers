@@ -21,6 +21,8 @@ class Settings:
     NEXCONN_APP_ID: str = os.getenv("NEXCONN_APP_ID", "")
     NEXCONN_APP_KEY: str = os.getenv("NEXCONN_APP_KEY", "")
     NEXCONN_APP_SECRET: str = os.getenv("NEXCONN_APP_SECRET", "")
+    NEXCONN_API_BASE_URL: str = os.getenv("NEXCONN_API_BASE_URL", "https://api.sg-light-api.com").rstrip("/")
+    NEXCONN_AREA_CODE: int = int(os.getenv("NEXCONN_AREA_CODE", "2"))
     
     # AI Provider Config
     AI_PROVIDER: str = os.getenv("AI_PROVIDER", "anthropic")

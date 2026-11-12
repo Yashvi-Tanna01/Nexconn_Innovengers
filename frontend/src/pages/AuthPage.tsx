@@ -36,7 +36,7 @@ export const AuthPage: React.FC = () => {
       setError(result.error || 'Unable to sign in.');
       return;
     }
-    navigate('/dashboard', { replace: true });
+    navigate('/home', { replace: true });
   };
 
   return (
@@ -113,4 +113,3 @@ export const AuthPage: React.FC = () => {
 };
 
 export default AuthPage;
-

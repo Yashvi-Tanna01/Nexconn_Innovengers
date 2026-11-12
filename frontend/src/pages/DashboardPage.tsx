@@ -33,20 +33,31 @@ export const DashboardPage: React.FC = () => {
   const [selectedSignal, setSelectedSignal] = useState<AtlasSignal | null>(ATLAS_SIGNALS[0]);
   const primaryCluster = ATLAS_CANDIDATE_CLUSTERS[0];
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
+  const [analyticsError, setAnalyticsError] = useState<string | null>(null);
+  const [isAnalyticsLoading, setIsAnalyticsLoading] = useState(true);
 
-  useEffect(() => {
-    apiRequest<Analytics>(API_ENDPOINTS.analytics).then((result) => {
-      if (result.data) setAnalytics(result.data);
-    });
-  }, []);
+  const loadAnalytics = async () => {
+    setIsAnalyticsLoading(true);
+    setAnalyticsError(null);
+    const result = await apiRequest<Analytics>(API_ENDPOINTS.analytics);
+    if (result.data) {
+      setAnalytics(result.data);
+    } else {
+      setAnalytics(null);
+      setAnalyticsError(result.error || 'Unable to load dashboard telemetry.');
+    }
+    setIsAnalyticsLoading(false);
+  };
+
+  useEffect(() => { void loadAnalytics(); }, []);
 
   const metrics = [
-    { label: 'Reportes', value: analytics ? String(analytics.reports) : '—', trend: 'Backend', color: 'text-[#286B56]', bg: 'bg-[#E1F0E8]' },
-    { label: 'Clusters', value: analytics ? String(analytics.clusters) : '—', trend: 'Backend', color: 'text-[#E7A65B]', bg: 'bg-amber-50' },
-    { label: 'Señales', value: analytics ? String(analytics.reports) : '—', trend: 'Backend', color: 'text-blue-700', bg: 'bg-blue-50' },
-    { label: 'Incidentes', value: analytics ? String(analytics.incidents) : '—', trend: 'Backend', color: 'text-teal-700', bg: 'bg-teal-50' },
-    { label: 'Aprobados', value: analytics ? String(analytics.approved_clusters) : '—', trend: 'Backend', color: 'text-emerald-700', bg: 'bg-emerald-50' },
-    { label: 'Resueltos', value: analytics ? String(analytics.resolved_incidents) : '—', trend: 'Backend', color: 'text-[#D9534F]', bg: 'bg-red-50' },
+    { label: 'Reportes', value: analytics ? String(analytics.reports) : isAnalyticsLoading ? '…' : '—', trend: 'Backend', color: 'text-[#286B56]', bg: 'bg-[#E1F0E8]' },
+    { label: 'Clusters', value: analytics ? String(analytics.clusters) : isAnalyticsLoading ? '…' : '—', trend: 'Backend', color: 'text-[#E7A65B]', bg: 'bg-amber-50' },
+    { label: 'Señales', value: analytics ? String(analytics.reports) : isAnalyticsLoading ? '…' : '—', trend: 'Backend', color: 'text-blue-700', bg: 'bg-blue-50' },
+    { label: 'Incidentes', value: analytics ? String(analytics.incidents) : isAnalyticsLoading ? '…' : '—', trend: 'Backend', color: 'text-teal-700', bg: 'bg-teal-50' },
+    { label: 'Aprobados', value: analytics ? String(analytics.approved_clusters) : isAnalyticsLoading ? '…' : '—', trend: 'Backend', color: 'text-emerald-700', bg: 'bg-emerald-50' },
+    { label: 'Resueltos', value: analytics ? String(analytics.resolved_incidents) : isAnalyticsLoading ? '…' : '—', trend: 'Backend', color: 'text-[#D9534F]', bg: 'bg-red-50' },
   ];
 
   return (
@@ -97,6 +108,12 @@ export const DashboardPage: React.FC = () => {
             </div>
           ))}
         </div>
+        {analyticsError && (
+          <div className="flex items-center justify-between rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">
+            <span>{analyticsError}</span>
+            <button type="button" onClick={() => void loadAnalytics()} className="font-semibold underline">Retry</button>
+          </div>
+        )}
       </section>
 
       {/* 3. PRIMARY GEOGRAPHIC MAP PREVIEW */}

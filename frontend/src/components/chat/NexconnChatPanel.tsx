@@ -3,51 +3,34 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Button } from '../common/Button';
 import { Send, ShieldCheck, User, Wrench, Radio, MessageSquare, AlertCircle } from 'lucide-react';
 import { messageSlideVariants } from '../../theme/motion';
+import { connectToRoom, loadHistory, sendText, subscribe } from '../../services/nexconn';
 
-interface ChatMessage {
+interface UiMessage {
   id: string;
-  sender: string;
-  role: 'coordinator' | 'crew' | 'citizen';
+  sender_id: string;
+  sender_name: string;
   text: string;
-  timestamp: string;
+  created_at: string;
 }
 
 interface NexconnChatPanelProps {
-  incidentId: string;
+  roomId?: number;
+  incidentId?: string;
   incidentTitle: string;
   className?: string;
   onClose?: () => void;
 }
 
 export const NexconnChatPanel: React.FC<NexconnChatPanelProps> = ({
+  roomId,
   incidentId,
   incidentTitle,
   className = '',
   onClose,
 }) => {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: 'm-1',
-      sender: 'Coordinator Maya V.',
-      role: 'coordinator',
-      text: 'Incident INC-2026-088 verified. Candidate cluster #409 confirmed as potable main fracture. Dispatching Crew Alpha.',
-      timestamp: '14:28',
-    },
-    {
-      id: 'm-2',
-      sender: 'Crew Alpha Lead (Ramesh)',
-      role: 'crew',
-      text: 'On-site at 4th Main Road. Acoustic sensor confirms sub-base pressure drop. Isolating Sector 3 gate valve 4.',
-      timestamp: '14:33',
-    },
-    {
-      id: 'm-3',
-      sender: 'Citizen Reporter (Ananya)',
-      role: 'citizen',
-      text: 'Water ponding near crossroad 7 has noticeably subsided since valve isolation.',
-      timestamp: '14:36',
-    },
-  ]);
+  const [messages, setMessages] = useState<UiMessage[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [nexconnToken, setNexconnToken] = useState<Awaited<ReturnType<typeof connectToRoom>> | null>(null);
 
   const [inputText, setInputText] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -60,6 +43,48 @@ export const NexconnChatPanel: React.FC<NexconnChatPanelProps> = ({
   };
 
   useEffect(() => {
+    let active = true;
+    setLoadError(null);
+    if (!roomId) {
+      setLoadError('No authorized chatroom was selected.');
+      return () => { active = false; };
+    }
+    void connectToRoom(roomId).then(async (token) => {
+      if (!active) return;
+      setNexconnToken(token);
+      const history = await loadHistory(token);
+      if (!active) return;
+      setMessages(history.map((message) => ({
+        id: message.messageId,
+        sender_id: message.senderUserId,
+        sender_name: message.content.senderUserInfo?.name || message.senderUserId,
+        text: message.content.text || '',
+        created_at: new Date(message.sentTime).toISOString(),
+      })));
+    }).catch((error: Error) => {
+      if (active) setLoadError(error.message);
+    });
+    return () => { active = false; };
+  }, [roomId]);
+
+  useEffect(() => {
+    if (!nexconnToken) return;
+    return subscribe((message) => {
+      if (message.channelIdentifier.channelId !== nexconnToken.channel_id || !message.content.text) return;
+      setMessages((previous) => previous.some((item) => item.id === message.messageId) ? previous : [
+        ...previous,
+        {
+          id: message.messageId,
+          sender_id: message.senderUserId,
+          sender_name: message.content.senderUserInfo?.name || message.senderUserId,
+          text: message.content.text,
+          created_at: new Date(message.sentTime).toISOString(),
+        },
+      ]);
+    });
+  }, [nexconnToken]);
+
+  useEffect(() => {
     scrollToBottom();
   }, [messages, isPeerTyping]);
 
@@ -69,38 +94,21 @@ export const NexconnChatPanel: React.FC<NexconnChatPanelProps> = ({
 
     const userText = inputText.trim();
     setIsSending(true);
-    const newMsg: ChatMessage = {
-      id: `m-${Date.now()}`,
-      sender: 'You (Municipal Responder)',
-      role: 'crew',
-      text: userText,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    };
-    setMessages((prev) => [...prev, newMsg]);
-    setInputText('');
-    setIsSending(false);
-
-    // Dynamic peer response simulation connected to actual transmission
-    const typingTimer = setTimeout(() => {
-      setIsPeerTyping(true);
-    }, 800);
-
-    const replyTimer = setTimeout(() => {
-      setIsPeerTyping(false);
-      const replyMsg: ChatMessage = {
-        id: `m-reply-${Date.now()}`,
-        sender: 'Coordinator Maya V.',
-        role: 'coordinator',
-        text: 'Telemetry telemetry received. Sensor feed confirms pressure stabilized at 4th Main. Work order #WO-409 updated. Stand by for site clearance.',
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      };
-      setMessages((prev) => [...prev, replyMsg]);
-    }, 2600);
-
-    return () => {
-      clearTimeout(typingTimer);
-      clearTimeout(replyTimer);
-    };
+    if (!nexconnToken) return;
+    void sendText(nexconnToken, userText).then((message) => {
+      setMessages((previous) => previous.some((item) => item.id === message.messageId) ? previous : [
+        ...previous,
+        {
+          id: message.messageId,
+          sender_id: message.senderUserId,
+          sender_name: message.content.senderUserInfo?.name || message.senderUserId,
+          text: message.content.text,
+          created_at: new Date(message.sentTime).toISOString(),
+        },
+      ]);
+      setInputText('');
+    }).catch((error: Error) => setLoadError(error.message))
+      .finally(() => setIsSending(false));
   };
 
   const handleQuickAction = (quickText: string) => {
@@ -118,10 +126,10 @@ export const NexconnChatPanel: React.FC<NexconnChatPanelProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-mono font-bold text-antah-navy uppercase">
-                LOCAL CHAT MOCK • NOT CONNECTED
+                AUTHENTICATED CHATROOM
               </span>
-              <span className="text-[10px] font-mono bg-amber-50 text-amber-800 border border-amber-200 px-1.5 py-0.2 rounded font-semibold">
-                LOCAL ONLY
+              <span className="text-[10px] font-mono bg-emerald-50 text-emerald-800 border border-emerald-200 px-1.5 py-0.2 rounded font-semibold">
+              NEXCONN SDK
               </span>
             </div>
             <div className="text-[11px] text-antah-slate font-medium truncate max-w-[280px]">
@@ -144,14 +152,15 @@ export const NexconnChatPanel: React.FC<NexconnChatPanelProps> = ({
       <div className="flex-1 p-4 overflow-y-auto space-y-3.5">
           <div className="text-center my-2">
             <span className="text-[10px] font-mono text-antah-muted bg-slate-100 px-2.5 py-1 rounded-full border border-slate-200">
-              Local preview adapter • messages are not sent to Nexconn
+              Messages are delivered by the authenticated Nexconn channel.
             </span>
           </div>
 
           <AnimatePresence initial={false}>
+            {loadError && <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-800">{loadError}</div>}
             {messages.map((m) => {
-              const isCoordinator = m.role === 'coordinator';
-              const isCrew = m.role === 'crew';
+              const isCoordinator = false;
+              const isCrew = false;
 
               return (
                 <motion.div
@@ -174,9 +183,9 @@ export const NexconnChatPanel: React.FC<NexconnChatPanelProps> = ({
                       {isCoordinator && <ShieldCheck size={12} className="text-amber-600" />}
                       {isCrew && <Wrench size={12} className="text-teal-600" />}
                       {!isCoordinator && !isCrew && <User size={12} className="text-slate-500" />}
-                      <span>{m.sender}</span>
+                      <span>{m.sender_name}</span>
                     </span>
-                    <span className="text-[10px] font-mono text-antah-muted">{m.timestamp}</span>
+                    <span className="text-[10px] font-mono text-antah-muted">{new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                   </div>
                   <p className="pt-0.5">{m.text}</p>
                 </motion.div>

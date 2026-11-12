@@ -45,9 +45,12 @@ export const API_ENDPOINTS = {
   analytics: `${API_BASE_URL}/analytics`,
   authMe: `${API_BASE_URL}/auth/me`,
   notifications: `${API_BASE_URL}/notifications`,
+  chatRooms: `${API_BASE_URL}/chat/rooms`,
+  profile: `${API_BASE_URL}/users/me`,
+  logout: `${API_BASE_URL}/auth/logout`,
 } as const;
 
-export interface User { id: number; email: string; full_name: string; role: string; }
+export interface User { id: number; email: string; full_name: string; role: string; is_active: boolean; }
 export interface Report {
   id: number; title: string; description: string; category: string;
   location: string; urgency: number; status: string; reporter_id: number;
@@ -62,6 +65,19 @@ export interface Cluster {
 }
 export interface Notification {
   id: number; user_id: number; message: string; read: boolean; created_at: string;
+}
+export interface ChatRoom {
+  id: number; room_key: string; title: string; room_type: string; incident_id?: number | null;
+}
+export interface ChatMessage {
+  id: number; room_id: number; sender_id: number; sender_name: string; text: string; created_at: string;
+}
+export interface NexconnToken {
+  access_token: string;
+  nexconn_user_id: string;
+  channel_id: string;
+  channel_type: 'community' | 'group';
+  area_code: number;
 }
 export interface AuthToken { access_token: string; token_type: string; }
 
@@ -93,9 +109,11 @@ export async function register(
   });
 }
 
-export function logout(): void {
+export async function logout(): Promise<void> {
+  await apiRequest('/auth/logout', { method: 'POST' });
   setAuthToken(null);
   clearApiCache();
+  if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('antah-logout'));
 }
 
 // In-flight request deduplication map & short-term read cache
@@ -112,13 +130,14 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}, tim
   const method = (options.method || 'GET').toUpperCase();
   const token = getAuthToken();
   const fullUrl = path.startsWith('http') ? path : `${API_BASE_URL}${path}`;
+  const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
   // On data mutations, invalidate read cache so UI gets fresh data
   if (method !== 'GET') {
     readCache.clear();
     return fetchWithTimeout<T>(fullUrl, {
       ...options,
-      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(options.headers || {}) },
+      headers: { ...authHeaders, ...(options.headers || {}) },
     }, timeoutMs);
   }
 
@@ -139,7 +158,7 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}, tim
     try {
       const res = await fetchWithTimeout<T>(fullUrl, {
         ...options,
-        headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(options.headers || {}) },
+        headers: { ...authHeaders, ...(options.headers || {}) },
       }, timeoutMs);
 
       // Cache successful responses
@@ -160,6 +179,7 @@ export interface ApiResponse<T> {
   data?: T;
   error?: string;
   isOffline?: boolean;
+  status?: number;
 }
 
 export async function fetchWithTimeout<T>(
@@ -198,7 +218,25 @@ export async function fetchWithTimeout<T>(
       } catch {
         // Some proxies return an empty response for errors.
       }
-      return { error: `${detail} (${response.status})` };
+      const errorMessages: Record<number, string> = {
+        400: 'The request could not be completed.',
+        401: 'Your session is invalid or has expired.',
+        403: 'You do not have permission to perform this action.',
+        404: 'The requested resource was not found.',
+        422: 'Please check the submitted information.',
+        429: 'Too many requests. Please try again shortly.',
+        500: 'The server encountered an error.',
+        502: 'The service is temporarily unavailable.',
+        503: 'The service is temporarily unavailable.',
+        504: 'The service took too long to respond.',
+      };
+      const isAuthEndpoint = endpoint.includes('/auth/login') || endpoint.includes('/auth/register') || endpoint.includes('/auth/me');
+      if (response.status === 401 && !isAuthEndpoint && typeof window !== 'undefined') {
+        setAuthToken(null);
+        clearApiCache();
+        window.dispatchEvent(new CustomEvent('antah-auth-expired'));
+      }
+      return { error: errorMessages[response.status] || `${detail} (${response.status})`, status: response.status };
     }
 
     const data = await response.json();
@@ -208,7 +246,6 @@ export async function fetchWithTimeout<T>(
     if (err.name === 'AbortError') {
       return { error: 'Request timed out. Please check your network connection.' };
     }
-    return { error: err.message || 'Network request failed.' };
+    return { error: 'Unable to connect to the server. Please try again.' };
   }
 }
-

@@ -1,18 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { NexconnChatPanel } from '../components/chat/NexconnChatPanel';
 import { MessageSquare, Radio, ShieldAlert, Users, Layers, CheckCircle2 } from 'lucide-react';
-import { API_ENDPOINTS, apiRequest, Notification } from '../config/api';
+import { API_ENDPOINTS, apiRequest, Notification, ChatRoom } from '../config/api';
 
 export const MessagesPage: React.FC = () => {
-  const [selectedIncident, setSelectedIncident] = useState({
-    id: 'INC-2026-088',
-    title: 'Fisura Hidráulica y Rebalse de Colector',
-    clusterId: 'CLUSTER-409',
-    district: 'Sector 3 Hydrologic Quad',
-    activeUsers: 4,
-    status: 'ACTIVE_REMEDIATION',
-    badge: 'Riesgo Crítico',
-  });
+  const [rooms, setRooms] = useState<ChatRoom[]>([]);
+  const [selectedRoomId, setSelectedRoomId] = useState<number | null>(null);
+  const [roomsLoading, setRoomsLoading] = useState(true);
+  const [roomsError, setRoomsError] = useState<string | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [notificationError, setNotificationError] = useState<string | null>(null);
   const [notificationsLoading, setNotificationsLoading] = useState(true);
@@ -28,35 +23,23 @@ export const MessagesPage: React.FC = () => {
     return () => { active = false; };
   }, []);
 
-  const incidentChannels = [
-    {
-      id: 'INC-2026-088',
-      title: 'Fisura Hidráulica y Rebalse de Colector',
-      clusterId: 'CLUSTER-409',
-      district: 'Sector 3 Hydrologic Quad',
-      activeUsers: 4,
-      status: 'ACTIVE_REMEDIATION',
-      badge: 'Riesgo Crítico',
-    },
-    {
-      id: 'INC-2026-089',
-      title: 'Depresión de Asfalto en Bus Rapid Transit',
-      clusterId: 'SIG-811',
-      district: 'Indiranagar Commercial Corridor',
-      activeUsers: 2,
-      status: 'DISPATCHED',
-      badge: 'Riesgo Alto',
-    },
-    {
-      id: 'INC-2026-090',
-      title: 'Corte de Pasarela Feeder Metro',
-      clusterId: 'SIG-819',
-      district: 'Central Metro Transit Core',
-      activeUsers: 3,
-      status: 'INVESTIGATING',
-      badge: 'Riesgo Medio',
-    },
-  ];
+  useEffect(() => {
+    let active = true;
+    setRoomsLoading(true);
+    void apiRequest<ChatRoom[]>(API_ENDPOINTS.chatRooms).then((result) => {
+      if (!active) return;
+      if (result.data) {
+        setRooms(result.data);
+        setSelectedRoomId((current) => current ?? result.data?.[0]?.id ?? null);
+      } else {
+        setRoomsError(result.error || 'Unable to load authorized chatrooms.');
+      }
+      setRoomsLoading(false);
+    });
+    return () => { active = false; };
+  }, []);
+
+  const selectedRoom = rooms.find((room) => room.id === selectedRoomId) || rooms[0];
 
   return (
     <div className="w-full px-4 pt-3 pb-8 space-y-4 select-none">
@@ -67,7 +50,7 @@ export const MessagesPage: React.FC = () => {
             Incident Channels
           </h1>
           <p className="text-[11px] text-[#737C78]">
-            Nexconn Chat SDK • Multi-actor incident rooms
+            Authenticated multi-actor chatrooms
           </p>
         </div>
         {notificationsLoading && (
@@ -92,12 +75,14 @@ export const MessagesPage: React.FC = () => {
 
       {/* 2. HORIZONTALLY SCROLLABLE CHANNELS CAROUSEL */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none -mx-4 px-4">
-        {incidentChannels.map((channel) => {
-          const isSelected = channel.id === selectedIncident.id;
+        {roomsLoading && <div className="text-xs text-[#737C78]">Loading authorized chatrooms…</div>}
+        {roomsError && <div className="text-xs text-red-800">{roomsError}</div>}
+        {rooms.map((channel) => {
+          const isSelected = channel.id === selectedRoom?.id;
           return (
             <button
               key={channel.id}
-              onClick={() => setSelectedIncident(channel)}
+              onClick={() => setSelectedRoomId(channel.id)}
               className={`shrink-0 px-3.5 py-2 rounded-2xl text-xs font-semibold border transition-all text-left flex items-center gap-2 active:scale-95 ${
                 isSelected
                   ? 'bg-[#286B56] text-white border-[#286B56] shadow-xs'
@@ -110,7 +95,7 @@ export const MessagesPage: React.FC = () => {
                   {channel.title}
                 </div>
                 <div className={`text-[9px] font-mono ${isSelected ? 'text-white/80' : 'text-[#737C78]'}`}>
-                  {channel.id} • {channel.activeUsers} users
+                  {channel.room_type}
                 </div>
               </div>
             </button>
@@ -124,24 +109,25 @@ export const MessagesPage: React.FC = () => {
         <div className="flex items-center justify-between pb-2.5 border-b border-stone-100">
           <div>
             <div className="text-[9px] font-mono font-bold text-[#286B56] uppercase tracking-wider">
-              {selectedIncident.id} • {selectedIncident.status}
+              {selectedRoom?.room_type || 'ROOM'}
             </div>
             <h2 className="text-xs font-bold text-[#202827] line-clamp-1">
-              {selectedIncident.title}
+              {selectedRoom?.title || 'No authorized chatroom'}
             </h2>
           </div>
           <span className="text-[10px] text-[#737C78] font-mono shrink-0">
-            {selectedIncident.district.split(' ')[0]}
+            {selectedRoom?.room_key || ''}
           </span>
         </div>
 
         {/* Embedded Chat View */}
         <div className="h-[460px] rounded-2xl overflow-hidden border border-stone-100">
-          <NexconnChatPanel
-            incidentId={selectedIncident.id}
-            incidentTitle={selectedIncident.title}
+          {selectedRoom ? <NexconnChatPanel
+            roomId={selectedRoom.id}
+            incidentId={selectedRoom.incident_id ? `INC-${selectedRoom.incident_id}` : undefined}
+            incidentTitle={selectedRoom.title}
             className="h-full border-none shadow-none rounded-none"
-          />
+          /> : <div className="p-6 text-sm text-[#737C78]">No authorized chatrooms are available.</div>}
         </div>
       </div>
     </div>
