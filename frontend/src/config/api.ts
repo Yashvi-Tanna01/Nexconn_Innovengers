@@ -211,32 +211,55 @@ export async function fetchWithTimeout<T>(
     clearTimeout(id);
 
     if (!response.ok) {
-      let detail = response.statusText;
+      let serverErrorMsg: string | null = null;
       try {
         const body = await response.json();
-        detail = body.detail || detail;
+        if (typeof body.detail === 'string' && body.detail.trim()) {
+          serverErrorMsg = body.detail.trim();
+        } else if (Array.isArray(body.detail) && body.detail.length > 0) {
+          serverErrorMsg = body.detail
+            .map((e: any) => (typeof e === 'string' ? e : e.msg || JSON.stringify(e)))
+            .join('; ');
+        } else if (typeof body.message === 'string' && body.message.trim()) {
+          serverErrorMsg = body.message.trim();
+        } else if (typeof body.error === 'string' && body.error.trim()) {
+          serverErrorMsg = body.error.trim();
+        }
       } catch {
-        // Some proxies return an empty response for errors.
+        // Some responses or proxies return non-JSON on error.
       }
-      const errorMessages: Record<number, string> = {
-        400: 'The request could not be completed.',
+
+      const defaultStatusMessages: Record<number, string> = {
+        400: 'The request could not be completed. Please check your input.',
         401: 'Your session is invalid or has expired.',
         403: 'You do not have permission to perform this action.',
         404: 'The requested resource was not found.',
-        422: 'Please check the submitted information.',
+        409: 'This record already exists. Please check your email or details.',
+        422: 'Please check that the submitted information is valid.',
         429: 'Too many requests. Please try again shortly.',
         500: 'The server encountered an error.',
-        502: 'The service is temporarily unavailable.',
-        503: 'The service is temporarily unavailable.',
-        504: 'The service took too long to respond.',
+        502: 'The backend service is temporarily unavailable.',
+        503: 'The backend service is temporarily unavailable.',
+        504: 'The backend service took too long to respond.',
       };
-      const isAuthEndpoint = endpoint.includes('/auth/login') || endpoint.includes('/auth/register') || endpoint.includes('/auth/me');
+
+      const finalErrorMessage =
+        serverErrorMsg ||
+        defaultStatusMessages[response.status] ||
+        `${response.statusText || 'Request failed'} (${response.status})`;
+
+      const isAuthEndpoint =
+        endpoint.includes('/auth/login') ||
+        endpoint.includes('/auth/register') ||
+        endpoint.includes('/auth/me');
+
       if (response.status === 401 && !isAuthEndpoint && typeof window !== 'undefined') {
         setAuthToken(null);
         clearApiCache();
         window.dispatchEvent(new CustomEvent('antah-auth-expired'));
       }
-      return { error: errorMessages[response.status] || `${detail} (${response.status})`, status: response.status };
+
+      return { error: finalErrorMessage, status: response.status };
     }
 
     const data = await response.json();
@@ -246,6 +269,8 @@ export async function fetchWithTimeout<T>(
     if (err.name === 'AbortError') {
       return { error: 'Request timed out. Please check your network connection.' };
     }
-    return { error: 'Unable to connect to the server. Please try again.' };
+    return {
+      error: `Unable to connect to the backend server at ${API_BASE_URL}. Please verify the ANTAH API service is running.`,
+    };
   }
 }
