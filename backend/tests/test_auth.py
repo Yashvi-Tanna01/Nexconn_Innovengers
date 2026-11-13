@@ -53,6 +53,23 @@ def test_private_endpoint_requires_valid_authentication():
     assert client.get("/api/v1/auth/me").status_code == 401
     assert client.get("/api/v1/auth/me", headers=auth("invalid-token")).status_code == 401
 
+def test_refresh_token_rotates_and_rejects_reuse():
+    create_user("refresh@example.com")
+    response = client.post(
+        "/api/v1/auth/login",
+        json={"email": "refresh@example.com", "password": "secure-password"},
+    )
+    assert response.status_code == 200
+    refresh_token = response.json()["refresh_token"]
+
+    refreshed = client.post("/api/v1/auth/refresh", json={"refresh_token": refresh_token})
+    assert refreshed.status_code == 200
+    assert refreshed.json()["access_token"]
+    assert refreshed.json()["refresh_token"] != refresh_token
+
+    reused = client.post("/api/v1/auth/refresh", json={"refresh_token": refresh_token})
+    assert reused.status_code == 401
+
 
 def test_current_user_and_role_authorization():
     create_user("resident@example.com")

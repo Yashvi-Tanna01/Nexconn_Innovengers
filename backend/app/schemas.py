@@ -17,9 +17,13 @@ class AdminUserUpdate(BaseModel):
 class ProfileUpdate(BaseModel):
     full_name: str = Field(min_length=2, max_length=160)
 class Token(BaseModel):
-    access_token: str; token_type: str = "bearer"
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
 class Login(BaseModel):
     email: str; password: str
+class RefreshRequest(BaseModel):
+    refresh_token: str = Field(min_length=20)
 class ReportCreate(BaseModel):
     title: str; description: str; category: str; location: str; urgency: int = Field(3, ge=1, le=5)
 class ReportOut(ReportCreate):
