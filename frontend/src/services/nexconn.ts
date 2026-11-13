@@ -19,8 +19,8 @@ let connectedUserId: string | null = null;
 const listeners = new Set<MessageListener>();
 
 const messageHandler = new MessageHandler({
-  onMessageReceived: ({ messages }) => {
-    messages.forEach((message) => listeners.forEach((listener) => listener(message)));
+  onMessageReceived: ({ messages }: { messages: any[] }) => {
+    messages.forEach((message: any) => listeners.forEach((listener) => listener(message)));
   },
 });
 
