@@ -1,9 +1,25 @@
+import ssl
+
 from sqlalchemy import create_engine, inspect, text
+from sqlalchemy.engine import make_url
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from app.core.config import settings
 
-connect_args = {"check_same_thread": False} if settings.DATABASE_URL.startswith("sqlite") else {}
-engine = create_engine(settings.DATABASE_URL, connect_args=connect_args)
+database_url = make_url(settings.DATABASE_URL)
+if database_url.drivername == "postgresql+pg8000":
+    query = {
+        key: value
+        for key, value in database_url.query.items()
+        if key not in {"sslmode", "channel_binding"}
+    }
+    database_url = database_url.set(query=query)
+    connect_args = {"ssl_context": ssl.create_default_context()}
+elif database_url.drivername.startswith("sqlite"):
+    connect_args = {"check_same_thread": False}
+else:
+    connect_args = {}
+
+engine = create_engine(database_url, connect_args=connect_args)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
 class Base(DeclarativeBase):

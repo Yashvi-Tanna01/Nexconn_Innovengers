@@ -13,8 +13,12 @@ class Settings:
     API_V1_STR: str = "/api/v1"
     
     # Database
+<<<<<<< HEAD
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./antah.db")
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development").lower()
+=======
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql+pg8000://neondb_owner:npg_mipaIEKo2nV1@ep-restless-moon-begy6uc2.c-9.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require")
+>>>>>>> 7864e7550f2a16773e9d6685aef97de15b37fd2e
     JWT_SECRET: str = os.getenv("JWT_SECRET") or secrets.token_urlsafe(32)
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
     
