@@ -3,13 +3,19 @@ apply plugin: 'com.android.application'
 android {
     namespace "com.antah.network"
     compileSdk 34
+    buildToolsVersion "34.0.0"
+    buildFeatures {
+        buildConfig true
+    }
 
     defaultConfig {
+        def apiBaseUrl = project.findProperty("ANTAH_API_BASE_URL") ?: "https://api.antah.network/api/v1"
         applicationId "com.antah.network"
         minSdk 24
         targetSdk 34
         versionCode 1
         versionName "1.0.0"
+        buildConfigField "String", "ANTAH_API_BASE_URL", "\"${apiBaseUrl}\""
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -37,4 +43,3 @@ dependencies {
     implementation 'androidx.webkit:webkit:1.10.0'
     implementation 'androidx.core:core-ktx:1.12.0'
 }
-

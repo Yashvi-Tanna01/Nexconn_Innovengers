@@ -14,6 +14,7 @@ class Settings:
     
     # Database
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./antah.db")
+    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development").lower()
     JWT_SECRET: str = os.getenv("JWT_SECRET") or secrets.token_urlsafe(32)
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
     
@@ -30,9 +31,15 @@ class Settings:
     
     # CORS
     BACKEND_CORS_ORIGINS: list[str] = [
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:3000",
+        origin.strip()
+        for origin in os.getenv(
+            "CORS_ORIGINS",
+            "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000",
+        ).split(",")
+        if origin.strip()
     ]
 
 settings = Settings()
+
+if settings.ENVIRONMENT == "production" and not os.getenv("JWT_SECRET"):
+    raise RuntimeError("JWT_SECRET must be configured in production.")

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from app.db import get_db
 from app.models import *
@@ -65,9 +66,37 @@ def login(data: Login, db: Session = Depends(get_db)):
     if not user or not user.is_active or not verify_password(data.password, user.password_hash):
         raise HTTPException(401, "Invalid email or password")
     token = create_token(user)
+    refresh_token = create_refresh_token()
+    db.add(RefreshToken(
+        user_id=user.id,
+        token_hash=hash_refresh_token(refresh_token),
+        expires_at=datetime.now(timezone.utc) + timedelta(days=30),
+    ))
     db.add(ActivityLog(actor_id=user.id, action="login", entity_type="user", entity_id=user.id))
     db.commit()
-    return Token(access_token=token)
+    return Token(access_token=token, refresh_token=refresh_token)
+
+@router.post("/auth/refresh", response_model=Token)
+def refresh(data: RefreshRequest, db: Session = Depends(get_db)):
+    stored = db.query(RefreshToken).filter(
+        RefreshToken.token_hash == hash_refresh_token(data.refresh_token),
+        RefreshToken.revoked_at.is_(None),
+    ).first()
+    expires_at = stored.expires_at.replace(tzinfo=timezone.utc) if stored and stored.expires_at.tzinfo is None else stored.expires_at if stored else None
+    if not stored or expires_at <= datetime.now(timezone.utc):
+        raise HTTPException(401, "Invalid or expired refresh token")
+    user = db.get(User, stored.user_id)
+    if not user or not user.is_active:
+        raise HTTPException(401, "Invalid or inactive account")
+    stored.revoked_at = datetime.now(timezone.utc)
+    replacement = create_refresh_token()
+    db.add(RefreshToken(
+        user_id=user.id,
+        token_hash=hash_refresh_token(replacement),
+        expires_at=datetime.now(timezone.utc) + timedelta(days=30),
+    ))
+    db.commit()
+    return Token(access_token=create_token(user), refresh_token=replacement)
 
 @router.get("/auth/me", response_model=UserOut)
 def me(user: User = Depends(current_user)): return user

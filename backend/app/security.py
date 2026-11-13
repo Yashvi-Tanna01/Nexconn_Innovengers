@@ -1,4 +1,4 @@
-import base64, hashlib, hmac, os
+import base64, hashlib, hmac, os, secrets
 from datetime import datetime, timedelta, timezone
 import jwt
 from fastapi import Depends, HTTPException, status
@@ -22,6 +22,12 @@ def verify_password(password: str, encoded: str) -> bool:
 def create_token(user: User) -> str:
     exp = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     return jwt.encode({"sub": str(user.id), "role": user.role, "exp": exp}, settings.JWT_SECRET, algorithm="HS256")
+
+def create_refresh_token() -> str:
+    return secrets.token_urlsafe(48)
+
+def hash_refresh_token(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 bearer = HTTPBearer(auto_error=False)
 def current_user(credentials: HTTPAuthorizationCredentials = Depends(bearer), db: Session = Depends(get_db)) -> User:
