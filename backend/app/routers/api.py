@@ -49,15 +49,11 @@ def user_can_access_room(db, room, user):
 
 @router.post("/auth/register", response_model=UserOut, status_code=201)
 def register(data: UserCreate, db: Session = Depends(get_db)):
-    clean_email = data.email.lower().strip()
-    clean_name = data.full_name.strip()
-    if not clean_email or not clean_name:
-        raise HTTPException(400, "Full name and email are required")
-    if db.query(User).filter(User.email == clean_email).first():
+    if db.query(User).filter(User.email == data.email.lower()).first():
         raise HTTPException(409, "Email already registered")
     user = User(
-        email=clean_email,
-        full_name=clean_name,
+        email=data.email.lower(),
+        full_name=data.full_name,
         password_hash=hash_password(data.password),
         role="reporter",
     )
@@ -66,8 +62,7 @@ def register(data: UserCreate, db: Session = Depends(get_db)):
 
 @router.post("/auth/login", response_model=Token)
 def login(data: Login, db: Session = Depends(get_db)):
-    clean_email = data.email.lower().strip()
-    user = db.query(User).filter(User.email == clean_email).first()
+    user = db.query(User).filter(User.email == data.email.lower()).first()
     if not user or not user.is_active or not verify_password(data.password, user.password_hash):
         raise HTTPException(401, "Invalid email or password")
     token = create_token(user)

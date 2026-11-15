@@ -54,7 +54,7 @@ export const NexconnChatPanel: React.FC<NexconnChatPanelProps> = ({
       setNexconnToken(token);
       const history = await loadHistory(token);
       if (!active) return;
-      setMessages(history.map((message: any) => ({
+      setMessages(history.map((message) => ({
         id: message.messageId,
         sender_id: message.senderUserId,
         sender_name: message.content.senderUserInfo?.name || message.senderUserId,
@@ -69,7 +69,7 @@ export const NexconnChatPanel: React.FC<NexconnChatPanelProps> = ({
 
   useEffect(() => {
     if (!nexconnToken) return;
-    return subscribe((message: any) => {
+    return subscribe((message) => {
       if (message.channelIdentifier.channelId !== nexconnToken.channel_id || !message.content.text) return;
       setMessages((previous) => previous.some((item) => item.id === message.messageId) ? previous : [
         ...previous,
