@@ -15,8 +15,7 @@ app.include_router(router)
 # CORS setup
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.BACKEND_CORS_ORIGINS if settings.ENVIRONMENT == "production" else ["*"],
-    allow_origin_regex=None if settings.ENVIRONMENT == "production" else r"^https?://.*|^capacitor://.*",
+    allow_origins=settings.BACKEND_CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -41,10 +40,6 @@ def health_check():
         "version": settings.VERSION,
         "database": db_health,
     }
-
-@app.get("/api/v1/health/db")
-def db_health_check():
-    return get_db_health()
 
 if __name__ == "__main__":
     import uvicorn
