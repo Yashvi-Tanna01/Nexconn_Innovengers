@@ -7,28 +7,86 @@ class UserCreate(BaseModel):
     full_name: str
     password: str = Field(min_length=8)
     role: str = "reporter"
+    phone: Optional[str] = None
+    avatar_url: Optional[str] = None
+    organization: Optional[str] = None
+
 class UserOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-    id: int; email: str; full_name: str; role: str; is_active: bool
+    id: int
+    email: str
+    full_name: str
+    role: str
+    is_active: bool
+    phone: Optional[str] = None
+    avatar_url: Optional[str] = None
+    organization: Optional[str] = None
+
+class UserPreferenceOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    theme: str
+    notifications_enabled: bool
+    email_alerts: bool
+    language: str
+
+class UserPreferenceUpdate(BaseModel):
+    theme: Optional[str] = None
+    notifications_enabled: Optional[bool] = None
+    email_alerts: Optional[bool] = None
+    language: Optional[str] = None
+
 class AdminUserUpdate(BaseModel):
     full_name: Optional[str] = None
     role: Optional[str] = None
     is_active: Optional[bool] = None
+    phone: Optional[str] = None
+    avatar_url: Optional[str] = None
+    organization: Optional[str] = None
+
 class ProfileUpdate(BaseModel):
-    full_name: str = Field(min_length=2, max_length=160)
+    full_name: Optional[str] = Field(None, min_length=2, max_length=160)
+    phone: Optional[str] = None
+    avatar_url: Optional[str] = None
+    organization: Optional[str] = None
+
 class Token(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
+
 class Login(BaseModel):
-    email: str; password: str
+    email: str
+    password: str
+
 class RefreshRequest(BaseModel):
     refresh_token: str = Field(min_length=20)
+
 class ReportCreate(BaseModel):
-    title: str; description: str; category: str; location: str; urgency: int = Field(3, ge=1, le=5)
+    title: str
+    description: str
+    category: str
+    location: str
+    urgency: int = Field(3, ge=1, le=5)
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+
+class ReportAttachmentOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    report_id: int
+    file_url: str
+    file_type: str
+    file_name: str
+    file_size: int
+    created_at: datetime
+
 class ReportOut(ReportCreate):
     model_config = ConfigDict(from_attributes=True)
-    id: int; status: str; reporter_id: int
+    id: int
+    status: str
+    reporter_id: int
+    created_at: Optional[datetime] = None
+
 class ClusterOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int; title: str; explanation: str; score: float; status: str

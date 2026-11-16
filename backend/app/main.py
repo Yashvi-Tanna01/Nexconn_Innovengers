@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.db import init_db
+from app.db import init_db, get_db_health
 from app.routers.api import router
 
 app = FastAPI(
@@ -34,11 +34,17 @@ def read_root():
 
 @app.get("/api/v1/health")
 def health_check():
+    db_health = get_db_health()
     return {
-        "status": "healthy",
+        "status": "healthy" if db_health.get("status") == "connected" else "degraded",
         "service": "ANTAH Core API",
         "version": settings.VERSION,
+        "database": db_health,
     }
+
+@app.get("/api/v1/health/db")
+def db_health_check():
+    return get_db_health()
 
 if __name__ == "__main__":
     import uvicorn

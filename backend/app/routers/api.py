@@ -108,11 +108,46 @@ def me(user: User = Depends(current_user)): return user
 
 @router.patch("/users/me", response_model=UserOut)
 def update_profile(data: ProfileUpdate, db: Session = Depends(get_db), user: User = Depends(current_user)):
-    user.full_name = data.full_name.strip()
+    if data.full_name is not None:
+        user.full_name = data.full_name.strip()
+    if data.phone is not None:
+        user.phone = data.phone.strip()
+    if data.avatar_url is not None:
+        user.avatar_url = data.avatar_url.strip()
+    if data.organization is not None:
+        user.organization = data.organization.strip()
     log(db, user, "updated", "profile", user.id)
     db.commit()
     db.refresh(user)
     return user
+
+@router.get("/users/me/preferences", response_model=UserPreferenceOut)
+def get_preferences(db: Session = Depends(get_db), user: User = Depends(current_user)):
+    pref = db.query(UserPreference).filter(UserPreference.user_id == user.id).first()
+    if not pref:
+        pref = UserPreference(user_id=user.id, theme="system", notifications_enabled=True, email_alerts=True, language="en")
+        db.add(pref)
+        db.commit()
+        db.refresh(pref)
+    return pref
+
+@router.patch("/users/me/preferences", response_model=UserPreferenceOut)
+def update_preferences(data: UserPreferenceUpdate, db: Session = Depends(get_db), user: User = Depends(current_user)):
+    pref = db.query(UserPreference).filter(UserPreference.user_id == user.id).first()
+    if not pref:
+        pref = UserPreference(user_id=user.id)
+        db.add(pref)
+    if data.theme is not None:
+        pref.theme = data.theme
+    if data.notifications_enabled is not None:
+        pref.notifications_enabled = data.notifications_enabled
+    if data.email_alerts is not None:
+        pref.email_alerts = data.email_alerts
+    if data.language is not None:
+        pref.language = data.language
+    db.commit()
+    db.refresh(pref)
+    return pref
 
 @router.post("/auth/logout", status_code=204)
 def logout(db: Session = Depends(get_db), user: User = Depends(current_user)):
@@ -180,6 +215,45 @@ def create_report(data: ReportCreate, db: Session = Depends(get_db), user: User 
 def reports(db: Session = Depends(get_db), user: User = Depends(current_user)):
     q = db.query(Report)
     return q.filter(Report.reporter_id == user.id).all() if user.role == "reporter" else q.order_by(Report.created_at.desc()).all()
+
+@router.post("/reports/{report_id}/attachments", response_model=ReportAttachmentOut, status_code=201)
+def add_report_attachment(
+    report_id: int,
+    file_url: str,
+    file_name: str,
+    file_type: str = "image/jpeg",
+    file_size: int = 0,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+):
+    report = db.get(Report, report_id)
+    if not report:
+        raise HTTPException(404, "Report not found")
+    if user.role == "reporter" and report.reporter_id != user.id:
+        raise HTTPException(403, "Not authorized to modify this report")
+    attachment = ReportAttachment(
+        report_id=report.id,
+        file_url=file_url,
+        file_name=file_name,
+        file_type=file_type,
+        file_size=file_size,
+    )
+    db.add(attachment)
+    db.commit()
+    db.refresh(attachment)
+    return attachment
+
+@router.get("/reports/{report_id}/attachments", response_model=list[ReportAttachmentOut])
+def list_report_attachments(
+    report_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+):
+    report = db.get(Report, report_id)
+    if not report:
+        raise HTTPException(404, "Report not found")
+    return db.query(ReportAttachment).filter(ReportAttachment.report_id == report.id).all()
+
 
 @router.post("/intelligence/clusters", response_model=list[ClusterOut])
 def generate_clusters(db: Session = Depends(get_db), user: User = Depends(require_roles("coordinator", "admin"))):

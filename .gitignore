@@ -13,3 +13,6 @@ backend/venv/
 **/build/
 **/node_modules/
 *.lock.tmp
+android/.tools/
+android/local.properties
+

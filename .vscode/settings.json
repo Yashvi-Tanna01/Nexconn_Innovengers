@@ -20,5 +20,6 @@
     "android/.gradle": true,
     "android/build": true,
     "android/app/build": true
-  }
+  },
+  "java.configuration.updateBuildConfiguration": "interactive"
 }

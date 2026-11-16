@@ -12,8 +12,21 @@ class User(Base):
     full_name: Mapped[str] = mapped_column(String(160))
     password_hash: Mapped[str] = mapped_column(String(300))
     role: Mapped[str] = mapped_column(String(30), default="reporter")
+    phone: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    avatar_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    organization: Mapped[str | None] = mapped_column(String(160), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+class UserPreference(Base):
+    __tablename__ = "user_preferences"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), unique=True, index=True)
+    theme: Mapped[str] = mapped_column(String(30), default="system")
+    notifications_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    email_alerts: Mapped[bool] = mapped_column(Boolean, default=True)
+    language: Mapped[str] = mapped_column(String(10), default="en")
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now)
 
 class RefreshToken(Base):
     __tablename__ = "refresh_tokens"
@@ -31,10 +44,23 @@ class Report(Base):
     description: Mapped[str] = mapped_column(Text)
     category: Mapped[str] = mapped_column(String(60), index=True)
     location: Mapped[str] = mapped_column(String(200), index=True)
+    latitude: Mapped[float | None] = mapped_column(Float, nullable=True, index=True)
+    longitude: Mapped[float | None] = mapped_column(Float, nullable=True, index=True)
     urgency: Mapped[int] = mapped_column(Integer, default=3)
     status: Mapped[str] = mapped_column(String(30), default="submitted")
     reporter_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+class ReportAttachment(Base):
+    __tablename__ = "report_attachments"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    report_id: Mapped[int] = mapped_column(ForeignKey("reports.id"), index=True)
+    file_url: Mapped[str] = mapped_column(String(500))
+    file_type: Mapped[str] = mapped_column(String(60), default="image/jpeg")
+    file_name: Mapped[str] = mapped_column(String(255))
+    file_size: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
 
 class Cluster(Base):
     __tablename__ = "clusters"
