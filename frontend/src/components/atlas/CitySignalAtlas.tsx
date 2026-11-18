@@ -107,6 +107,7 @@ export const CitySignalAtlas: React.FC<CitySignalAtlasProps> = ({
       districtId: district.id,
       reportedAt: 'Backend report',
       reporterName: `Reporter #${report.reporter_id}`,
+      attachments: report.attachments,
     };
   }), [liveReports]);
 

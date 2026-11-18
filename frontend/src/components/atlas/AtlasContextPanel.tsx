@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
@@ -16,9 +16,12 @@ import {
   Activity,
   Layers,
   CheckCircle2,
+  Camera,
+  Maximize2,
 } from 'lucide-react';
 import { AtlasSignal, AtlasCandidateCluster } from './types';
 import { CATEGORY_PALETTE } from './AtlasSymbols';
+import { getMediaUrl } from '../../config/api';
 
 interface AtlasContextPanelProps {
   selectedSignal: AtlasSignal | null;
@@ -35,16 +38,22 @@ export const AtlasContextPanel: React.FC<AtlasContextPanelProps> = ({
   onSelectSignalById,
   onOpenChat,
 }) => {
-  // Accessible Escape key to dismiss context inspector
+  const [enlargedPhoto, setEnlargedPhoto] = useState<string | null>(null);
+
+  // Accessible Escape key to dismiss context inspector or modal
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose();
+        if (enlargedPhoto) {
+          setEnlargedPhoto(null);
+        } else {
+          onClose();
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+  }, [onClose, enlargedPhoto]);
 
   if (!selectedSignal && !selectedCluster) {
     return null;
@@ -68,24 +77,23 @@ export const AtlasContextPanel: React.FC<AtlasContextPanelProps> = ({
         <div className="px-4 py-3 sm:px-5 sm:py-4 border-b border-[#E6EAE6] flex items-center justify-between shrink-0 bg-white">
           <div className="flex items-center gap-2">
             <span
-              className={`w-2 h-2 rounded-full ${
-                selectedCluster
+              className={`w-2 h-2 rounded-full ${selectedCluster
                   ? 'bg-[#D99A45] animate-pulse'
                   : selectedSignal?.status === 'verified_incident'
-                  ? 'bg-[#D9534F]'
-                  : selectedSignal?.status === 'resolved'
-                  ? 'bg-[#286B56]'
-                  : 'bg-[#182322]'
-              }`}
+                    ? 'bg-[#D9534F]'
+                    : selectedSignal?.status === 'resolved'
+                      ? 'bg-[#286B56]'
+                      : 'bg-[#182322]'
+                }`}
             />
             <span className="text-[11px] font-mono font-bold tracking-wider uppercase text-[#727C79]">
               {selectedCluster
                 ? 'Candidate Signal Cluster'
                 : selectedSignal?.status === 'verified_incident'
-                ? 'Verified Civic Incident'
-                : selectedSignal?.status === 'resolved'
-                ? 'Resolved Municipal Ticket'
-                : 'Reported Community Issue'}
+                  ? 'Verified Civic Incident'
+                  : selectedSignal?.status === 'resolved'
+                    ? 'Resolved Municipal Ticket'
+                    : 'Reported Community Issue'}
             </span>
           </div>
 
@@ -161,11 +169,10 @@ export const AtlasContextPanel: React.FC<AtlasContextPanelProps> = ({
               <div className="p-3.5 rounded-2xl bg-[#F8F8F5] border border-[#E6EAE6] text-xs space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-[#727C79] font-medium">Verification Status:</span>
-                  <span className={`font-mono text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
-                    selectedCluster.status === 'verified_incident'
+                  <span className={`font-mono text-[11px] font-bold px-2.5 py-0.5 rounded-full ${selectedCluster.status === 'verified_incident'
                       ? 'bg-[#FEF2F2] text-[#D9534F] border border-[#D9534F]/30'
                       : 'bg-[#FFFBEB] text-[#D99A45] border border-[#D99A45]/30'
-                  }`}>
+                    }`}>
                     {selectedCluster.status === 'verified_incident' ? 'Verified Incident' : 'Awaiting Coordinator'}
                   </span>
                 </div>
@@ -254,6 +261,56 @@ export const AtlasContextPanel: React.FC<AtlasContextPanelProps> = ({
                 )}
               </div>
 
+              {/* Attached Evidence Photographs */}
+              {selectedSignal.attachments && selectedSignal.attachments.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono font-semibold uppercase text-[#727C79] tracking-wider flex items-center gap-1.5">
+                      <Camera size={13} className="text-[#286B56]" />
+                      <span>Attached Photographic Evidence</span>
+                    </span>
+                    <span className="text-[10px] font-mono text-[#286B56] font-bold bg-[#E1F0E8] px-2 py-0.5 rounded-full">
+                      {selectedSignal.attachments.length} {selectedSignal.attachments.length === 1 ? 'Photo' : 'Photos'}
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    {selectedSignal.attachments.map((att) => (
+                      <div
+                        key={att.id}
+                        className="rounded-2xl border border-[#E6EAE6] bg-[#F8F8F5] p-2.5 overflow-hidden transition-all hover:border-[#286B56]/40"
+                      >
+                        <div
+                          className="relative rounded-xl overflow-hidden bg-slate-900/5 cursor-pointer group"
+                          onClick={() => setEnlargedPhoto(getMediaUrl(att.file_url))}
+                        >
+                          <img
+                            src={getMediaUrl(att.file_url)}
+                            alt={att.file_name}
+                            className="w-full max-h-56 object-contain rounded-xl mx-auto transition-transform duration-200 group-hover:scale-[1.02]"
+                            loading="lazy"
+                            onError={(e) => {
+                              (e.target as HTMLElement).style.display = 'none';
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-semibold gap-1.5">
+                            <Maximize2 size={14} />
+                            <span>Click to enlarge</span>
+                          </div>
+                        </div>
+                        <div className="mt-2 flex items-center justify-between text-[11px] px-1 text-[#727C79]">
+                          <span className="truncate max-w-[200px] font-mono font-medium text-[#182322]" title={att.file_name}>
+                            {att.file_name}
+                          </span>
+                          <span className="font-mono text-[10px]">
+                            {att.file_size ? `${(att.file_size / 1024).toFixed(1)} KB` : 'Attached'}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Connected Signal Thread (Candidate Correlation) */}
               {selectedSignal.relatedSignalId && (
                 <div className="p-3.5 rounded-2xl bg-[#FFFBEB] border border-[#D99A45]/30 space-y-2">
@@ -336,6 +393,34 @@ export const AtlasContextPanel: React.FC<AtlasContextPanelProps> = ({
           )}
         </div>
       </motion.div>
+
+      {/* Fullscreen Photo Lightbox Modal */}
+      {enlargedPhoto && (
+        <div
+          role="dialog"
+          aria-label="Enlarged Photographic Evidence"
+          className="fixed inset-0 z-[600] flex items-center justify-center bg-black/80 backdrop-blur-xs p-4"
+          onClick={() => setEnlargedPhoto(null)}
+        >
+          <div
+            className="relative max-w-4xl max-h-[90vh] bg-slate-900 rounded-3xl overflow-hidden shadow-2xl p-2 flex flex-col items-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setEnlargedPhoto(null)}
+              className="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center transition-colors"
+              aria-label="Close enlarged preview"
+            >
+              <X size={18} />
+            </button>
+            <img
+              src={enlargedPhoto}
+              alt="Enlarged Evidence"
+              className="max-h-[82vh] w-auto max-w-full object-contain rounded-2xl"
+            />
+          </div>
+        </div>
+      )}
     </AnimatePresence>
   );
 };

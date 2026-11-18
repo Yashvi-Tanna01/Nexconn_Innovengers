@@ -15,4 +15,6 @@ backend/venv/
 *.lock.tmp
 android/.tools/
 android/local.properties
+backend/uploads/*
+!backend/uploads/.gitkeep
 

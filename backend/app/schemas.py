@@ -86,6 +86,7 @@ class ReportOut(ReportCreate):
     status: str
     reporter_id: int
     created_at: Optional[datetime] = None
+    attachments: list[ReportAttachmentOut] = []
 
 class ClusterOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -103,15 +104,29 @@ class ChatRoomOut(BaseModel):
     id: int; room_key: str; title: str; room_type: str; incident_id: Optional[int] = None
 class ChatMessageCreate(BaseModel):
     text: str = Field(min_length=1, max_length=4000)
+    message_uid: Optional[str] = None
+
 class ChatMessageOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-    id: int; room_id: int; sender_id: int; sender_name: str; text: str; created_at: datetime
+    id: int
+    room_id: int
+    sender_id: int
+    sender_name: str
+    sender_role: Optional[str] = "reporter"
+    message_uid: Optional[str] = None
+    text: str
+    created_at: datetime
+
 class ChatTokenRequest(BaseModel):
     room_id: int
+
 class ChatTokenOut(BaseModel):
     access_token: str
     nexconn_user_id: str
+    user_name: Optional[str] = None
+    user_role: Optional[str] = None
     channel_id: str
+    sub_channel_id: Optional[str] = None
     channel_type: str
     area_code: int
 class NexconnGroupCreate(BaseModel):

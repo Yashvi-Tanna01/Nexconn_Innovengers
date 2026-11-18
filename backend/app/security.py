@@ -35,11 +35,16 @@ def current_user(credentials: HTTPAuthorizationCredentials = Depends(bearer), db
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
     try:
         payload = jwt.decode(credentials.credentials, settings.JWT_SECRET, algorithms=["HS256"])
-        user = db.get(User, int(payload["sub"]))
+        user_id = int(payload["sub"])
+        user = db.get(User, user_id)
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Your session has expired. Please sign in again.")
     except (jwt.PyJWTError, KeyError, ValueError, TypeError):
-        user = None
-    if not user or not user.is_active:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid session token. Please sign in again.")
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Account not found.")
+    if not user.is_active:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is disabled.")
     return user
 def require_roles(*roles):
     def dependency(user: User = Depends(current_user)):

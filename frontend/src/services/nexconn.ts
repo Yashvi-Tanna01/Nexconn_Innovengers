@@ -3,6 +3,10 @@ import {
   BaseChannel,
   CommunityChannel,
   CommunityChannelIdentifier,
+  CommunitySubChannel,
+  CommunitySubChannelIdentifier,
+  ConnectionStatus,
+  ConnectionStatusHandler,
   GroupChannel,
   GroupChannelIdentifier,
   Message,
@@ -12,15 +16,59 @@ import {
 } from '@nexconn/chat';
 import { API_ENDPOINTS, apiRequest, NexconnToken } from '../config/api';
 
-type MessageListener = (message: Message<any>) => void;
+export type MessageListener = (message: Message<any>) => void;
+export type NexconnConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
 
 let initialized = false;
 let connectedUserId: string | null = null;
+let currentStatus: NexconnConnectionStatus = 'disconnected';
 const listeners = new Set<MessageListener>();
+const statusListeners = new Set<(status: NexconnConnectionStatus) => void>();
+
+export function getConnectionStatus(): NexconnConnectionStatus {
+  return currentStatus;
+}
+
+export function subscribeConnectionStatus(listener: (status: NexconnConnectionStatus) => void): () => void {
+  statusListeners.add(listener);
+  listener(currentStatus);
+  return () => statusListeners.delete(listener);
+}
+
+function updateConnectionStatus(status: NexconnConnectionStatus): void {
+  currentStatus = status;
+  statusListeners.forEach((l) => {
+    try {
+      l(status);
+    } catch (err) {
+      console.warn('[Nexconn] Status listener error:', err);
+    }
+  });
+}
 
 const messageHandler = new MessageHandler({
   onMessageReceived: ({ messages }) => {
-    messages.forEach((message) => listeners.forEach((listener) => listener(message)));
+    messages.forEach((message) => {
+      listeners.forEach((listener) => {
+        try {
+          listener(message);
+        } catch (err) {
+          console.error('[Nexconn] Message listener error:', err);
+        }
+      });
+    });
+  },
+});
+
+const connectionStatusHandler = new ConnectionStatusHandler({
+  onConnectionStatusChanged: (event) => {
+    if (event.status === ConnectionStatus.CONNECTED) {
+      updateConnectionStatus('connected');
+    } else if (event.status === ConnectionStatus.CONNECTING) {
+      updateConnectionStatus('connecting');
+    } else {
+      updateConnectionStatus('disconnected');
+    }
   },
 });
 
@@ -37,73 +85,127 @@ function initialize(token: NexconnToken): void {
   if (!appKey) throw new Error('VITE_NEXCONN_APP_KEY is not configured for the frontend.');
   NCEngine.initialize({ appKey, areaCode: getAreaCode(token.area_code) });
   NCEngine.addMessageHandler('antah-chat', messageHandler);
+  NCEngine.addConnectionStatusHandler('antah-status', connectionStatusHandler);
   initialized = true;
 }
 
 export async function connectToRoom(roomId: number): Promise<NexconnToken> {
+  updateConnectionStatus('connecting');
   const tokenResult = await apiRequest<NexconnToken>(API_ENDPOINTS.chatAuth, {
     method: 'POST',
     body: JSON.stringify({ room_id: roomId }),
   });
-  if (!tokenResult.data) throw new Error(tokenResult.error || 'Unable to obtain the Nexconn access token.');
+  if (!tokenResult.data) {
+    updateConnectionStatus('error');
+    throw new Error(tokenResult.error || 'Unable to obtain the Nexconn access token.');
+  }
 
   const token = tokenResult.data;
   initialize(token);
+
   if (connectedUserId && connectedUserId !== token.nexconn_user_id) {
     await NCEngine.disconnect();
     connectedUserId = null;
   }
+
   if (!connectedUserId) {
     const result = await NCEngine.connect({ token: token.access_token });
-    if (!result.isOk || !result.data) throw new Error('Nexconn connection failed.');
+    if (!result.isOk || !result.data) {
+      updateConnectionStatus('error');
+      const code = 'code' in result ? ` (code ${result.code})` : '';
+      throw new Error(`Nexconn connection failed${code}.`);
+    }
     connectedUserId = result.data.userId;
+    updateConnectionStatus('connected');
   }
+
   return token;
 }
 
 export function createChannel(token: NexconnToken): BaseChannel {
-  return token.channel_type === 'community'
-    ? new CommunityChannel(token.channel_id)
-    : new GroupChannel(token.channel_id);
+  if (token.channel_type === 'community') {
+    const communityId = token.channel_id;
+    const subChannelId = token.sub_channel_id || 'general';
+    return new CommunitySubChannel(communityId, subChannelId);
+  }
+  return new GroupChannel(token.channel_id);
 }
 
 export function createChannelIdentifier(token: NexconnToken) {
-  return token.channel_type === 'community'
-    ? new CommunityChannelIdentifier(token.channel_id)
-    : new GroupChannelIdentifier(token.channel_id);
-}
-
-export async function loadHistory(token: NexconnToken) {
-  const channel = createChannel(token);
-  const query = BaseChannel.createMessagesQuery({
-    channelIdentifier: channel.identifier,
-    startTime: Date.now(),
-    pageSize: 50,
-    isAscending: true,
-  });
-  const result = await query.loadNextPage();
-  if (!result.isOk || !result.data) {
-    const code = 'code' in result && typeof result.code === 'number' ? ` (code ${result.code})` : '';
-    throw new Error(`Unable to load Nexconn message history${code}.`);
+  if (token.channel_type === 'community') {
+    const communityId = token.channel_id;
+    const subChannelId = token.sub_channel_id || 'general';
+    return new CommunitySubChannelIdentifier(communityId, subChannelId);
   }
-  return result.data.data;
+  return new GroupChannelIdentifier(token.channel_id);
 }
 
-export async function sendText(token: NexconnToken, text: string) {
-  const result = await createChannel(token).sendMessage(new SendTextMessageParams({ text }));
-  if (!result.isOk || !result.data) throw new Error('Unable to send the Nexconn message.');
+export async function loadHistory(token: NexconnToken): Promise<Message<any>[]> {
+  try {
+    const channel = createChannel(token);
+    const query = BaseChannel.createMessagesQuery({
+      channelIdentifier: channel.identifier,
+      pageSize: 50,
+    });
+    const result = await query.loadNextPage();
+    if (!result.isOk || !result.data) {
+      return [];
+    }
+    const msgs = result.data.data || [];
+    return [...msgs].sort((a: any, b: any) => (a.sentTime || 0) - (b.sentTime || 0));
+  } catch (err) {
+    console.warn('[Nexconn] loadHistory error:', err);
+    return [];
+  }
+}
+
+export async function sendText(
+  token: NexconnToken,
+  text: string,
+  senderName?: string,
+  senderRole?: string
+): Promise<Message<any>> {
+  const trimmed = text.trim();
+  if (!trimmed) throw new Error('Cannot send an empty message.');
+
+  const displayName = senderName || token.user_name || token.nexconn_user_id;
+  const role = senderRole || token.user_role || 'reporter';
+
+  const channel = createChannel(token);
+  const params = new SendTextMessageParams({
+    text: trimmed,
+    senderUserInfo: {
+      userId: token.nexconn_user_id,
+      name: displayName,
+      extra: JSON.stringify({ role, name: displayName }),
+    },
+  });
+
+  const result = await channel.sendMessage(params);
+  if (!result.isOk || !result.data) {
+    const code = 'code' in result ? ` (code ${result.code})` : '';
+    const msg = (result as any).msg || (result as any).errmsg?.() || '';
+    throw new Error(`Unable to send the Nexconn message${code}${msg ? `: ${msg}` : ''}.`);
+  }
   return result.data;
 }
 
 export function subscribe(listener: MessageListener): () => void {
   listeners.add(listener);
-  return () => listeners.delete(listener);
+  return () => {
+    listeners.delete(listener);
+  };
 }
 
 export async function disconnectNexconn(): Promise<void> {
   if (!connectedUserId) return;
-  await NCEngine.disconnect();
+  try {
+    await NCEngine.disconnect();
+  } catch (err) {
+    console.warn('[Nexconn] Disconnect error:', err);
+  }
   connectedUserId = null;
+  updateConnectionStatus('disconnected');
 }
 
 if (typeof window !== 'undefined') {

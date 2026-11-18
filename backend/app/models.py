@@ -50,6 +50,7 @@ class Report(Base):
     status: Mapped[str] = mapped_column(String(30), default="submitted")
     reporter_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    attachments: Mapped[list["ReportAttachment"]] = relationship("ReportAttachment", back_populates="report", cascade="all, delete-orphan", lazy="selectin")
 
 class ReportAttachment(Base):
     __tablename__ = "report_attachments"
@@ -60,6 +61,7 @@ class ReportAttachment(Base):
     file_name: Mapped[str] = mapped_column(String(255))
     file_size: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    report: Mapped["Report"] = relationship("Report", back_populates="attachments")
 
 
 class Cluster(Base):
@@ -136,5 +138,6 @@ class ChatMessage(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     room_id: Mapped[int] = mapped_column(ForeignKey("chat_rooms.id"), index=True)
     sender_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    message_uid: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
     text: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)

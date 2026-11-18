@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from app.core.config import settings
 from app.db import init_db, get_db_health
 from app.routers.api import router
@@ -10,6 +11,15 @@ app = FastAPI(
     version=settings.VERSION,
 )
 init_db()
+
+# Ensure persistent uploads directory exists
+settings.UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+(settings.UPLOAD_DIR / "reports").mkdir(parents=True, exist_ok=True)
+
+# Mount persistent uploads directory
+app.mount("/uploads", StaticFiles(directory=str(settings.UPLOAD_DIR)), name="uploads")
+app.mount("/api/v1/uploads", StaticFiles(directory=str(settings.UPLOAD_DIR)), name="api_uploads")
+
 app.include_router(router)
 
 # CORS setup

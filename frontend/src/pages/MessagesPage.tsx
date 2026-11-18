@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { NexconnChatPanel } from '../components/chat/NexconnChatPanel';
 import { MessageSquare, Radio, ShieldAlert, Users, Layers, CheckCircle2 } from 'lucide-react';
 import { API_ENDPOINTS, apiRequest, Notification, ChatRoom } from '../config/api';
+import { subscribeConnectionStatus, NexconnConnectionStatus } from '../services/nexconn';
 
 export const MessagesPage: React.FC = () => {
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
@@ -11,6 +12,13 @@ export const MessagesPage: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [notificationError, setNotificationError] = useState<string | null>(null);
   const [notificationsLoading, setNotificationsLoading] = useState(true);
+  const [connectionStatus, setConnectionStatus] = useState<NexconnConnectionStatus>('disconnected');
+
+  useEffect(() => {
+    return subscribeConnectionStatus((status) => {
+      setConnectionStatus(status);
+    });
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -67,9 +75,21 @@ export const MessagesPage: React.FC = () => {
           </div>
         )}
 
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#E1F0E8] border border-[#286B56]/20 text-[#286B56] text-[10px] font-mono font-semibold">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#286B56] animate-pulse" />
-          <span>SDK ONLINE</span>
+        <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-mono font-semibold ${
+          connectionStatus === 'connected'
+            ? 'bg-[#E1F0E8] border-[#286B56]/20 text-[#286B56]'
+            : connectionStatus === 'connecting'
+            ? 'bg-amber-50 border-amber-200 text-amber-800'
+            : 'bg-slate-100 border-slate-200 text-slate-600'
+        }`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${
+            connectionStatus === 'connected'
+              ? 'bg-[#286B56] animate-pulse'
+              : connectionStatus === 'connecting'
+              ? 'bg-amber-500 animate-ping'
+              : 'bg-slate-400'
+          }`} />
+          <span>{connectionStatus === 'connected' ? 'SDK ONLINE' : connectionStatus === 'connecting' ? 'CONNECTING...' : 'SDK OFFLINE'}</span>
         </div>
       </div>
 

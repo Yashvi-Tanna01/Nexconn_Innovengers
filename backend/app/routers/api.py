@@ -1,4 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+import io
+import re
+import secrets
+import time
+from pathlib import Path
+from PIL import Image
 from sqlalchemy import func
 from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
@@ -14,6 +20,11 @@ from app.services.nexconn import (
     create_group,
     get_group_profile,
     stable_user_id,
+    ensure_community_channel,
+    ensure_community_subchannel,
+    join_community,
+    ensure_group,
+    join_group,
 )
 
 router = APIRouter(prefix="/api/v1")
@@ -49,11 +60,12 @@ def user_can_access_room(db, room, user):
 
 @router.post("/auth/register", response_model=UserOut, status_code=201)
 def register(data: UserCreate, db: Session = Depends(get_db)):
-    if db.query(User).filter(User.email == data.email.lower()).first():
-        raise HTTPException(409, "Email already registered")
+    email = data.email.lower().strip()
+    if db.query(User).filter(User.email == email).first():
+        raise HTTPException(status_code=409, detail="Email already registered")
     user = User(
-        email=data.email.lower(),
-        full_name=data.full_name,
+        email=email,
+        full_name=data.full_name.strip(),
         password_hash=hash_password(data.password),
         role="reporter",
     )
@@ -62,9 +74,14 @@ def register(data: UserCreate, db: Session = Depends(get_db)):
 
 @router.post("/auth/login", response_model=Token)
 def login(data: Login, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == data.email.lower()).first()
-    if not user or not user.is_active or not verify_password(data.password, user.password_hash):
-        raise HTTPException(401, "Invalid email or password")
+    email = data.email.lower().strip()
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="Incorrect email or password")
+    if not user.is_active:
+        raise HTTPException(status_code=403, detail="Account is disabled. Please contact support.")
+    if not verify_password(data.password, user.password_hash):
+        raise HTTPException(status_code=401, detail="Incorrect email or password")
     token = create_token(user)
     refresh_token = create_refresh_token()
     db.add(RefreshToken(
@@ -84,10 +101,12 @@ def refresh(data: RefreshRequest, db: Session = Depends(get_db)):
     ).first()
     expires_at = stored.expires_at.replace(tzinfo=timezone.utc) if stored and stored.expires_at.tzinfo is None else stored.expires_at if stored else None
     if not stored or expires_at <= datetime.now(timezone.utc):
-        raise HTTPException(401, "Invalid or expired refresh token")
+        raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
     user = db.get(User, stored.user_id)
-    if not user or not user.is_active:
-        raise HTTPException(401, "Invalid or inactive account")
+    if not user:
+        raise HTTPException(status_code=401, detail="Account not found")
+    if not user.is_active:
+        raise HTTPException(status_code=403, detail="Account is disabled")
     stored.revoked_at = datetime.now(timezone.utc)
     replacement = create_refresh_token()
     db.add(RefreshToken(
@@ -145,9 +164,22 @@ def update_preferences(data: UserPreferenceUpdate, db: Session = Depends(get_db)
     return pref
 
 @router.post("/auth/logout", status_code=204)
-def logout(db: Session = Depends(get_db), user: User = Depends(current_user)):
-    log(db, user, "logout", "user", user.id)
-    db.commit()
+def logout(db: Session = Depends(get_db), credentials: HTTPAuthorizationCredentials = Depends(bearer)):
+    if credentials:
+        try:
+            payload = jwt.decode(credentials.credentials, settings.JWT_SECRET, algorithms=["HS256"])
+            user_id = int(payload["sub"])
+            user = db.get(User, user_id)
+            if user:
+                log(db, user, "logout", "user", user.id)
+                db.query(RefreshToken).filter(
+                    RefreshToken.user_id == user.id,
+                    RefreshToken.revoked_at.is_(None),
+                ).update({RefreshToken.revoked_at: datetime.now(timezone.utc)})
+                db.commit()
+        except Exception:
+            pass
+    return None
 
 @router.get("/admin/users", response_model=list[UserOut])
 def admin_users(db: Session = Depends(get_db), user: User = Depends(require_roles("admin"))):
@@ -202,22 +234,64 @@ def admin_audit(db: Session = Depends(get_db), user: User = Depends(require_role
 
 @router.post("/reports", response_model=ReportOut, status_code=201)
 def create_report(data: ReportCreate, db: Session = Depends(get_db), user: User = Depends(current_user)):
+    # 1. Idempotency safeguard: prevent duplicate report insertion on rapid retries
+    recent_cutoff = datetime.now(timezone.utc) - timedelta(seconds=60)
+    existing = db.query(Report).filter(
+        Report.reporter_id == user.id,
+        Report.title == data.title,
+        Report.category == data.category,
+        Report.location == data.location,
+        Report.created_at >= recent_cutoff,
+    ).first()
+    if existing:
+        return existing
+
+    # 2. Persist new report to PostgreSQL
     report = Report(**data.model_dump(), reporter_id=user.id)
-    db.add(report); db.commit(); db.refresh(report); log(db, user, "created", "report", report.id); db.commit()
+    db.add(report)
+    db.flush()
+
+    # 3. Register Civic Network Telemetry & Activity Log
+    db.add(ActivityLog(
+        actor_id=user.id,
+        action="submitted_signal",
+        entity_type="report",
+        entity_id=report.id,
+        details=f"Category: {report.category}, Urgency: {report.urgency}, Location: {report.location}"
+    ))
+
+    # 4. Notify civic coordinators of incoming signal observation
+    coordinators = db.query(User).filter(User.role.in_(["coordinator", "admin"])).all()
+    for coord in coordinators:
+        db.add(Notification(
+            user_id=coord.id,
+            message=f"New civic observation #{report.id} ({report.category}) reported in {report.location}.",
+            read=False
+        ))
+
+    # Single atomic commit to eliminate excessive remote round trips
+    db.commit()
+    report.attachments = []
     return report
 
 @router.get("/reports", response_model=list[ReportOut])
-def reports(db: Session = Depends(get_db), user: User = Depends(current_user)):
-    q = db.query(Report)
-    return q.filter(Report.reporter_id == user.id).all() if user.role == "reporter" else q.order_by(Report.created_at.desc()).all()
+def reports(my_only: bool = False, db: Session = Depends(get_db), user: User = Depends(current_user)):
+    q = db.query(Report).order_by(Report.created_at.desc())
+    if my_only:
+        q = q.filter(Report.reporter_id == user.id)
+    return q.all()
+
+@router.get("/reports/{report_id}", response_model=ReportOut)
+def get_report(report_id: int, db: Session = Depends(get_db), user: User = Depends(current_user)):
+    report = db.get(Report, report_id)
+    if not report:
+        raise HTTPException(404, "Report not found")
+    return report
 
 @router.post("/reports/{report_id}/attachments", response_model=ReportAttachmentOut, status_code=201)
-def add_report_attachment(
+async def add_report_attachment(
     report_id: int,
-    file_url: str,
-    file_name: str,
-    file_type: str = "image/jpeg",
-    file_size: int = 0,
+    file: UploadFile = File(...),
     db: Session = Depends(get_db),
     user: User = Depends(current_user),
 ):
@@ -226,17 +300,97 @@ def add_report_attachment(
         raise HTTPException(404, "Report not found")
     if user.role == "reporter" and report.reporter_id != user.id:
         raise HTTPException(403, "Not authorized to modify this report")
+
+    content = await file.read()
+    if not content or len(content) == 0:
+        raise HTTPException(400, "Empty photograph uploaded.")
+
+    if len(content) > settings.MAX_UPLOAD_SIZE_BYTES:
+        max_mb = settings.MAX_UPLOAD_SIZE_BYTES // (1024 * 1024)
+        raise HTTPException(400, f"File size exceeds maximum permitted limit of {max_mb}MB.")
+
+    # MIME type and format verification
+    allowed_mimes = {"image/jpeg", "image/jpg", "image/png", "image/webp"}
+    content_type = (file.content_type or "").lower()
+    if content_type and content_type not in allowed_mimes:
+        raise HTTPException(400, "Unsupported file format. Please attach a JPG, PNG, or WEBP image.")
+
+    # Binary magic bytes signature check
+    is_jpeg = content.startswith(b"\xff\xd8\xff")
+    is_png = content.startswith(b"\x89PNG\r\n\x1a\n")
+    is_webp = content.startswith(b"RIFF") and len(content) > 12 and content[8:12] == b"WEBP"
+    if not (is_jpeg or is_png or is_webp):
+        raise HTTPException(400, "File signature does not match a valid JPG, PNG, or WEBP photograph.")
+
+    # Pillow deep verification
+    try:
+        with Image.open(io.BytesIO(content)) as img:
+            img.verify()
+            fmt = img.format
+            if fmt not in ("JPEG", "PNG", "WEBP"):
+                raise ValueError(f"Unsupported format: {fmt}")
+    except Exception:
+        raise HTTPException(400, "Invalid or corrupted photograph file.")
+
+    ext = ".jpg" if fmt == "JPEG" else (".png" if fmt == "PNG" else ".webp")
+    mime = "image/jpeg" if fmt == "JPEG" else ("image/png" if fmt == "PNG" else "image/webp")
+    safe_filename = f"rep_{report.id}_{secrets.token_hex(6)}_{int(time.time())}{ext}"
+    dest_path = settings.UPLOAD_DIR / "reports" / safe_filename
+    dest_path.parent.mkdir(parents=True, exist_ok=True)
+
+    try:
+        dest_path.write_bytes(content)
+    except Exception as e:
+        raise HTTPException(500, f"Failed to persist photograph: {str(e)}")
+
+    original_name = Path(file.filename or f"photo{ext}").name
+    original_name = re.sub(r'[^a-zA-Z0-9_.-]', '_', original_name)[:200]
+
     attachment = ReportAttachment(
         report_id=report.id,
-        file_url=file_url,
-        file_name=file_name,
-        file_type=file_type,
-        file_size=file_size,
+        file_url=f"/uploads/reports/{safe_filename}",
+        file_name=original_name,
+        file_type=mime,
+        file_size=len(content),
+        created_at=datetime.now(timezone.utc),
     )
-    db.add(attachment)
-    db.commit()
-    db.refresh(attachment)
+
+    try:
+        db.add(attachment)
+        db.commit()
+        db.refresh(attachment)
+    except Exception as e:
+        db.rollback()
+        dest_path.unlink(missing_ok=True)
+        raise HTTPException(500, f"Failed to record attachment in database: {str(e)}")
+
     return attachment
+
+@router.delete("/reports/{report_id}/attachments/{attachment_id}", status_code=204)
+def delete_report_attachment(
+    report_id: int,
+    attachment_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+):
+    report = db.get(Report, report_id)
+    if not report:
+        raise HTTPException(404, "Report not found")
+    if user.role == "reporter" and report.reporter_id != user.id:
+        raise HTTPException(403, "Not authorized to modify this report")
+    attachment = db.get(ReportAttachment, attachment_id)
+    if not attachment or attachment.report_id != report.id:
+        raise HTTPException(404, "Attachment not found")
+
+    if attachment.file_url.startswith("/uploads/"):
+        relative_path = attachment.file_url.removeprefix("/uploads/")
+        file_path = settings.UPLOAD_DIR / relative_path
+        if file_path.exists():
+            file_path.unlink(missing_ok=True)
+
+    db.delete(attachment)
+    db.commit()
+    return None
 
 @router.get("/reports/{report_id}/attachments", response_model=list[ReportAttachmentOut])
 def list_report_attachments(
@@ -380,12 +534,36 @@ async def chat_token(
         raise HTTPException(503, str(exc)) from exc
     except NexconnApiError as exc:
         raise HTTPException(502, str(exc)) from exc
-    channel_type = "group" if room.nexconn_channel_id else ("community" if room.room_type == "community" else "group")
-    channel_id = room.nexconn_channel_id or (room.room_key.split(":", 1)[1] if ":" in room.room_key else room.room_key)
+    # Determine channel configuration and ensure server-side channel & membership exist
+    is_community = (room.room_type == "community")
+    if is_community:
+        parts = room.room_key.split(":", 1)
+        channel_id = parts[0] if len(parts) > 1 else room.room_key
+        sub_channel_id = parts[1] if len(parts) > 1 else "general"
+        channel_type = "community"
+        try:
+            await ensure_community_channel(channel_id, room.title, nexconn_user_id)
+            await ensure_community_subchannel(channel_id, sub_channel_id)
+            await join_community(channel_id, nexconn_user_id)
+        except Exception as exc:
+            print(f"[Nexconn] Community provisioning warning: {exc}")
+    else:
+        channel_type = "group"
+        sub_channel_id = None
+        channel_id = room.nexconn_channel_id or room.room_key.replace(":", "_")
+        try:
+            await ensure_group(channel_id, room.title, nexconn_user_id)
+            await join_group(channel_id, nexconn_user_id)
+        except Exception as exc:
+            print(f"[Nexconn] Group provisioning warning: {exc}")
+
     return ChatTokenOut(
         access_token=access_token,
         nexconn_user_id=nexconn_user_id,
+        user_name=user.full_name,
+        user_role=user.role,
         channel_id=channel_id,
+        sub_channel_id=sub_channel_id,
         channel_type=channel_type,
         area_code=settings.NEXCONN_AREA_CODE,
     )
@@ -433,8 +611,15 @@ def chat_messages(room_id: int, db: Session = Depends(get_db), user: User = Depe
     if not room: raise HTTPException(404, "Chatroom not found")
     if not user_can_access_room(db, room, user): raise HTTPException(403, "Chatroom access denied")
     messages = db.query(ChatMessage).filter(ChatMessage.room_id == room.id).order_by(ChatMessage.created_at.asc()).all()
+    user_ids = {m.sender_id for m in messages}
+    users = {u.id: u for u in db.query(User).filter(User.id.in_(user_ids)).all()} if user_ids else {}
     return [
-        {**message.__dict__, "sender_name": db.get(User, message.sender_id).full_name}
+        {
+            **message.__dict__,
+            "sender_name": users.get(message.sender_id).full_name if users.get(message.sender_id) else f"User {message.sender_id}",
+            "sender_role": users.get(message.sender_id).role if users.get(message.sender_id) else "reporter",
+            "message_uid": message.message_uid,
+        }
         for message in messages
     ]
 
@@ -443,6 +628,27 @@ def send_chat_message(room_id: int, data: ChatMessageCreate, db: Session = Depen
     room = db.get(ChatRoom, room_id)
     if not room: raise HTTPException(404, "Chatroom not found")
     if not user_can_access_room(db, room, user): raise HTTPException(403, "Chatroom access denied")
-    message = ChatMessage(room_id=room.id, sender_id=user.id, text=data.text.strip())
+    
+    if data.message_uid:
+        existing = db.query(ChatMessage).filter(ChatMessage.room_id == room.id, ChatMessage.message_uid == data.message_uid).first()
+        if existing:
+            return {
+                **existing.__dict__,
+                "sender_name": user.full_name,
+                "sender_role": user.role,
+                "message_uid": existing.message_uid,
+            }
+            
+    message = ChatMessage(
+        room_id=room.id,
+        sender_id=user.id,
+        text=data.text.strip(),
+        message_uid=data.message_uid
+    )
     db.add(message); db.commit(); db.refresh(message)
-    return {**message.__dict__, "sender_name": user.full_name}
+    return {
+        **message.__dict__,
+        "sender_name": user.full_name,
+        "sender_role": user.role,
+        "message_uid": message.message_uid,
+    }

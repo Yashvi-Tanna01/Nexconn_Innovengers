@@ -1,4 +1,5 @@
 import { ReportCategory, ReportStatus } from '../../theme/tokens';
+import { ReportAttachment } from '../../config/api';
 
 export type SignalSeverity = 'low' | 'medium' | 'high' | 'critical';
 
@@ -35,6 +36,7 @@ export interface AtlasSignal {
   relatedSignalId?: string; // Links to candidate report
   candidateReason?: string;
   confidenceScore?: number;
+  attachments?: ReportAttachment[];
 }
 
 export interface AtlasCandidateCluster {

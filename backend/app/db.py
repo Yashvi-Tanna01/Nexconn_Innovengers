@@ -18,14 +18,24 @@ def build_engine(url_str: str):
             if key not in {"sslmode", "channel_binding"}
         }
         database_url = database_url.set(query=query)
-        connect_args = {"ssl_context": ssl.create_default_context(), "timeout": 15}
+        connect_args = {"ssl_context": ssl.create_default_context(), "timeout": 20}
+        return create_engine(
+            database_url,
+            connect_args=connect_args,
+            pool_size=10,
+            max_overflow=20,
+            pool_timeout=30,
+            pool_pre_ping=True,
+            pool_recycle=280,
+        )
     elif database_url.drivername.startswith("sqlite"):
         connect_args = {"check_same_thread": False}
+        return create_engine(database_url, connect_args=connect_args)
     else:
         connect_args = {}
-    return create_engine(database_url, connect_args=connect_args)
+        return create_engine(database_url, connect_args=connect_args, pool_pre_ping=True)
 
-engine = create_engine(database_url, connect_args=connect_args)
+engine = build_engine(settings.DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
 
