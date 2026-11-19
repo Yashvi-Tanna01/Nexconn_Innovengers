@@ -51,6 +51,7 @@ export const API_ENDPOINTS = {
   authMe: `${API_BASE_URL}/auth/me`,
   notifications: `${API_BASE_URL}/notifications`,
   chatRooms: `${API_BASE_URL}/chat/rooms`,
+  chatUsers: `${API_BASE_URL}/chat/users`,
   profile: `${API_BASE_URL}/users/me`,
   logout: `${API_BASE_URL}/auth/logout`,
 } as const;

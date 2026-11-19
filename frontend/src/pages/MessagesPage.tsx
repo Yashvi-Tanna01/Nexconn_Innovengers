@@ -78,18 +78,42 @@ export const MessagesPage: React.FC = () => {
         <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-mono font-semibold ${
           connectionStatus === 'connected'
             ? 'bg-[#E1F0E8] border-[#286B56]/20 text-[#286B56]'
-            : connectionStatus === 'connecting'
+            : connectionStatus === 'authenticated' || connectionStatus === 'joining'
+            ? 'bg-teal-50 border-teal-200 text-teal-800'
+            : connectionStatus === 'connecting' || connectionStatus === 'initializing' || connectionStatus === 'reconnecting'
             ? 'bg-amber-50 border-amber-200 text-amber-800'
+            : connectionStatus === 'failed' || connectionStatus === 'error'
+            ? 'bg-red-50 border-red-200 text-red-800'
             : 'bg-slate-100 border-slate-200 text-slate-600'
         }`}>
           <span className={`w-1.5 h-1.5 rounded-full ${
             connectionStatus === 'connected'
               ? 'bg-[#286B56] animate-pulse'
-              : connectionStatus === 'connecting'
+              : connectionStatus === 'connecting' || connectionStatus === 'initializing' || connectionStatus === 'reconnecting'
               ? 'bg-amber-500 animate-ping'
+              : connectionStatus === 'authenticated' || connectionStatus === 'joining'
+              ? 'bg-teal-500'
+              : connectionStatus === 'failed' || connectionStatus === 'error'
+              ? 'bg-red-500'
               : 'bg-slate-400'
           }`} />
-          <span>{connectionStatus === 'connected' ? 'SDK ONLINE' : connectionStatus === 'connecting' ? 'CONNECTING...' : 'SDK OFFLINE'}</span>
+          <span>
+            {connectionStatus === 'connected'
+              ? 'SDK ONLINE'
+              : connectionStatus === 'connecting'
+              ? 'CONNECTING...'
+              : connectionStatus === 'initializing'
+              ? 'INITIALIZING...'
+              : connectionStatus === 'authenticated'
+              ? 'AUTHENTICATED'
+              : connectionStatus === 'joining'
+              ? 'JOINING CHANNEL...'
+              : connectionStatus === 'reconnecting'
+              ? 'RECONNECTING...'
+              : connectionStatus === 'failed' || connectionStatus === 'error'
+              ? 'CONNECTION FAILED'
+              : 'SDK OFFLINE'}
+          </span>
         </div>
       </div>
 

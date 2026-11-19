@@ -11,7 +11,15 @@ import {
   subscribeConnectionStatus,
   NexconnConnectionStatus,
 } from '../../services/nexconn';
-import { apiRequest, ChatMessage, NexconnToken } from '../../config/api';
+import { apiRequest, ChatMessage, NexconnToken, API_ENDPOINTS } from '../../config/api';
+
+export type UserDirectory = Record<string, { name: string; role: string; email?: string }>;
+
+let globalUserDirectory: UserDirectory = {};
+
+export function setUserDirectory(dir: UserDirectory) {
+  globalUserDirectory = { ...globalUserDirectory, ...dir };
+}
 
 interface UiMessage {
   id: string;
@@ -21,6 +29,7 @@ interface UiMessage {
   text: string;
   created_at: string;
   isSelf?: boolean;
+  status?: 'sending' | 'sent' | 'failed';
 }
 
 interface NexconnChatPanelProps {
@@ -35,7 +44,8 @@ function parseMessage(
   raw: any,
   currentUserId?: string,
   defaultName?: string,
-  defaultRole?: string
+  defaultRole?: string,
+  userDirectory: UserDirectory = globalUserDirectory
 ): UiMessage {
   if (raw.messageId) {
     const userInfo = raw.content?.senderUserInfo;
@@ -43,23 +53,36 @@ function parseMessage(
     let role = 'reporter';
     if (userInfo?.extra) {
       try {
-        const extra = JSON.parse(userInfo.extra);
-        if (extra.name && !name) name = extra.name;
-        if (extra.role) role = extra.role;
+        const extra = typeof userInfo.extra === 'string' ? JSON.parse(userInfo.extra) : userInfo.extra;
+        if (extra?.name && !name) name = extra.name;
+        if (extra?.role) role = extra.role;
       } catch {}
     }
-    const senderId = raw.senderUserId || '';
-    if (!name && currentUserId && (senderId === currentUserId || senderId === `antah${currentUserId}`)) {
+
+    const senderId = String(raw.senderUserId || '');
+    const isSelf = currentUserId
+      ? senderId === currentUserId ||
+        senderId === `antah${currentUserId}` ||
+        senderId.replace(/^antah/, '') === currentUserId.replace(/^antah/, '')
+      : false;
+
+    // Check directory if name is missing or is raw ID like antah6
+    if (!name || name === senderId || name.startsWith('antah')) {
+      const match = userDirectory[senderId] || userDirectory[senderId.replace(/^antah/, '')];
+      if (match?.name) {
+        name = match.name;
+        role = match.role || role;
+      }
+    }
+
+    if (!name && isSelf) {
       name = defaultName || '';
       role = defaultRole || role;
     }
-    if (!name) {
-      name = senderId || 'Participant';
-    }
 
-    const isSelf = currentUserId
-      ? senderId === currentUserId || senderId === `antah${currentUserId}`
-      : false;
+    if (!name || name === senderId || name.startsWith('antah')) {
+      name = senderId ? `Participant (${senderId})` : 'Participant';
+    }
 
     return {
       id: raw.messageId,
@@ -69,23 +92,45 @@ function parseMessage(
       text: raw.content?.text || '',
       created_at: new Date(raw.sentTime || Date.now()).toISOString(),
       isSelf,
+      status: 'sent',
     };
   }
 
   // From database ChatMessage
   const senderId = `antah${raw.sender_id}`;
   const isSelf = currentUserId
-    ? senderId === currentUserId || String(raw.sender_id) === currentUserId.replace('antah', '')
+    ? senderId === currentUserId || String(raw.sender_id) === currentUserId.replace(/^antah/, '')
     : false;
+
+  let name = raw.sender_name || '';
+  let role = raw.sender_role || 'reporter';
+
+  if (!name || name === senderId || name.startsWith('antah') || name.startsWith('User ')) {
+    const match = userDirectory[senderId] || userDirectory[String(raw.sender_id)];
+    if (match?.name) {
+      name = match.name;
+      role = match.role || role;
+    }
+  }
+
+  if (!name && isSelf) {
+    name = defaultName || '';
+    role = defaultRole || role;
+  }
+
+  if (!name) {
+    name = senderId;
+  }
 
   return {
     id: raw.message_uid || `db-${raw.id}`,
     sender_id: senderId,
-    sender_name: raw.sender_name || senderId,
-    sender_role: raw.sender_role || 'reporter',
+    sender_name: name,
+    sender_role: role,
     text: raw.text || '',
     created_at: raw.created_at ? new Date(raw.created_at).toISOString() : new Date().toISOString(),
     isSelf,
+    status: 'sent',
   };
 }
 
@@ -96,24 +141,38 @@ function mergeMessages(existing: UiMessage[], incoming: UiMessage[]): UiMessage[
   }
 
   for (const inc of incoming) {
+    // Exact ID match
     if (map.has(inc.id)) {
       const prev = map.get(inc.id)!;
-      if (prev.sender_name.startsWith('antah') && !inc.sender_name.startsWith('antah')) {
-        map.set(inc.id, { ...prev, sender_name: inc.sender_name, sender_role: inc.sender_role });
-      }
+      const bestName = (inc.sender_name && !inc.sender_name.startsWith('antah') && !inc.sender_name.startsWith('Participant'))
+        ? inc.sender_name
+        : prev.sender_name;
+      const bestRole = inc.sender_role || prev.sender_role;
+      map.set(inc.id, {
+        ...prev,
+        ...inc,
+        id: inc.id,
+        sender_name: bestName,
+        sender_role: bestRole,
+      });
       continue;
     }
 
-    // Match optimistic / database message by exact text, sender, and close timestamp (+/- 5s)
+    // Match optimistic message or match database vs SDK message:
+    // If incoming message has matching text and same sender within a 15s timestamp window
     const incTime = new Date(inc.created_at).getTime();
     let matchedKey: string | null = null;
     for (const [key, prev] of map.entries()) {
-      if (
-        prev.text === inc.text &&
-        (prev.sender_id === inc.sender_id || prev.sender_name === inc.sender_name)
-      ) {
+      const isSameSender =
+        prev.sender_id === inc.sender_id ||
+        prev.sender_id.replace(/^antah/, '') === inc.sender_id.replace(/^antah/, '') ||
+        (prev.isSelf && inc.isSelf);
+
+      if (prev.text === inc.text && isSameSender) {
         const prevTime = new Date(prev.created_at).getTime();
-        if (Math.abs(incTime - prevTime) < 5000) {
+        const isOneTemp = key.startsWith('temp-') || inc.id.startsWith('temp-');
+        const isOneDb = key.startsWith('db-') || inc.id.startsWith('db-');
+        if ((isOneTemp || isOneDb) && Math.abs(incTime - prevTime) < 15000) {
           matchedKey = key;
           break;
         }
@@ -123,11 +182,13 @@ function mergeMessages(existing: UiMessage[], incoming: UiMessage[]): UiMessage[
     if (matchedKey) {
       const prev = map.get(matchedKey)!;
       map.delete(matchedKey);
-      const chosenId = inc.id.startsWith('db-') ? prev.id : inc.id;
+      const chosenId = (inc.id.startsWith('temp-') || inc.id.startsWith('db-')) ? prev.id : inc.id;
+      const bestName = (inc.sender_name && !inc.sender_name.startsWith('antah')) ? inc.sender_name : prev.sender_name;
       map.set(chosenId, {
         ...prev,
+        ...inc,
         id: chosenId,
-        sender_name: (!inc.sender_name.startsWith('antah') && inc.sender_name) ? inc.sender_name : prev.sender_name,
+        sender_name: bestName,
         sender_role: inc.sender_role || prev.sender_role,
         created_at: prev.created_at || inc.created_at,
         isSelf: prev.isSelf ?? inc.isSelf,
@@ -153,6 +214,7 @@ export const NexconnChatPanel: React.FC<NexconnChatPanelProps> = ({
   const [loadError, setLoadError] = useState<string | null>(null);
   const [nexconnToken, setNexconnToken] = useState<NexconnToken | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<NexconnConnectionStatus>('disconnected');
+  const [userDirectory, setUserDirectoryState] = useState<UserDirectory>({});
 
   const [inputText, setInputText] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -173,7 +235,20 @@ export const NexconnChatPanel: React.FC<NexconnChatPanelProps> = ({
     });
   }, []);
 
-  // 2. Connect to room, load history and database messages
+  // 2. Load user directory for authenticated sender name resolution
+  useEffect(() => {
+    let active = true;
+    apiRequest<UserDirectory>(API_ENDPOINTS.chatUsers).then((res) => {
+      if (!active) return;
+      if (res.data) {
+        setUserDirectory(res.data);
+        setUserDirectoryState(res.data);
+      }
+    });
+    return () => { active = false; };
+  }, []);
+
+  // 3. Connect to room, load history and database messages
   useEffect(() => {
     let active = true;
     setLoadError(null);
@@ -207,11 +282,12 @@ export const NexconnChatPanel: React.FC<NexconnChatPanelProps> = ({
 
         if (!active) return;
 
+        const currentDir = { ...globalUserDirectory, ...userDirectory };
         const parsedDb = dbList.map((m) =>
-          parseMessage(m, token.nexconn_user_id, token.user_name, token.user_role)
+          parseMessage(m, token.nexconn_user_id, token.user_name, token.user_role, currentDir)
         );
         const parsedHistory = history.map((m) =>
-          parseMessage(m, token.nexconn_user_id, token.user_name, token.user_role)
+          parseMessage(m, token.nexconn_user_id, token.user_name, token.user_role, currentDir)
         );
 
         setMessages(mergeMessages(parsedDb, parsedHistory));
@@ -223,9 +299,9 @@ export const NexconnChatPanel: React.FC<NexconnChatPanelProps> = ({
       });
 
     return () => { active = false; };
-  }, [roomId]);
+  }, [roomId, userDirectory]);
 
-  // 3. Real-time message subscription
+  // 4. Real-time message subscription
   useEffect(() => {
     if (!nexconnToken) return;
 
@@ -242,22 +318,24 @@ export const NexconnChatPanel: React.FC<NexconnChatPanelProps> = ({
 
       if (!isMatch || !message.content?.text) return;
 
+      const currentDir = { ...globalUserDirectory, ...userDirectory };
       const incomingUi = parseMessage(
         message,
         nexconnToken.nexconn_user_id,
         nexconnToken.user_name,
-        nexconnToken.user_role
+        nexconnToken.user_role,
+        currentDir
       );
 
       setMessages((prev) => mergeMessages(prev, [incomingUi]));
     });
-  }, [nexconnToken]);
+  }, [nexconnToken, userDirectory]);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages, isPeerTyping, scrollToBottom]);
 
-  // 4. Message transmission with preservation on failure
+  // 5. Message transmission with preservation on failure
   const handleSend = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const userText = inputText.trim();
@@ -272,6 +350,21 @@ export const NexconnChatPanel: React.FC<NexconnChatPanelProps> = ({
     setLoadError(null);
     setSendFailed(false);
 
+    // Optimistic local insertion
+    const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const optimisticUi: UiMessage = {
+      id: tempId,
+      sender_id: nexconnToken.nexconn_user_id,
+      sender_name: nexconnToken.user_name || 'You',
+      sender_role: nexconnToken.user_role || 'reporter',
+      text: userText,
+      created_at: new Date().toISOString(),
+      isSelf: true,
+      status: 'sending',
+    };
+    setMessages((prev) => mergeMessages(prev, [optimisticUi]));
+    setInputText('');
+
     try {
       const deliveredMsg = await sendText(
         nexconnToken,
@@ -280,15 +373,16 @@ export const NexconnChatPanel: React.FC<NexconnChatPanelProps> = ({
         nexconnToken.user_role
       );
 
+      const currentDir = { ...globalUserDirectory, ...userDirectory };
       const confirmedUiMsg = parseMessage(
         deliveredMsg,
         nexconnToken.nexconn_user_id,
         nexconnToken.user_name,
-        nexconnToken.user_role
+        nexconnToken.user_role,
+        currentDir
       );
 
       setMessages((prev) => mergeMessages(prev, [confirmedUiMsg]));
-      setInputText('');
 
       if (roomId) {
         void apiRequest(`/chat/rooms/${roomId}/messages`, {
@@ -302,7 +396,10 @@ export const NexconnChatPanel: React.FC<NexconnChatPanelProps> = ({
     } catch (error: any) {
       setLoadError(error.message || 'Unable to deliver message.');
       setSendFailed(true);
-      // Keep inputText preserved so user can retry
+      // Preserve input text so user can retry immediately
+      setInputText(userText);
+      // Remove the optimistic pending message
+      setMessages((prev) => prev.filter((m) => m.id !== tempId));
     } finally {
       setIsSending(false);
     }
@@ -323,7 +420,12 @@ export const NexconnChatPanel: React.FC<NexconnChatPanelProps> = ({
   const getStatusColor = () => {
     switch (connectionStatus) {
       case 'connected': return 'bg-emerald-500';
-      case 'connecting': return 'bg-amber-500 animate-pulse';
+      case 'connecting':
+      case 'initializing':
+      case 'joining': return 'bg-amber-500 animate-pulse';
+      case 'authenticated': return 'bg-teal-500';
+      case 'reconnecting': return 'bg-orange-500 animate-pulse';
+      case 'failed':
       case 'error': return 'bg-red-500';
       default: return 'bg-slate-400';
     }
@@ -332,8 +434,13 @@ export const NexconnChatPanel: React.FC<NexconnChatPanelProps> = ({
   const getStatusText = () => {
     switch (connectionStatus) {
       case 'connected': return 'SDK ONLINE';
-      case 'connecting': return 'CONNECTING';
-      case 'error': return 'OFFLINE';
+      case 'connecting': return 'CONNECTING...';
+      case 'initializing': return 'SDK INITIALIZING';
+      case 'authenticated': return 'AUTHENTICATED';
+      case 'joining': return 'JOINING CHANNEL';
+      case 'reconnecting': return 'RECONNECTING';
+      case 'failed':
+      case 'error': return 'CONNECTION FAILED';
       default: return 'DISCONNECTED';
     }
   };

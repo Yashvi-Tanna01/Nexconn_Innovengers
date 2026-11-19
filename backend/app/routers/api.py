@@ -623,6 +623,16 @@ def chat_messages(room_id: int, db: Session = Depends(get_db), user: User = Depe
         for message in messages
     ]
 
+@router.get("/chat/users", response_model=dict[str, dict[str, str]])
+def chat_users(db: Session = Depends(get_db), user: User = Depends(current_user)):
+    users = db.query(User).all()
+    directory = {}
+    for u in users:
+        info = {"name": u.full_name, "role": u.role, "email": u.email}
+        directory[f"antah{u.id}"] = info
+        directory[str(u.id)] = info
+    return directory
+
 @router.post("/chat/rooms/{room_id}/messages", response_model=ChatMessageOut, status_code=201)
 def send_chat_message(room_id: int, data: ChatMessageCreate, db: Session = Depends(get_db), user: User = Depends(current_user)):
     room = db.get(ChatRoom, room_id)

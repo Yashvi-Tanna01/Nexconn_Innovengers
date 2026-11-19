@@ -17,7 +17,16 @@ import {
 import { API_ENDPOINTS, apiRequest, NexconnToken } from '../config/api';
 
 export type MessageListener = (message: Message<any>) => void;
-export type NexconnConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
+export type NexconnConnectionStatus =
+  | 'disconnected'
+  | 'initializing'
+  | 'connecting'
+  | 'authenticated'
+  | 'joining'
+  | 'connected'
+  | 'reconnecting'
+  | 'failed'
+  | 'error';
 
 let initialized = false;
 let connectedUserId: string | null = null;
@@ -66,8 +75,13 @@ const connectionStatusHandler = new ConnectionStatusHandler({
       updateConnectionStatus('connected');
     } else if (event.status === ConnectionStatus.CONNECTING) {
       updateConnectionStatus('connecting');
-    } else {
+    } else if (event.status === ConnectionStatus.DISCONNECTED) {
       updateConnectionStatus('disconnected');
+    } else if ((event.status as number) === 2 || (event.status as number) === 12) {
+      // Reconnecting or Suspended states
+      updateConnectionStatus('reconnecting');
+    } else {
+      updateConnectionStatus('failed');
     }
   },
 });
@@ -101,6 +115,9 @@ export async function connectToRoom(roomId: number): Promise<NexconnToken> {
   }
 
   const token = tokenResult.data;
+  updateConnectionStatus('authenticated');
+
+  updateConnectionStatus('initializing');
   initialize(token);
 
   if (connectedUserId && connectedUserId !== token.nexconn_user_id) {
@@ -109,13 +126,18 @@ export async function connectToRoom(roomId: number): Promise<NexconnToken> {
   }
 
   if (!connectedUserId) {
+    updateConnectionStatus('joining');
     const result = await NCEngine.connect({ token: token.access_token });
     if (!result.isOk || !result.data) {
-      updateConnectionStatus('error');
-      const code = 'code' in result ? ` (code ${result.code})` : '';
-      throw new Error(`Nexconn connection failed${code}.`);
+      updateConnectionStatus('failed');
+      const code = typeof result?.code === 'number' ? ` (code ${result.code})` : '';
+      const rawMsg = (result as any)?.msg || (typeof (result as any)?.errmsg === 'function' ? (result as any).errmsg() : '');
+      const msg = typeof rawMsg === 'string' ? rawMsg : JSON.stringify(rawMsg);
+      throw new Error(`Nexconn connection failed${code}${msg ? `: ${msg}` : ''}.`);
     }
     connectedUserId = result.data.userId;
+    updateConnectionStatus('connected');
+  } else {
     updateConnectionStatus('connected');
   }
 
@@ -183,8 +205,9 @@ export async function sendText(
 
   const result = await channel.sendMessage(params);
   if (!result.isOk || !result.data) {
-    const code = 'code' in result ? ` (code ${result.code})` : '';
-    const msg = (result as any).msg || (result as any).errmsg?.() || '';
+    const code = typeof result?.code === 'number' ? ` (code ${result.code})` : '';
+    const rawMsg = (result as any)?.msg || (typeof (result as any)?.errmsg === 'function' ? (result as any).errmsg() : '');
+    const msg = typeof rawMsg === 'string' ? rawMsg : JSON.stringify(rawMsg);
     throw new Error(`Unable to send the Nexconn message${code}${msg ? `: ${msg}` : ''}.`);
   }
   return result.data;
