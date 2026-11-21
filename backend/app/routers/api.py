@@ -13,6 +13,7 @@ from app.models import *
 from app.schemas import *
 from app.security import *
 from app.core.config import settings
+from app.services.storage import save_attachment_file, delete_attachment_file
 from app.services.nexconn import (
     NexconnApiError,
     NexconnConfigurationError,
@@ -334,24 +335,24 @@ async def add_report_attachment(
 
     ext = ".jpg" if fmt == "JPEG" else (".png" if fmt == "PNG" else ".webp")
     mime = "image/jpeg" if fmt == "JPEG" else ("image/png" if fmt == "PNG" else "image/webp")
-    safe_filename = f"rep_{report.id}_{secrets.token_hex(6)}_{int(time.time())}{ext}"
-    dest_path = settings.UPLOAD_DIR / "reports" / safe_filename
-    dest_path.parent.mkdir(parents=True, exist_ok=True)
 
     try:
-        dest_path.write_bytes(content)
+        file_url, clean_name, file_size = save_attachment_file(
+            content=content,
+            report_id=report.id,
+            original_filename=file.filename or f"photo{ext}",
+            content_type=mime,
+            file_extension=ext,
+        )
     except Exception as e:
         raise HTTPException(500, f"Failed to persist photograph: {str(e)}")
 
-    original_name = Path(file.filename or f"photo{ext}").name
-    original_name = re.sub(r'[^a-zA-Z0-9_.-]', '_', original_name)[:200]
-
     attachment = ReportAttachment(
         report_id=report.id,
-        file_url=f"/uploads/reports/{safe_filename}",
-        file_name=original_name,
+        file_url=file_url,
+        file_name=clean_name,
         file_type=mime,
-        file_size=len(content),
+        file_size=file_size,
         created_at=datetime.now(timezone.utc),
     )
 
@@ -361,7 +362,7 @@ async def add_report_attachment(
         db.refresh(attachment)
     except Exception as e:
         db.rollback()
-        dest_path.unlink(missing_ok=True)
+        delete_attachment_file(file_url)
         raise HTTPException(500, f"Failed to record attachment in database: {str(e)}")
 
     return attachment
@@ -382,11 +383,7 @@ def delete_report_attachment(
     if not attachment or attachment.report_id != report.id:
         raise HTTPException(404, "Attachment not found")
 
-    if attachment.file_url.startswith("/uploads/"):
-        relative_path = attachment.file_url.removeprefix("/uploads/")
-        file_path = settings.UPLOAD_DIR / relative_path
-        if file_path.exists():
-            file_path.unlink(missing_ok=True)
+    delete_attachment_file(attachment.file_url)
 
     db.delete(attachment)
     db.commit()
@@ -662,3 +659,22 @@ def send_chat_message(room_id: int, data: ChatMessageCreate, db: Session = Depen
         "sender_role": user.role,
         "message_uid": message.message_uid,
     }
+
+
+@router.post("/chat/ai/query", response_model=AiQueryResponse)
+async def query_civic_ai(
+    data: AiQueryRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+):
+    """Generates an authoritative civic AI response using live ANTAH database context."""
+    from app.services.ai import ask_civic_ai
+    try:
+        answer = await ask_civic_ai(db, data.question, data.history)
+        return {
+            "answer": answer,
+            "model": "openrouter",
+            "timestamp": datetime.now(timezone.utc),
+        }
+    except Exception as exc:
+        raise HTTPException(502, f"Civic AI query failed: {str(exc)}")

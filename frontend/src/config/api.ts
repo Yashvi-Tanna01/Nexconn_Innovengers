@@ -4,11 +4,39 @@
  * Never hardcodes localhost in production or mobile APK packages.
  */
 
+export const getStoredApiBaseUrl = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    return localStorage.getItem('antah_api_base_url');
+  } catch {
+    return null;
+  }
+};
+
+export const setCustomApiBaseUrl = (url: string): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    const cleaned = url.trim().replace(/\/+$/, '');
+    if (cleaned) {
+      localStorage.setItem('antah_api_base_url', cleaned);
+    } else {
+      localStorage.removeItem('antah_api_base_url');
+    }
+  } catch {}
+};
+
+const normalizeApiUrl = (url: string): string => {
+  const trimmed = url.trim().replace(/\/+$/, '');
+  if (!trimmed) return trimmed;
+  // If user passed root domain (e.g. https://api.myantah.com), append /api/v1
+  return trimmed.endsWith('/api/v1') ? trimmed : `${trimmed}/api/v1`;
+};
+
 const getApiBaseUrl = (): string => {
-  // 1. Explicitly configured production / staging backend URL
-  const metaEnv = (import.meta as any).env;
-  if (metaEnv && metaEnv.VITE_API_BASE_URL) {
-    return metaEnv.VITE_API_BASE_URL.replace(/\/+$/, '');
+  // 1. Check user-configured override from localStorage (allows live IP changes on phone without recompiling)
+  const stored = getStoredApiBaseUrl();
+  if (stored && stored.trim().length > 0) {
+    return normalizeApiUrl(stored);
   }
 
   // 2. Detect Android APK / Hybrid WebView environments
@@ -17,15 +45,31 @@ const getApiBaseUrl = (): string => {
     ((window as any).Capacitor ||
       (window as any).cordova ||
       window.location.protocol === 'file:' ||
-      window.location.protocol === 'capacitor:');
+      window.location.protocol === 'capacitor:' ||
+      window.location.hostname === 'appassets.androidplatform.net');
 
-  if (isHybridApp) {
-    // In Android APK, localhost points to the phone's loopback, not the server.
-    // Default to the designated cloud backend or configured gateway
-    return 'https://api.antah.network/api/v1';
+  // 3. Explicitly configured production / staging backend URL (supports VITE_API_BASE_URL, VITE_API_URL, VITE_BACKEND_URL)
+  const metaEnv = (import.meta as any).env;
+  const configuredEnvUrl =
+    metaEnv?.VITE_API_BASE_URL ||
+    metaEnv?.VITE_API_URL ||
+    metaEnv?.VITE_BACKEND_URL;
+
+  if (configuredEnvUrl && typeof configuredEnvUrl === 'string' && configuredEnvUrl.trim()) {
+    const envUrl = normalizeApiUrl(configuredEnvUrl);
+    // In Android APK, localhost/127.0.0.1 resolves to the phone itself, which has no backend.
+    if (isHybridApp && (envUrl.includes('127.0.0.1') || envUrl.includes('localhost'))) {
+      return 'http://192.168.30.120:8000/api/v1';
+    }
+    return envUrl;
   }
 
-  // 3. Standard Web environment
+  if (isHybridApp) {
+    // In Android APK, default to computer's local Wi-Fi IP
+    return 'http://192.168.30.120:8000/api/v1';
+  }
+
+  // 4. Standard Web environment (Vercel, Cloud, or Local Browser)
   if (typeof window !== 'undefined') {
     if (window.location.port === '5173') {
       return `${window.location.origin}/api/v1`;
@@ -35,7 +79,7 @@ const getApiBaseUrl = (): string => {
     }
   }
 
-  // 4. Local desktop development fallback
+  // 5. Local desktop development fallback
   return 'http://127.0.0.1:8000/api/v1';
 };
 

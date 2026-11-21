@@ -1,5 +1,8 @@
 backend/.env
 frontend/.env
+*.env
+*.env.local
+.vercel
 __pycache__/
 .pytest_cache/
 frontend/node_modules/

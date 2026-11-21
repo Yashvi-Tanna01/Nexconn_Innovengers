@@ -136,3 +136,12 @@ class NexconnGroupOut(BaseModel):
     group_id: str
     created: bool
     response: dict
+
+class AiQueryRequest(BaseModel):
+    question: str = Field(min_length=1, max_length=2000)
+    history: Optional[list[dict]] = None
+
+class AiQueryResponse(BaseModel):
+    answer: str
+    model: str = "openrouter"
+    timestamp: datetime

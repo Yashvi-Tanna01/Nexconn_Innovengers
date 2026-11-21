@@ -22,10 +22,11 @@ app.mount("/api/v1/uploads", StaticFiles(directory=str(settings.UPLOAD_DIR)), na
 
 app.include_router(router)
 
-# CORS setup
+# CORS setup — allow web, mobile apps (Capacitor/WebView/Android), and LAN clients
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_origin_regex=r".*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -52,6 +53,8 @@ def health_check():
     }
 
 if __name__ == "__main__":
+    import os
     import uvicorn
-    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
+    port = int(os.getenv("PORT", "8000"))
+    uvicorn.run("app.main:app", host="0.0.0.0", port=port, reload=True)
 

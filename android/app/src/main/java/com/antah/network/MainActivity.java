@@ -9,10 +9,12 @@ import android.webkit.ConsoleMessage;
 import android.webkit.PermissionRequest;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.webkit.WebViewAssetLoader;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -46,14 +48,25 @@ public class MainActivity extends AppCompatActivity {
         settings.setUseWideViewPort(true);
         settings.setMediaPlaybackRequiresUserGesture(false);
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
+        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
 
         // Hardware acceleration
         webView.setLayerType(WebView.LAYER_TYPE_HARDWARE, null);
 
+        // Android Jetpack WebViewAssetLoader allows loading local assets over https://appassets.androidplatform.net/
+        // This gives full origin security, CORS compatibility, and modern ES module support
+        final WebViewAssetLoader assetLoader = new WebViewAssetLoader.Builder()
+                .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
+                .build();
+
         webView.setWebViewClient(new WebViewClient() {
             @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                return assetLoader.shouldInterceptRequest(request.getUrl());
+            }
+
+            @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                // Keep file:///android_asset/ and internal navigation inside WebView
                 return false;
             }
         });
@@ -72,8 +85,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Load local production web assets bundled inside the APK
-        webView.loadUrl("file:///android_asset/public/index.html");
+        // Load local production web assets via WebViewAssetLoader virtual HTTPS origin
+        webView.loadUrl("https://appassets.androidplatform.net/assets/public/index.html");
     }
 
     @Override

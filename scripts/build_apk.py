@@ -88,9 +88,12 @@ def generate_launcher_icons():
 
 def build_frontend():
     print("==> [2/6] Building Vite Production Distribution...")
+    env = os.environ.copy()
+    env["VITE_BASE_URL"] = "./"
     result = subprocess.run(
         ["npm", "run", "build"],
         cwd=str(FRONTEND_DIR),
+        env=env,
         shell=True,
         capture_output=True,
         text=True,
