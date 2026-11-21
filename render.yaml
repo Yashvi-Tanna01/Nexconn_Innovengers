@@ -24,4 +24,4 @@ services:
       - key: NEXCONN_APP_SECRET
         sync: false
       - key: CORS_ORIGINS
-        value: https://*.vercel.app
+        value: https://antah-network.vercel.app,https://*.vercel.app,https://appassets.androidplatform.net
