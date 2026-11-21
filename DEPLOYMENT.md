@@ -10,8 +10,8 @@ ANTAH is structured as a decoupled full-stack civic intelligence platform:
 
 | Component | Technology | Recommended Production Host | Purpose |
 | :--- | :--- | :--- | :--- |
-| **Frontend** | React 18, Vite 5, TailwindCSS, Lucide, Nexconn Web SDK | **Vercel** (Global Edge CDN) | Citizen portal, incident map, community chat rooms, civic reporter |
-| **Backend** | Python 3.12, FastAPI, SQLAlchemy 2.0, Uvicorn, Pydantic v2 | **Render**, **Railway**, **Fly.io**, or **Docker/AWS App Runner** | REST API, Nexconn token signing, JWT auth, incident clustering, AI services |
+| **Frontend** | React 18, Vite 5, TailwindCSS, Lucide, Nexconn Web SDK | **Vercel** (`https://antah-network.vercel.app`) | Citizen portal, incident map, community chat rooms, civic reporter |
+| **Backend** | Python 3.12, FastAPI, SQLAlchemy 2.0, Uvicorn, Pydantic v2 | **Vercel Functions** (`https://antah-backend.vercel.app`) or **Render** | REST API, Nexconn token signing, JWT auth, incident clustering, AI services |
 | **Database** | PostgreSQL 16+ (or Neon Serverless Postgres) | **Neon.tech** or **Supabase** | Multi-table persistent storage with auto-schema migration and pooling |
 | **Media Storage** | Local Disk / AWS S3 / Cloudflare R2 / Supabase Storage | **Cloudflare R2** or **AWS S3** | Persistent evidence photographs uploaded by citizens |
 | **Realtime Chat** | Nexconn RTC & Channel System | **Nexconn Cloud** | High-throughput low-latency citizen and coordinator chat channels |
@@ -151,7 +151,7 @@ Configure these in the **Vercel Project Settings > Environment Variables**:
 
 | Variable Name | Required | Default / Example | Purpose |
 | :--- | :---: | :--- | :--- |
-| `VITE_API_BASE_URL` | **Yes** | `https://antah-backend.onrender.com/api/v1` | Production URL pointing to your deployed backend API gateway. |
+| `VITE_API_BASE_URL` | **Yes** | `https://antah-backend.vercel.app/api/v1` | Production URL pointing to your deployed backend API gateway. |
 | `VITE_NEXCONN_APP_KEY` | **Yes** | `qf3d5gbjqvk3h` | Nexconn Chat App Key for client SDK room subscriptions. |
 | `VITE_NEXCONN_AREA_CODE` | **Yes** | `2` | Nexconn geographic cluster code (2 = Singapore/Asia). |
 | `VITE_CARTO_API_KEY` | No | *(leave blank for default basemap)* | CartoDB map tile key for dark civic map tiles. |
