@@ -31,7 +31,8 @@ class Settings:
     AI_PROVIDER: str = os.getenv("AI_PROVIDER", "anthropic")
     AI_API_KEY: str = os.getenv("AI_API_KEY", "")
 
-    UPLOAD_DIR: Path = Path(os.getenv("UPLOAD_DIR", str(BASE_DIR / "uploads"))).resolve()
+    _default_upload = "/tmp/uploads" if os.getenv("VERCEL") else str(BASE_DIR / "uploads")
+    UPLOAD_DIR: Path = Path(os.getenv("UPLOAD_DIR", _default_upload)).resolve()
     MAX_UPLOAD_SIZE_BYTES: int = int(os.getenv("MAX_UPLOAD_SIZE_BYTES", str(10 * 1024 * 1024))) # 10MB default
 
     BACKEND_CORS_ORIGINS: list[str] = [

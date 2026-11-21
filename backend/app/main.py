@@ -12,13 +12,15 @@ app = FastAPI(
 )
 init_db()
 
-# Ensure persistent uploads directory exists
-settings.UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
-(settings.UPLOAD_DIR / "reports").mkdir(parents=True, exist_ok=True)
-
-# Mount persistent uploads directory
-app.mount("/uploads", StaticFiles(directory=str(settings.UPLOAD_DIR)), name="uploads")
-app.mount("/api/v1/uploads", StaticFiles(directory=str(settings.UPLOAD_DIR)), name="api_uploads")
+# Ensure uploads directory exists if filesystem allows
+try:
+    settings.UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+    (settings.UPLOAD_DIR / "reports").mkdir(parents=True, exist_ok=True)
+    if settings.UPLOAD_DIR.exists():
+        app.mount("/uploads", StaticFiles(directory=str(settings.UPLOAD_DIR)), name="uploads")
+        app.mount("/api/v1/uploads", StaticFiles(directory=str(settings.UPLOAD_DIR)), name="api_uploads")
+except Exception:
+    pass
 
 app.include_router(router)
 
