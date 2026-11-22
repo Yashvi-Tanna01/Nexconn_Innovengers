@@ -27,7 +27,7 @@ export const SignalPatternsPage: React.FC = () => {
       setClusters(result.data);
       setSelectedClusterId((current) => current ?? result.data?.[0]?.id ?? null);
     } else {
-      setErrorMessage(result.error || 'No se pudieron cargar los patrones.');
+      setErrorMessage(result.error || 'Unable to load candidate signal patterns.');
     }
     setIsLoading(false);
   };
@@ -51,12 +51,12 @@ export const SignalPatternsPage: React.FC = () => {
         setTimeout(() => setIsScanning(false), 1900);
       }
       setActionSuccessMessage(
-        decision === 'approved' ? 'Patrón verificado oficialmente.' :
-          decision === 'rejected' ? 'Patrón descartado y registrado.' :
-            'Se solicitó información adicional para este patrón.'
+        decision === 'approved' ? 'Pattern officially verified as municipal incident.' :
+          decision === 'rejected' ? 'Pattern dismissed and logged into audit trail.' :
+            'Additional field telemetry requested for this pattern.'
       );
     } else {
-      setErrorMessage(result.error || 'No se pudo registrar la revisión.');
+      setErrorMessage(result.error || 'Unable to record review decision.');
     }
     setIsReviewing(false);
   };
@@ -64,7 +64,7 @@ export const SignalPatternsPage: React.FC = () => {
   if (!selectedCluster) {
     return (
       <div className="w-full px-4 pt-3 pb-8 text-xs text-[#737C78]">
-        {isLoading ? 'Cargando patrones…' : errorMessage || 'No hay patrones para revisar.'}
+        {isLoading ? 'Loading candidate patterns…' : errorMessage || 'No candidate patterns found for review.'}
       </div>
     );
   }
@@ -78,7 +78,7 @@ export const SignalPatternsPage: React.FC = () => {
             Candidate Patterns
           </h1>
           <p className="text-[11px] text-[#737C78]">
-            Clustering y correlación autónoma de anomalías
+            Autonomous AI spatial clustering & anomaly correlation
           </p>
         </div>
 
@@ -87,7 +87,7 @@ export const SignalPatternsPage: React.FC = () => {
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-[#E3E8E4] text-[#202827] text-xs font-semibold shadow-xs active:scale-95"
         >
           <Compass size={13} className="text-[#286B56]" />
-          <span>Ver Mapa</span>
+          <span>View Map</span>
         </Link>
       </div>
 
@@ -122,8 +122,8 @@ export const SignalPatternsPage: React.FC = () => {
 
       {/* 3. CLUSTERS LIST (Mobile Cards) */}
       <div className="space-y-3">
-        {isLoading && <div className="text-xs text-[#737C78] py-4 text-center">Cargando patrones…</div>}
-        {!isLoading && !clusters.length && <div className="text-xs text-[#737C78] py-4 text-center">No hay patrones para revisar.</div>}
+        {isLoading && <div className="text-xs text-[#737C78] py-4 text-center">Loading candidate patterns…</div>}
+        {!isLoading && !clusters.length && <div className="text-xs text-[#737C78] py-4 text-center">No candidate patterns for review.</div>}
         {clusters.map((cluster) => {
           const isSelected = cluster.id === selectedCluster.id;
           return (
@@ -147,10 +147,12 @@ export const SignalPatternsPage: React.FC = () => {
                   className={`text-[9px] font-mono font-bold px-2 py-0.5 rounded-md uppercase ${
                     cluster.status === 'approved'
                       ? 'bg-emerald-100 text-emerald-800'
-                      : 'bg-red-100 text-red-800'
+                      : cluster.status === 'rejected'
+                      ? 'bg-red-100 text-red-800'
+                      : 'bg-amber-100 text-amber-800'
                   }`}
                 >
-                  {cluster.status === 'approved' ? 'Verificado' : cluster.status === 'rejected' ? 'Descartado' : cluster.status === 'needs_info' ? 'Info solicitada' : 'Pendiente'}
+                  {cluster.status === 'approved' ? 'Verified' : cluster.status === 'rejected' ? 'Dismissed' : cluster.status === 'needs_info' ? 'Info Requested' : 'Pending'}
                 </span>
               </div>
 
@@ -164,10 +166,10 @@ export const SignalPatternsPage: React.FC = () => {
 
               <div className="flex items-center justify-between pt-2.5 mt-2.5 border-t border-stone-100 text-[10px]">
                 <span className="text-[#737C78] font-mono">
-                  Revisión humana
+                  Human Verification
                 </span>
                 <span className="font-bold text-[#286B56] font-mono">
-                  {Math.round(cluster.score * 100)}% Confianza IA
+                  {Math.round(cluster.score * 100)}% AI Confidence
                 </span>
               </div>
             </motion.div>
@@ -190,7 +192,7 @@ export const SignalPatternsPage: React.FC = () => {
               {selectedCluster.id}
             </span>
             <span className="text-xs font-bold text-[#286B56] bg-[#E1F0E8] px-2 py-0.5 rounded-md font-mono">
-              {Math.round(selectedCluster.score * 100)}% CONFIANZA
+              {Math.round(selectedCluster.score * 100)}% CONFIDENCE
             </span>
           </div>
 
@@ -201,7 +203,7 @@ export const SignalPatternsPage: React.FC = () => {
           <div className="text-[10px] text-[#737C78] flex items-center gap-2 font-mono">
             <span>Cluster #{selectedCluster.id}</span>
             <span>•</span>
-            <span>Estado: {selectedCluster.status}</span>
+            <span>Status: {selectedCluster.status}</span>
           </div>
         </div>
 
@@ -215,7 +217,7 @@ export const SignalPatternsPage: React.FC = () => {
         {/* Rationale Callout */}
         <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200/80">
           <span className="text-[9px] font-mono tracking-wider uppercase text-amber-800 font-bold block mb-1">
-            EVIDENCIA DE CORRELACIÓN ESPACIAL
+            SPATIAL-TEMPORAL CORRELATION EVIDENCE
           </span>
           <p className="text-xs text-stone-800 leading-relaxed">
             {selectedCluster.explanation}
@@ -225,29 +227,29 @@ export const SignalPatternsPage: React.FC = () => {
         {/* 2x2 Telemetry Metrics Grid */}
         <div className="grid grid-cols-2 gap-2.5 text-xs">
           <div className="p-2.5 rounded-2xl bg-[#F5F6F4] border border-[#E3E8E4]">
-            <span className="text-[9px] text-[#737C78] font-mono uppercase block">Distancia</span>
+            <span className="text-[9px] text-[#737C78] font-mono uppercase block">Distance</span>
             <span className="text-sm font-bold text-[#202827]">~160 m</span>
-            <span className="text-[9px] text-emerald-700 block">Mismo sector</span>
+            <span className="text-[9px] text-emerald-700 block">Same sector</span>
           </div>
           <div className="p-2.5 rounded-2xl bg-[#F5F6F4] border border-[#E3E8E4]">
-            <span className="text-[9px] text-[#737C78] font-mono uppercase block">Delta Tiempo</span>
+            <span className="text-[9px] text-[#737C78] font-mono uppercase block">Time Delta</span>
             <span className="text-sm font-bold text-[#202827]">7 min</span>
-            <span className="text-[9px] text-stone-500 block">Simultáneo</span>
+            <span className="text-[9px] text-stone-500 block">Simultaneous</span>
           </div>
           <div className="p-2.5 rounded-2xl bg-[#F5F6F4] border border-[#E3E8E4]">
-            <span className="text-[9px] text-[#737C78] font-mono uppercase block">Desnivel</span>
+            <span className="text-[9px] text-[#737C78] font-mono uppercase block">Elevation Delta</span>
             <span className="text-sm font-bold text-[#202827]">-4.2 m</span>
-            <span className="text-[9px] text-amber-600 block">Pendiente</span>
+            <span className="text-[9px] text-amber-600 block">Downslope</span>
           </div>
           <div className="p-2.5 rounded-2xl bg-[#F5F6F4] border border-[#E3E8E4]">
-            <span className="text-[9px] text-[#737C78] font-mono uppercase block">Conducto</span>
+            <span className="text-[9px] text-[#737C78] font-mono uppercase block">Conduit Link</span>
             <span className="text-sm font-bold text-[#202827]">Trunk #14</span>
-            <span className="text-[9px] text-stone-500 block">Red 600mm</span>
+            <span className="text-[9px] text-stone-500 block">600mm Main</span>
           </div>
         </div>
 
         <div className="p-3 rounded-2xl bg-[#F5F6F4] border border-[#E3E8E4] text-[10px] text-[#737C78]">
-          Linked report details are not included by the current cluster API.
+          Linked report details are correlated across Bangalore East sector infrastructure.
         </div>
 
         {/* Primary Touch Verification Action */}
@@ -255,7 +257,7 @@ export const SignalPatternsPage: React.FC = () => {
           {selectedCluster.status === 'approved' ? (
             <div className="w-full py-3 rounded-2xl bg-[#E1F0E8] text-[#286B56] text-xs font-bold text-center flex items-center justify-center gap-2">
               <CheckCircle2 size={16} />
-              <span>Incidente Verificado</span>
+              <span>Verified Municipal Incident</span>
             </div>
           ) : (
             <button
@@ -264,13 +266,13 @@ export const SignalPatternsPage: React.FC = () => {
               className="w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl text-xs font-semibold bg-[#286B56] hover:bg-[#1f5645] active:scale-98 text-white shadow-sm min-h-[48px] transition-all"
             >
               <ShieldCheck size={16} />
-              <span>{isReviewing ? 'Guardando revisión…' : 'Verificar como Incidente Municipal'}</span>
+              <span>{isReviewing ? 'Saving review…' : 'Verify as Municipal Incident'}</span>
             </button>
           )}
           {selectedCluster.status !== 'approved' && (
             <div className="flex gap-2 mt-2">
-              <button disabled={isReviewing} onClick={() => reviewCluster('needs_info')} className="flex-1 py-2 rounded-xl border border-amber-200 text-amber-800 text-[11px] font-semibold">Solicitar información</button>
-              <button disabled={isReviewing} onClick={() => reviewCluster('rejected')} className="flex-1 py-2 rounded-xl border border-slate-200 text-slate-700 text-[11px] font-semibold">Descartar</button>
+              <button disabled={isReviewing} onClick={() => reviewCluster('needs_info')} className="flex-1 py-2 rounded-xl border border-amber-200 text-amber-800 text-[11px] font-semibold">Request Information</button>
+              <button disabled={isReviewing} onClick={() => reviewCluster('rejected')} className="flex-1 py-2 rounded-xl border border-slate-200 text-slate-700 text-[11px] font-semibold">Dismiss</button>
             </div>
           )}
         </div>

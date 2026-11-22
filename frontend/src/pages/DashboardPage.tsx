@@ -52,12 +52,12 @@ export const DashboardPage: React.FC = () => {
   useEffect(() => { void loadAnalytics(); }, []);
 
   const metrics = [
-    { label: 'Reportes', value: analytics ? String(analytics.reports) : isAnalyticsLoading ? '…' : '—', trend: 'Backend', color: 'text-[#286B56]', bg: 'bg-[#E1F0E8]' },
+    { label: 'Reports', value: analytics ? String(analytics.reports) : isAnalyticsLoading ? '…' : '—', trend: 'Backend', color: 'text-[#286B56]', bg: 'bg-[#E1F0E8]' },
     { label: 'Clusters', value: analytics ? String(analytics.clusters) : isAnalyticsLoading ? '…' : '—', trend: 'Backend', color: 'text-[#E7A65B]', bg: 'bg-amber-50' },
-    { label: 'Señales', value: analytics ? String(analytics.reports) : isAnalyticsLoading ? '…' : '—', trend: 'Backend', color: 'text-blue-700', bg: 'bg-blue-50' },
-    { label: 'Incidentes', value: analytics ? String(analytics.incidents) : isAnalyticsLoading ? '…' : '—', trend: 'Backend', color: 'text-teal-700', bg: 'bg-teal-50' },
-    { label: 'Aprobados', value: analytics ? String(analytics.approved_clusters) : isAnalyticsLoading ? '…' : '—', trend: 'Backend', color: 'text-emerald-700', bg: 'bg-emerald-50' },
-    { label: 'Resueltos', value: analytics ? String(analytics.resolved_incidents) : isAnalyticsLoading ? '…' : '—', trend: 'Backend', color: 'text-[#D9534F]', bg: 'bg-red-50' },
+    { label: 'Signals', value: analytics ? String(analytics.reports) : isAnalyticsLoading ? '…' : '—', trend: 'Backend', color: 'text-blue-700', bg: 'bg-blue-50' },
+    { label: 'Incidents', value: analytics ? String(analytics.incidents) : isAnalyticsLoading ? '…' : '—', trend: 'Backend', color: 'text-teal-700', bg: 'bg-teal-50' },
+    { label: 'Approved', value: analytics ? String(analytics.approved_clusters) : isAnalyticsLoading ? '…' : '—', trend: 'Backend', color: 'text-emerald-700', bg: 'bg-emerald-50' },
+    { label: 'Resolved', value: analytics ? String(analytics.resolved_incidents) : isAnalyticsLoading ? '…' : '—', trend: 'Backend', color: 'text-[#D9534F]', bg: 'bg-red-50' },
   ];
 
   return (
@@ -69,7 +69,7 @@ export const DashboardPage: React.FC = () => {
             Observatory Overview
           </h1>
           <p className="text-[11px] text-[#737C78]">
-            Región Bangalore Este • Telemetría en Vivo
+            Bangalore East Sector • Real-time Telemetry
           </p>
         </div>
 
@@ -77,7 +77,7 @@ export const DashboardPage: React.FC = () => {
           to="/report"
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#286B56] text-white text-xs font-semibold shadow-xs active:scale-95"
         >
-          <span>+ Reportar</span>
+          <span>+ Report Issue</span>
         </Link>
       </div>
 
@@ -85,9 +85,9 @@ export const DashboardPage: React.FC = () => {
       <section className="space-y-1.5">
         <div className="flex items-center justify-between px-1">
           <span className="text-[10px] font-mono text-[#737C78] uppercase tracking-wider font-semibold">
-            TELEMETRÍA TERRITORIAL
+            TERRITORIAL TELEMETRY
           </span>
-          <span className="text-[10px] text-emerald-700 font-mono">EN TIEMPO REAL</span>
+          <span className="text-[10px] text-emerald-700 font-mono">REAL-TIME MESH</span>
         </div>
 
         <div className="flex items-center gap-2.5 overflow-x-auto pb-1.5 scrollbar-none -mx-4 px-4">
@@ -142,7 +142,7 @@ export const DashboardPage: React.FC = () => {
 
         {/* Map Canvas Preview */}
         <div className="relative w-full h-[260px] rounded-2xl overflow-hidden border border-[#E3E8E4] bg-stone-100">
-          <Suspense fallback={<PageLoadingState message="Cargando mapa territorial..." />}>
+          <Suspense fallback={<PageLoadingState message="Loading territorial atlas..." />}>
             <CitySignalAtlas
               className="w-full h-full"
               selectedSignalId={selectedSignal?.id}
@@ -158,10 +158,10 @@ export const DashboardPage: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-amber-800">
             <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-            <span>PATRÓN CANDIDATO PRIORITARIO</span>
+            <span>PRIORITY CANDIDATE PATTERN</span>
           </div>
           <span className="px-2 py-0.5 rounded-md bg-[#D9534F] text-white text-[9px] font-mono font-bold">
-            94% Confianza
+            94% Confidence
           </span>
         </div>
 
@@ -175,13 +175,13 @@ export const DashboardPage: React.FC = () => {
 
         <div className="flex items-center justify-between pt-2 border-t border-amber-200/60 text-[11px]">
           <span className="text-stone-500 font-mono text-[10px]">
-            Sector 3 • 2 Señales
+            Sector 3 • 2 Connected Signals
           </span>
           <Link
             to="/patterns"
             className="inline-flex items-center gap-1 text-[#286B56] font-bold text-xs"
           >
-            <span>Inspeccionar y Verificar</span>
+            <span>Inspect & Verify</span>
             <ChevronRight size={13} />
           </Link>
         </div>
@@ -191,10 +191,10 @@ export const DashboardPage: React.FC = () => {
       <section className="bg-white rounded-3xl border border-[#E3E8E4] shadow-xs p-4 space-y-3">
         <div className="flex items-center justify-between pb-2 border-b border-stone-100">
           <h3 className="text-xs font-bold text-[#202827]">
-            Bitácora Reciente de Incidentes
+            Recent Incident Activity Log
           </h3>
           <span className="text-[10px] font-mono text-emerald-700 font-bold">
-            EN VIVO
+            LIVE MESH
           </span>
         </div>
 
@@ -203,10 +203,10 @@ export const DashboardPage: React.FC = () => {
             <div className="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
             <div className="flex-1 text-xs">
               <div className="font-semibold text-[#202827]">
-                Fisura en red potable reportada por vecina
+                Mainline fissure reported by resident
               </div>
               <span className="text-[10px] text-[#737C78]">
-                Sector 3 Hydrologic Quad • Hace 18 mins
+                Sector 3 Hydrologic Quad • 18 mins ago
               </span>
             </div>
           </div>
@@ -215,10 +215,10 @@ export const DashboardPage: React.FC = () => {
             <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 shrink-0" />
             <div className="flex-1 text-xs">
               <div className="font-semibold text-[#202827]">
-                IA correlacionó desborde de sumidero downstream
+                AI correlated downstream culvert surcharge
               </div>
               <span className="text-[10px] text-[#737C78]">
-                CLUSTER-409 Generado • Hace 25 mins
+                CLUSTER-409 Generated • 25 mins ago
               </span>
             </div>
           </div>
@@ -227,10 +227,10 @@ export const DashboardPage: React.FC = () => {
             <div className="w-2 h-2 rounded-full bg-amber-500 mt-1.5 shrink-0" />
             <div className="flex-1 text-xs">
               <div className="font-semibold text-[#202827]">
-                Cuadrilla Hidráulica Alfa en camino al sitio
+                Hydraulic Unit Alpha dispatched to site
               </div>
               <span className="text-[10px] text-[#737C78]">
-                Remediación Municipal • Hace 40 mins
+                Municipal Remediation • 40 mins ago
               </span>
             </div>
           </div>
@@ -241,15 +241,15 @@ export const DashboardPage: React.FC = () => {
       <section className="bg-white rounded-3xl border border-[#E3E8E4] shadow-xs p-4 space-y-3">
         <div className="flex items-center justify-between pb-2 border-b border-stone-100">
           <h3 className="text-xs font-bold text-[#202827]">
-            Riesgo por Categoría
+            Category Risk Distribution
           </h3>
-          <span className="text-[10px] text-[#737C78]">Carga activa</span>
+          <span className="text-[10px] text-[#737C78]">Active Load</span>
         </div>
 
         <div className="space-y-2.5 text-xs">
           <div>
             <div className="flex justify-between text-[11px] mb-1">
-              <span className="font-medium text-stone-700">Fugas de Agua</span>
+              <span className="font-medium text-stone-700">Water & Mainlines</span>
               <span className="font-bold text-red-600">72%</span>
             </div>
             <div className="w-full h-1.5 rounded-full bg-stone-100 overflow-hidden">
@@ -259,7 +259,7 @@ export const DashboardPage: React.FC = () => {
 
           <div>
             <div className="flex justify-between text-[11px] mb-1">
-              <span className="font-medium text-stone-700">Desbordes y Drenaje</span>
+              <span className="font-medium text-stone-700">Drainage & Culverts</span>
               <span className="font-bold text-amber-600">48%</span>
             </div>
             <div className="w-full h-1.5 rounded-full bg-stone-100 overflow-hidden">
@@ -269,7 +269,7 @@ export const DashboardPage: React.FC = () => {
 
           <div>
             <div className="flex justify-between text-[11px] mb-1">
-              <span className="font-medium text-stone-700">Calzadas y Asfalto</span>
+              <span className="font-medium text-stone-700">Roadways & Asphalt</span>
               <span className="font-bold text-amber-600">45%</span>
             </div>
             <div className="w-full h-1.5 rounded-full bg-stone-100 overflow-hidden">

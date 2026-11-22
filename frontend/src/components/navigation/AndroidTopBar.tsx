@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useNavigationTransition } from './transition';
+import { AntahLogo } from '../brand/AntahLogo';
 import {
   Bell,
   ShieldCheck,
@@ -61,10 +62,8 @@ export const AndroidTopBar: React.FC = () => {
           }}
           className="flex items-center gap-2.5 group focus:outline-none min-w-0"
         >
-          <div className="w-8 h-8 rounded-xl bg-[#17533E] flex items-center justify-center text-white font-bold text-xs shadow-sm group-active:scale-95 transition-transform shrink-0">
-            A
-          </div>
-          <div className="flex flex-col min-w-0">
+          <AntahLogo size="sm" showSubtitle={false} />
+          <div className="flex flex-col min-w-0 border-l border-stone-200/80 pl-2.5">
             <span className="font-bold text-sm tracking-wide text-[#202827] font-sans truncate">
               {meta.title}
             </span>
@@ -79,7 +78,7 @@ export const AndroidTopBar: React.FC = () => {
           {/* Live Status indicator */}
           <div className="hidden xs:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#E1F0E8] border border-[#286B56]/20 text-[10px] font-mono text-[#286B56] font-semibold">
             <span className="w-1.5 h-1.5 rounded-full bg-[#286B56] animate-pulse" />
-            <span>ONLINE</span>
+            <span>CIVIC GRID: ONLINE</span>
           </div>
 
           {/* Notifications Bell */}

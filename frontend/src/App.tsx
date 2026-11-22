@@ -146,7 +146,7 @@ function MainLayout() {
           className="w-full flex-1 flex flex-col"
         >
           <Routes location={location}>
-            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="/" element={<RouteReadySentinel path="/home"><HomePage /></RouteReadySentinel>} />
             <Route path="/home" element={<RouteReadySentinel path="/home"><HomePage /></RouteReadySentinel>} />
             <Route path="/dashboard" element={<Suspense fallback={<PageFallback />}><RequireAuth><RouteReadySentinel path="/explorer"><RoleDashboard /></RouteReadySentinel></RequireAuth></Suspense>} />
             <Route path="/admin/dashboard" element={<Suspense fallback={<PageFallback />}><RequireAuth roles={['admin']}><RouteReadySentinel path="/admin/dashboard"><AdminDashboardPage /></RouteReadySentinel></RequireAuth></Suspense>} />
@@ -154,13 +154,12 @@ function MainLayout() {
             <Route path="/coordinator/dashboard" element={<Suspense fallback={<PageFallback />}><RequireAuth roles={['coordinator']}><CoordinatorPage /></RequireAuth></Suspense>} />
             <Route path="/responder/dashboard" element={<Suspense fallback={<PageFallback />}><RequireAuth roles={['responder']}><DashboardPage /></RequireAuth></Suspense>} />
             <Route path="/profile" element={<Suspense fallback={<PageFallback />}><RequireAuth><ProfilePage /></RequireAuth></Suspense>} />
-            <Route path="/explorer" element={<Suspense fallback={<PageFallback />}><RequireAuth><RouteReadySentinel path="/explorer"><ExplorerPage /></RouteReadySentinel></RequireAuth></Suspense>} />
+            <Route path="/explorer" element={<Suspense fallback={<PageFallback />}><RouteReadySentinel path="/explorer"><ExplorerPage /></RouteReadySentinel></Suspense>} />
             <Route path="/report" element={<Suspense fallback={<PageFallback />}><RequireAuth><RouteReadySentinel path="/report"><ReportPage /></RouteReadySentinel></RequireAuth></Suspense>} />
-            <Route path="/patterns" element={<Suspense fallback={<PageFallback />}><RequireAuth roles={['coordinator', 'admin']}><RouteReadySentinel path="/patterns"><SignalPatternsPage /></RouteReadySentinel></RequireAuth></Suspense>} />
+            <Route path="/patterns" element={<Suspense fallback={<PageFallback />}><RouteReadySentinel path="/patterns"><SignalPatternsPage /></RouteReadySentinel></Suspense>} />
             <Route path="/coordinator" element={<Suspense fallback={<PageFallback />}><RequireAuth roles={['coordinator', 'admin']}><RouteReadySentinel path="/patterns"><CoordinatorPage /></RouteReadySentinel></RequireAuth></Suspense>} />
             <Route path="/messages" element={<Suspense fallback={<PageFallback />}><RequireAuth><RouteReadySentinel path="/messages"><MessagesPage /></RouteReadySentinel></RequireAuth></Suspense>} />
             <Route path="/auth" element={<Suspense fallback={<PageFallback />}><PublicAuthRoute><RouteReadySentinel path="/auth"><AuthPage /></RouteReadySentinel></PublicAuthRoute></Suspense>} />
-            <Route path="/login" element={<Suspense fallback={<PageFallback />}><PublicAuthRoute><RouteReadySentinel path="/auth"><AuthPage /></RouteReadySentinel></PublicAuthRoute></Suspense>} />
             <Route path="/login" element={<Suspense fallback={<PageFallback />}><PublicAuthRoute><RouteReadySentinel path="/login"><AuthPage /></RouteReadySentinel></PublicAuthRoute></Suspense>} />
             <Route path="*" element={<Navigate to="/home" replace />} />
           </Routes>

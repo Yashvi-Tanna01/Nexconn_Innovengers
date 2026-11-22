@@ -6,12 +6,13 @@ import {
   Home,
   Compass,
   Plus,
+  Layers,
   MessageSquare,
 } from 'lucide-react';
 import { API_ENDPOINTS, apiRequest, getAuthToken, Notification } from '../../config/api';
 
 interface NavItem {
-  id: 'home' | 'explore' | 'report' | 'chat';
+  id: 'home' | 'explore' | 'report' | 'patterns' | 'chat';
   label: string;
   path: string;
   altPaths?: string[];
@@ -37,6 +38,12 @@ const NAV_ITEMS: NavItem[] = [
     path: '/report',
     altPaths: [],
     isCenterAction: true,
+  },
+  {
+    id: 'patterns',
+    label: 'Patterns',
+    path: '/patterns',
+    altPaths: ['/coordinator'],
   },
   {
     id: 'chat',
@@ -90,10 +97,10 @@ export const AndroidBottomNav: React.FC = React.memo(() => {
     <nav
       role="navigation"
       aria-label="Bottom Navigation"
-      className="fixed bottom-3 sm:bottom-4 left-0 right-0 z-[1100] px-3 sm:px-4 pointer-events-none select-none box-border flex justify-center"
+      className="fixed bottom-3 sm:bottom-4 left-0 right-0 z-[1100] px-2 sm:px-4 pointer-events-none select-none box-border flex justify-center"
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
-      <div className="w-full max-w-[390px] sm:max-w-[430px] h-[66px] bg-white/95 backdrop-blur-xl rounded-full border border-white/80 shadow-[0_10px_35px_rgba(15,23,42,0.08),0_2px_8px_rgba(15,23,42,0.04)] grid grid-cols-4 items-center px-1.5 pointer-events-auto">
+      <div className="w-full max-w-[420px] sm:max-w-[470px] h-[66px] bg-white/95 backdrop-blur-xl rounded-full border border-white/80 shadow-[0_10px_35px_rgba(15,23,42,0.08),0_2px_8px_rgba(15,23,42,0.04)] grid grid-cols-5 items-center px-1.5 pointer-events-auto">
         {NAV_ITEMS.map((item) => {
           const active = isCurrentActive(item);
 
@@ -116,14 +123,14 @@ export const AndroidBottomNav: React.FC = React.memo(() => {
                 >
                   <Plus size={24} strokeWidth={2.6} className="text-white" />
                 </div>
-                <span className="text-[11px] font-bold text-[#164E3D] -mt-1 font-sans tracking-tight">
+                <span className="text-[10px] sm:text-[11px] font-bold text-[#164E3D] -mt-1 font-sans tracking-tight">
                   {item.label}
                 </span>
               </Link>
             );
           }
 
-          // 2. Standard Navigation Destinations (Home, Explore, Chat)
+          // 2. Standard Navigation Destinations (Home, Explore, Patterns, Chat)
           return (
             <Link
               key={item.id}
@@ -132,7 +139,7 @@ export const AndroidBottomNav: React.FC = React.memo(() => {
               className="flex flex-col items-center justify-center py-1 group focus:outline-none active:scale-95 transition-transform"
             >
               {/* Icon Container with active Mint-Green Capsule Pill */}
-              <div className="relative w-14 h-8 flex items-center justify-center">
+              <div className="relative w-12 sm:w-14 h-8 flex items-center justify-center">
                 {active && (
                   <motion.div
                     layoutId="activeBottomNavMintPill"
@@ -146,16 +153,27 @@ export const AndroidBottomNav: React.FC = React.memo(() => {
                     active ? 'text-[#164E3D]' : 'text-[#62776E] group-hover:text-[#164E3D]'
                   }`}
                 >
-                  {item.id === 'home' && <Home size={22} strokeWidth={active ? 2.1 : 1.8} />}
-                  {item.id === 'explore' && <Compass size={22} strokeWidth={active ? 2.1 : 1.8} />}
-                  {item.id === 'chat' && <MessageSquare size={22} strokeWidth={active ? 2.1 : 1.8} />}
+                  {item.id === 'home' && <Home size={20} strokeWidth={active ? 2.1 : 1.8} />}
+                  {item.id === 'explore' && <Compass size={20} strokeWidth={active ? 2.1 : 1.8} />}
+                  {item.id === 'patterns' && <Layers size={20} strokeWidth={active ? 2.1 : 1.8} />}
+                  {item.id === 'chat' && <MessageSquare size={20} strokeWidth={active ? 2.1 : 1.8} />}
                 </span>
+
+                {/* Patterns AI Alert Badge */}
+                {item.id === 'patterns' && (
+                  <span
+                    aria-label="1 AI Pattern"
+                    className="absolute top-0 right-1 z-20 min-w-[14px] h-3.5 px-1 rounded-full bg-[#D97706] text-[9px] font-bold text-white flex items-center justify-center leading-none shadow-xs pointer-events-none"
+                  >
+                    1
+                  </span>
+                )}
 
                 {/* Orange Chat Notification Badge */}
                 {item.id === 'chat' && unreadCount > 0 && (
                   <span
                     aria-label={`${unreadCount} unread messages`}
-                    className="absolute top-0 right-2 z-20 min-w-[16px] h-4 px-1 rounded-full bg-[#EA580C] text-[10px] font-bold text-white flex items-center justify-center leading-none shadow-xs pointer-events-none"
+                    className="absolute top-0 right-1 z-20 min-w-[15px] h-3.5 px-1 rounded-full bg-[#EA580C] text-[9px] font-bold text-white flex items-center justify-center leading-none shadow-xs pointer-events-none"
                   >
                     {unreadCount > 99 ? '99+' : unreadCount}
                   </span>
@@ -164,7 +182,7 @@ export const AndroidBottomNav: React.FC = React.memo(() => {
 
               {/* Destination Label */}
               <span
-                className={`text-[11px] tracking-tight mt-0.5 transition-colors font-sans truncate text-center ${
+                className={`text-[10px] sm:text-[11px] tracking-tight mt-0.5 transition-colors font-sans truncate text-center ${
                   active ? 'font-bold text-[#164E3D]' : 'font-medium text-[#62776E] group-hover:text-[#164E3D]'
                 }`}
               >

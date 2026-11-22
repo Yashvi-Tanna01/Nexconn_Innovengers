@@ -210,11 +210,11 @@ export const ReportPage: React.FC = () => {
             Report Civic Issue
           </h1>
           <p className="text-[11px] text-[#737C78]">
-            Ingreso de telemetría ciudadana a la red ANTAH
+            Citizen telemetry submission to the ANTAH civic network
           </p>
         </div>
         <div className="text-[10px] font-mono text-[#286B56] font-bold px-2.5 py-1 rounded-full bg-[#E1F0E8]">
-          PASO {step}/3
+          STEP {step}/3
         </div>
       </div>
 
