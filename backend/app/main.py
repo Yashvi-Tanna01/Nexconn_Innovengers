@@ -44,9 +44,8 @@ async def custom_404_handler(request: Request, exc):
             "received_path": request.url.path,
             "scope_path": request.scope.get("path"),
             "root_path": request.scope.get("root_path"),
-            "matched_path": request.headers.get("x-matched-path"),
-            "now_route_matches": request.headers.get("x-now-route-matches"),
-            "available_routes": [route.path for route in app.routes if hasattr(route, "path")][:20],
+            "headers": dict(request.headers),
+            "scope_keys": list(request.scope.keys()),
         }
     )
 
