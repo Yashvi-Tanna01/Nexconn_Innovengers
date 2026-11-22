@@ -25,6 +25,19 @@ except Exception:
 
 app.include_router(router)
 
+# Normalize Vercel serverless function prefix so routes match seamlessly
+@app.middleware("http")
+async def strip_vercel_prefix(request: Request, call_next):
+    path = request.scope.get("path", "")
+    for prefix in ("/api/index.py", "/api/index", "/api/main.py", "/main.py"):
+        if path.startswith(prefix):
+            new_path = path[len(prefix):]
+            if not new_path.startswith("/"):
+                new_path = "/" + new_path
+            request.scope["path"] = new_path
+            break
+    return await call_next(request)
+
 # CORS setup — allow web, mobile apps (Capacitor/WebView/Android), and LAN clients
 app.add_middleware(
     CORSMiddleware,
